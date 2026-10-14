@@ -104,11 +104,3 @@ npm install
 npm run dev
 ```
 *Giao diện sẵn sàng tại:* `http://localhost:5173`
-
----
-
-## 6. BẢN QUYỀN & PHÁT TRIỂN
-
-- **Dự án**: Hệ thống quản lý Phòng Khám Chúc Từ
-- **Tác giả**: [tritrongpham0513](https://github.com/tritrongpham0513)
-- **Giấy phép**: MIT License
