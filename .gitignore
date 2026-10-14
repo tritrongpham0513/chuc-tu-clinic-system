@@ -22,6 +22,11 @@ desktop.ini
 *.secret
 *.pem
 *.key
+backend/src/main/resources/application.yml
+backend/src/main/resources/application.properties
+backend/src/main/resources/application-*.yml
+backend/src/main/resources/application-*.properties
+!backend/src/main/resources/application.example.yml
 
 # --- Frontend (Node / Vite / React) ---
 frontend/node_modules/

@@ -1,0 +1,43 @@
+# ============================================================================
+# CẤU HÌNH MẪU - PHÒNG KHÁM CHÚC TỪ BACKEND
+# ============================================================================
+# Hướng dẫn:
+# 1. Tạo bản sao của file này và đặt tên là: application.yml
+# 2. Điền thông tin mật khẩu MySQL của bạn vào biến DB_PASSWORD hoặc cấu hình trực tiếp.
+# ⚠️ File application.yml đã được chặn trong .gitignore để không bao giờ bị lộ lên GitHub.
+# ============================================================================
+
+server:
+  port: ${PORT:8080}
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: chuc-tu-clinic-backend
+
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/phongkham_chuctu?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  jackson:
+    time-zone: Asia/Ho_Chi_Minh
+    date-format: yyyy-MM-dd HH:mm:ss
+    serialization:
+      write-dates-as-timestamps: false
