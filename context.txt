@@ -1,0 +1,13 @@
+# HỒ SƠ NGỮ CẢNH DỰ ÁN - PHÒNG KHÁM CHÚC TỪ
+Vui lòng xem toàn văn tài liệu đặc tả chuẩn Enterprise tại: file:///d:/phong-kham-chuc-tu/PROJECT_CONTEXT.md
+
+## Tóm tắt định hướng cốt lõi:
+- Dự án: Website Quản lý và Nhận bệnh - Phòng Khám Chúc Từ.
+- Đối tượng chính: Bệnh nhân lớn tuổi và con cháu đặt lịch khám hộ.
+- Vibe & Thẩm mỹ: Mộc mạc, bình an, ấm áp (Tông gỗ, vàng rơm, xanh lá thảo dược). Tuyệt đối tránh vẻ công nghệ cao lạnh lẽo.
+- Frontend: React (Vite) + Tailwind CSS (Cỡ chữ 18-20px, font to rõ, không hiệu ứng bay lượn gây rối mắt, Mobile-First với nút Gọi Hotline và Chỉ đường Maps dính đáy).
+- Backend: Java Spring Boot 3.x (Spring Web, Spring Security 6 JWT, Spring Data JPA).
+- Database: MySQL 8.0 (InnoDB, charset: utf8mb4_unicode_ci).
+- Bản đồ: Nhúng Google Maps chính xác tọa độ đường Điện Biên Phủ, TP.HCM.
+- Tối ưu mạng 3G/4G: Lazy loading, nén ảnh WebP.
+- Dashboard Admin (CMS): 100% tiếng Việt, tinh gọn (Xem lịch khám, Viết/Sửa bài viết, Quản lý tài khoản).
