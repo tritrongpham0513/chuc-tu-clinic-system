@@ -29,9 +29,9 @@ Dự án áp dụng mô hình **Monorepo** chuẩn mực:
 ```text
 phong-kham-chuc-tu/
 ├── frontend/           # Ứng dụng Web Client & Admin CMS (React 18 + Vite + Tailwind)
-├── backend/            # RESTful API Backend (Java 17/21 + Spring Boot 3.x)
+├── backend/            # RESTful API Backend (Java 17/21 + Spring Boot 3.x/4.x)
 ├── database/           # Kịch bản DDL MySQL 8.0 & Seed Data
-├── PROJECT_CONTEXT.md  # Hồ sơ nghiệp vụ & Kiến trúc chi tiết
+├── docs/               # Tài liệu dự án (PROJECT_CONTEXT.md, context.txt)
 ├── AGENTS.md           # Bộ quy tắc hướng dẫn AI Agent
 └── README.md           # Tài liệu giới thiệu dự án
 ```

@@ -37,9 +37,9 @@
 ```text
 phong-kham-chuc-tu/
 ├── frontend/           # React 18+ (Vite) + Tailwind CSS + Axios
-├── backend/            # Java 17/21 + Spring Boot 3.x (Clean Architecture)
+├── backend/            # Java 17/21 + Spring Boot 3.x/4.x (Clean Architecture)
 ├── database/           # MySQL 8.0 scripts, migrations, seed data
-├── PROJECT_CONTEXT.md  # Tài liệu kiến trúc & nghiệp vụ chi tiết
+├── docs/               # Tài liệu kiến trúc & nghiệp vụ (PROJECT_CONTEXT.md)
 └── AGENTS.md           # File quy tắc chỉ dẫn AI (File này)
 ```
 
@@ -90,6 +90,6 @@ Mọi endpoint trả về định dạng chuẩn:
 
 ## 4. QUY ƯỚC LÀM VIỆC CỦA AGENT
 
-- Khi sinh mã hoặc chỉnh sửa mã, luôn đối chiếu với [PROJECT_CONTEXT.md](file:///d:/phong-kham-chuc-tu/PROJECT_CONTEXT.md) để đảm bảo đồng bộ biến màu, cỡ chữ, và schema.
+- Khi sinh mã hoặc chỉnh sửa mã, luôn đối chiếu với [PROJECT_CONTEXT.md](file:///d:/phong-kham-chuc-tu/docs/PROJECT_CONTEXT.md) để đảm bảo đồng bộ biến màu, cỡ chữ, và schema.
 - Luôn giải thích ngắn gọn, rõ ràng bằng tiếng Việt.
 - Ưu tiên tính ổn định, dễ đọc, dễ kiểm thử trước khi tối ưu nâng cao.
