@@ -1,0 +1,53 @@
+# ============================================================================
+# .gitignore - Dự án Phòng Khám Chúc Từ
+# ============================================================================
+
+# --- OS & System Files ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- IDE & Editors ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.iml
+
+# --- Environment Variables & Secrets ---
+.env
+.env.local
+.env.*.local
+*.secret
+*.pem
+*.key
+
+# --- Frontend (Node / Vite / React) ---
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.cache/
+frontend/*.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# --- Backend (Java / Spring Boot / Maven / Gradle) ---
+backend/target/
+backend/*.jar
+backend/*.war
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/bin/
+backend/out/
+backend/logs/
+backend/*.log
+
+# --- Database & Local Dumps ---
+*.dump
+*.bak
+
+# --- Logs ---
+logs/
+*.log
