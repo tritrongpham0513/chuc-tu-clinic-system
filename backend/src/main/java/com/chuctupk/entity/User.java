@@ -37,7 +37,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
-    private Role role = Role.PATIENT;
+    private Role role = Role.STAFF;
 
     @Column(name = "is_active", nullable = false)
     @Builder.Default
