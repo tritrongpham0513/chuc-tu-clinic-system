@@ -86,9 +86,8 @@ Hệ thống hỗ trợ 4 vai trò rõ ràng:
 Mở MySQL Workbench hoặc MySQL CLI:
 ```bash
 mysql -u root -p < database/001_schema.sql
-mysql -u root -p < database/002_seed_data.sql
 ```
-*(Tài khoản mặc định: `admin` / `admin123`)*.
+
 
 ### Bước 2: Khởi chạy Backend (Spring Boot)
 ```bash
