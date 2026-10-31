@@ -24,6 +24,10 @@ public class AppException extends RuntimeException {
         return new AppException(409, message);
     }
 
+    public static AppException unprocessable(String message) {
+        return new AppException(422, message);
+    }
+
     public static AppException internal(String message) {
         return new AppException(500, message);
     }
