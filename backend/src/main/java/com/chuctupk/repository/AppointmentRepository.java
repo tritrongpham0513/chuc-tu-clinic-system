@@ -16,11 +16,20 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     Optional<Appointment> findByBookingCode(String bookingCode);
 
+    boolean existsByBookingCode(String bookingCode);
+
     List<Appointment> findByAppointmentDateOrderByTimeSlotStartTimeAsc(LocalDate appointmentDate);
 
     List<Appointment> findByPatientPhoneOrderByAppointmentDateDesc(String phone);
 
     List<Appointment> findByStatusOrderByAppointmentDateDesc(AppointmentStatus status);
+
+    boolean existsByPatientIdAndAppointmentDateAndTimeSlotIdAndStatusNot(
+            Long patientId,
+            LocalDate appointmentDate,
+            Long timeSlotId,
+            AppointmentStatus excludeStatus
+    );
 
     @Query("SELECT COUNT(a) FROM Appointment a WHERE a.appointmentDate = :date " +
            "AND a.doctor.id = :doctorId AND a.timeSlot.id = :timeSlotId " +

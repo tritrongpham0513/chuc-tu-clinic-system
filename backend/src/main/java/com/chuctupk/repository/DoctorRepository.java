@@ -10,6 +10,7 @@ import java.util.Optional;
 @Repository
 public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     List<Doctor> findByIsActiveTrue();
+    List<Doctor> findByIsActiveTrueOrderBySortOrderAsc();
     List<Doctor> findBySpecialty(String specialty);
     Optional<Doctor> findByUserId(Long userId);
 }
