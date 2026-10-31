@@ -1,0 +1,33 @@
+server:
+  port: 0
+
+spring:
+  application:
+    name: chuc-tu-clinic-backend-test
+
+  datasource:
+    url: ${DB_TEST_URL:jdbc:mysql://localhost:3306/phongkham_chuctu_test?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 15
+      minimum-idle: 2
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+  jackson:
+    time-zone: Asia/Ho_Chi_Minh
+    date-format: yyyy-MM-dd HH:mm:ss
+
+app:
+  admin:
+    username: ${ADMIN_USERNAME:test_admin}
+    password: ${ADMIN_PASSWORD:test_password_123}
+    phone: ${ADMIN_PHONE:0987654321}
+    full-name: Quản trị viên Test
+
