@@ -215,11 +215,17 @@ Mọi API trả về từ Spring Boot đều bọc trong cấu trúc thống nh�
 * **Xác thực**:
   - `POST /api/v1/auth/login` (Đăng nhập nhân viên/bác sĩ, trả về JWT Token)
   - `GET /api/v1/auth/me` (Lấy thông tin tài khoản đang đăng nhập)
-* **Đặt lịch nhận bệnh**:
-  - `POST /api/v1/appointments/book` (Bệnh nhân/người nhà gửi form đặt lịch)
-  - `GET /api/v1/appointments/available-slots?date=YYYY-MM-DD` (Lấy các ca còn trống)
-  - `GET /api/v1/appointments` (Admin xem danh sách lịch hẹn)
-  - `PUT /api/v1/appointments/{id}/status` (Cập nhật trạng thái duyệt/hủy ca khám)
+* **Dịch vụ & Bác sĩ (Công khai)**:
+  - `GET /api/v1/services` (Danh sách dịch vụ y tế đang hoạt động, sắp xếp theo thứ tự)
+  - `GET /api/v1/doctors` (Danh sách bác sĩ đang hoạt động, sắp xếp theo thứ tự hiển thị)
+* **Đặt lịch & Tra cứu (Công khai - Chuẩn RESTful, bảo mật SĐT)**:
+  - `GET /api/v1/time-slots?date=YYYY-MM-DD&doctorId={tùy chọn}` (Lấy danh sách khung giờ khám khả dụng trong ngày)
+  - `POST /api/v1/appointments` (Tiếp nhận đặt lịch khám mới, trả về 201 Created kèm header Location)
+  - `GET /api/v1/appointments/{bookingCode}` (Tra cứu thông tin lịch hẹn, xác thực qua Header `X-Phone`)
+  - `PATCH /api/v1/appointments/{bookingCode}` (Hủy lịch hẹn bởi bệnh nhân, xác thực qua Header `X-Phone`)
+* **Quản trị tiếp nhận bệnh (Nội bộ/Admin)**:
+  - `GET /api/v1/admin/appointments` (Admin/Điều dưỡng xem danh sách tiếp nhận lịch hẹn)
+  - `PATCH /api/v1/admin/appointments/{id}/status` (Cập nhật trạng thái tiếp nhận/khám)
 * **Bài viết / Cẩm nang sức khỏe**:
   - `GET /api/v1/articles` (Công khai danh sách bài viết)
   - `GET /api/v1/articles/{slug}` (Xem chi tiết bài viết)
