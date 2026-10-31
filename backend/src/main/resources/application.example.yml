@@ -1,10 +1,9 @@
 # ============================================================================
 # CẤU HÌNH MẪU - PHÒNG KHÁM CHÚC TỪ BACKEND
 # ============================================================================
-# Hướng dẫn:
-# 1. Tạo bản sao của file này và đặt tên là: application.yml
-# 2. Điền thông tin mật khẩu MySQL của bạn vào biến DB_PASSWORD hoặc cấu hình trực tiếp.
-# ⚠️ File application.yml đã được chặn trong .gitignore để không bao giờ bị lộ lên GitHub.
+# 1. Sao chép file này thành: application.yml (đã bị chặn trong .gitignore)
+# 2. Đặt các biến môi trường: DB_PASSWORD, ADMIN_USERNAME, ADMIN_PASSWORD, ADMIN_PHONE
+#    (Windows PowerShell:  $env:ADMIN_PASSWORD="MatKhauManh@2026")
 # ============================================================================
 
 server:
@@ -29,15 +28,20 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: validate   # Schema do database/001_schema_v2.sql quản lý, Hibernate chỉ kiểm tra
+    show-sql: false        # Tránh log dữ liệu bệnh nhân
     properties:
       hibernate:
-        format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
 
   jackson:
     time-zone: Asia/Ho_Chi_Minh
     date-format: yyyy-MM-dd HH:mm:ss
-    serialization:
-      write-dates-as-timestamps: false
+
+# Tài khoản ADMIN đầu tiên (chỉ tạo khi hệ thống chưa có admin nào)
+app:
+  admin:
+    username: ${ADMIN_USERNAME:}
+    password: ${ADMIN_PASSWORD:}
+    phone: ${ADMIN_PHONE:}
+    full-name: ${ADMIN_FULL_NAME:Quản trị viên}
