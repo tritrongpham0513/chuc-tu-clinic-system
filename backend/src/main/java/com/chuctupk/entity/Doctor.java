@@ -25,8 +25,14 @@ public class Doctor {
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
 
+    @Column(length = 50)
+    private String title;
+
     @Column(nullable = false, length = 100)
     private String specialty;
+
+    @Column(name = "experience_years")
+    private Integer experienceYears;
 
     @Column(columnDefinition = "TEXT")
     private String bio;
@@ -36,6 +42,10 @@ public class Doctor {
 
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
+
+    @Column(name = "sort_order", nullable = false)
+    @Builder.Default
+    private Integer sortOrder = 0;
 
     @Column(name = "is_active", nullable = false)
     @Builder.Default

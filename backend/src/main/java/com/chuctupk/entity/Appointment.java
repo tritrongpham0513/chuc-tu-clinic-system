@@ -1,5 +1,6 @@
 package com.chuctupk.entity;
 
+import com.chuctupk.entity.enums.AppointmentSource;
 import com.chuctupk.entity.enums.AppointmentStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -31,6 +32,10 @@ public class Appointment {
     @JoinColumn(name = "doctor_id")
     private Doctor doctor;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "service_id")
+    private ClinicService service;
+
     @Column(name = "appointment_date", nullable = false)
     private LocalDate appointmentDate;
 
@@ -41,10 +46,28 @@ public class Appointment {
     @Column(columnDefinition = "TEXT")
     private String symptoms;
 
+    @Column(name = "booker_name", length = 100)
+    private String bookerName;
+
+    @Column(name = "booker_phone", length = 15)
+    private String bookerPhone;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private AppointmentSource source = AppointmentSource.WEB;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
     private AppointmentStatus status = AppointmentStatus.PENDING;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "confirmed_by")
+    private User confirmedBy;
+
+    @Column(name = "confirmed_at")
+    private LocalDateTime confirmedAt;
 
     @Column(name = "cancel_reason", length = 255)
     private String cancelReason;
