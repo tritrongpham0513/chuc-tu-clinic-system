@@ -23,11 +23,12 @@ desktop.ini
 *.secret
 *.pem
 *.key
-backend/src/main/resources/application.yml
+# backend/src/main/resources/application.yml (Đã an toàn, dùng biến môi trường ${VAR})
 backend/src/main/resources/application.properties
 backend/src/main/resources/application-*.yml
 backend/src/main/resources/application-*.properties
 !backend/src/main/resources/application.example.yml
+!backend/src/main/resources/application.yml
 
 # --- Frontend (Node / Vite / React) ---
 frontend/node_modules/

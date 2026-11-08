@@ -10,8 +10,13 @@ WORKDIR /app
 COPY pom.xml .
 RUN mvn dependency:go-offline -B || true
 
-# Copy source code và đóng gói file JAR
+# Copy source code
 COPY src ./src
+
+# Đảm bảo file cấu hình application.yml luôn tồn tại (nếu thiếu sẽ tự động copy từ application.example.yml)
+RUN if [ ! -f src/main/resources/application.yml ]; then cp src/main/resources/application.example.yml src/main/resources/application.yml; fi
+
+# Đóng gói file JAR
 RUN mvn clean package -DskipTests -B
 
 # -------------------------------------------------------------
@@ -36,7 +41,7 @@ USER appuser
 
 EXPOSE 8080
 
-HEALTHCHECK --interval=10s --timeout=5s --start-period=35s --retries=5 \
+HEALTHCHECK --interval=10s --timeout=5s --start-period=45s --retries=5 \
   CMD curl -f http://localhost:8080/api/v1/articles || exit 1
 
 ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-Duser.timezone=Asia/Ho_Chi_Minh", "-jar", "app.jar"]

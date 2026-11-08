@@ -209,6 +209,8 @@ CREATE TABLE `patients` (
   `address`       VARCHAR(255) DEFAULT NULL,
   `relationship`  VARCHAR(50)  DEFAULT NULL COMMENT 'Quan hệ với người đặt hộ: cha, mẹ, ông, bà...',
   `medical_history` TEXT       DEFAULT NULL COMMENT 'Tiền sử bệnh, dị ứng thuốc',
+  `is_primary`    TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '1 = hồ sơ chính chủ (không xóa được)',
+  `is_active`     TINYINT(1)   NOT NULL DEFAULT 1 COMMENT '0 = đã xóa mềm/unlink',
   `created_at`    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at`    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -216,6 +218,7 @@ CREATE TABLE `patients` (
   INDEX `idx_patient_phone` (`phone`),
   INDEX `idx_patient_name` (`full_name`),
   INDEX `idx_patient_user` (`user_id`),
+  INDEX `idx_patients_user_active` (`user_id`, `is_active`),
   CONSTRAINT `fk_patient_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`)
     ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `chk_patient_yob` CHECK (`year_of_birth` BETWEEN 1900 AND 2100)

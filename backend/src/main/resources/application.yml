@@ -1,0 +1,56 @@
+# ============================================================================
+# CẤU HÌNH MẪU - PHÒNG KHÁM CHÚC TỪ BACKEND
+# ============================================================================
+# 1. Sao chép file này thành: application.yml (đã bị chặn trong .gitignore)
+# 2. Đặt các biến môi trường: DB_PASSWORD, ADMIN_USERNAME, ADMIN_PASSWORD, ADMIN_PHONE
+#    (Windows PowerShell:  $env:ADMIN_PASSWORD="MatKhauManh@2026")
+# ============================================================================
+
+server:
+  port: ${PORT:8080}
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: chuc-tu-clinic-backend
+
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/phongkham_chuctu?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate   # Schema do database/001_schema_v2.sql quản lý, Hibernate chỉ kiểm tra
+    show-sql: false        # Tránh log dữ liệu bệnh nhân
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  jackson:
+    time-zone: Asia/Ho_Chi_Minh
+    date-format: yyyy-MM-dd HH:mm:ss
+
+# Tài khoản ADMIN đầu tiên (chỉ tạo khi hệ thống chưa có admin nào)
+app:
+  admin:
+    username: ${ADMIN_USERNAME:}
+    password: ${ADMIN_PASSWORD:}
+    phone: ${ADMIN_PHONE:}
+    full-name: ${ADMIN_FULL_NAME:Quản trị viên}
+
+  # Cấu hình Cổng gửi tin nhắn SMS OTP thật qua eSMS.vn
+  sms:
+    enabled: ${SMS_ENABLED:false}           # Đổi thành true để kích hoạt gửi SMS thật
+    provider: ${SMS_PROVIDER:esms}          # Mặc định sử dụng eSMS
+    api-key: ${SMS_API_KEY:}                # ApiKey copy từ eSMS.vn
+    secret-key: ${SMS_SECRET_KEY:}          # SecretKey copy từ eSMS.vn
+    sms-type: ${SMS_TYPE:2}                 # 2: Brandname CSKH/OTP (khuyên dùng khi có Brandname), 8: Đầu số cố định
+    brandname: ${SMS_BRAND_NAME:Baotrixemay} # Tên Brandname đã đăng ký trên eSMS (ví dụ Baotrixemay)
