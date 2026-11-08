@@ -192,18 +192,18 @@ public class AdminUserController {
         user.setFullName(req.getFullName().trim());
         user.setPhone(req.getPhone().trim());
         user.setEmail(req.getEmail() != null && !req.getEmail().isBlank() ? req.getEmail().trim() : null);
-        user = userRepository.save(user);
+        final User savedUser = userRepository.save(user);
 
         // Đồng bộ họ tên và SĐT sang bảng Doctor nếu là Bác sĩ
-        if (user.getRole() == Role.DOCTOR) {
-            doctorRepository.findByUserId(user.getId()).ifPresent(doc -> {
-                doc.setFullName(user.getFullName());
-                doc.setPhone(user.getPhone());
+        if (savedUser.getRole() == Role.DOCTOR) {
+            doctorRepository.findByUserId(savedUser.getId()).ifPresent(doc -> {
+                doc.setFullName(savedUser.getFullName());
+                doc.setPhone(savedUser.getPhone());
                 doctorRepository.save(doc);
             });
         }
 
-        return ResponseEntity.ok(ApiResponse.success(toAdminResponse(user), "Cập nhật thông tin tài khoản thành công"));
+        return ResponseEntity.ok(ApiResponse.success(toAdminResponse(savedUser), "Cập nhật thông tin tài khoản thành công"));
     }
 
     private void syncDoctorProfile(User user, String title, String specialty) {

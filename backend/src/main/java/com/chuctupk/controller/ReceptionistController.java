@@ -206,10 +206,10 @@ public class ReceptionistController {
             throw AppException.badRequest("Khung giờ khám này hiện không khả dụng.");
         }
 
-        long countInNewSlot = appointmentRepository.countByAppointmentDateAndTimeSlotIdAndStatusNotIn(
+        long countInNewSlot = appointmentRepository.countBookedSlotsTotal(
                 req.getNewDate(),
                 newSlot.getId(),
-                List.of(AppointmentStatus.CANCELLED)
+                AppointmentStatus.CANCELLED
         );
 
         if (countInNewSlot >= newSlot.getMaxPatients()) {

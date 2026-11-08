@@ -365,7 +365,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public void resetPasswordWithOtp(com.chuctupk.dto.request.ResetPasswordWithOtpRequest request) {
         String cleanPhone = cleanPhone(request.getPhone());
-        String code = request.getOtpCode().trim();
+        String code = request.getOtp().trim();
 
         OtpVerification verification = otpVerificationRepository
                 .findTopByPhoneAndOtpTypeAndIsVerifiedFalseOrderByCreatedAtDesc(cleanPhone, OtpType.FORGOT_PASSWORD)

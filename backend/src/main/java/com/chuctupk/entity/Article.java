@@ -45,7 +45,7 @@ public class Article {
     @Builder.Default
     private Boolean isPublished = false;
 
-    @Column(name = "is_pinned", nullable = false)
+    @Column(name = "is_featured", nullable = false)
     @Builder.Default
     private Boolean isPinned = false;
 

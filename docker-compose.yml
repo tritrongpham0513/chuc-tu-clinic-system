@@ -1,0 +1,113 @@
+# ============================================================================
+# DOCKER COMPOSE - HỆ THỐNG PHÒNG KHÁM CHÚC TỪ
+# ============================================================================
+# Khởi chạy toàn bộ hệ thống bằng 1 lệnh duy nhất:
+#   docker compose up --build -d
+#
+# Dừng hệ thống:
+#   docker compose down
+# ============================================================================
+
+services:
+  # --------------------------------------------------------------------------
+  # 1. Cơ sở dữ liệu MySQL 8.0
+  # --------------------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: chuctupk-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_NAME:-phongkham_chuctu}
+      MYSQL_USER: ${DB_USERNAME:-chuctu_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-chuctu_password}
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+    volumes:
+      - chuctupk_mysql_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD:-root} || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - chuctupk-network
+
+  # --------------------------------------------------------------------------
+  # 2. Backend API (Java 17 / Spring Boot 3)
+  # --------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: chuctupk-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PORT: 8080
+      DB_URL: jdbc:mysql://mysql:3306/${DB_NAME:-phongkham_chuctu}?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-MatKhauAdmin@2026}
+      ADMIN_PHONE: ${ADMIN_PHONE:-0912345678}
+      ADMIN_FULL_NAME: ${ADMIN_FULL_NAME:-Quản trị viên Phòng khám}
+      SMS_ENABLED: ${SMS_ENABLED:-false}
+      SMS_PROVIDER: ${SMS_PROVIDER:-esms}
+      SMS_API_KEY: ${SMS_API_KEY:-}
+      SMS_SECRET_KEY: ${SMS_SECRET_KEY:-}
+      SMS_TYPE: ${SMS_TYPE:-2}
+      SMS_BRAND_NAME: ${SMS_BRAND_NAME:-Baotrixemay}
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/api/v1/articles || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 35s
+    networks:
+      - chuctupk-network
+
+  # --------------------------------------------------------------------------
+  # 3. Frontend Web App (React 18 + Vite + Nginx Reverse Proxy)
+  # --------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api/v1
+    container_name: chuctupk-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost/ || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - chuctupk-network
+
+volumes:
+  chuctupk_mysql_data:
+    name: chuctupk_mysql_data
+
+networks:
+  chuctupk-network:
+    name: chuctupk-network
+    driver: bridge
