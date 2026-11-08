@@ -4,8 +4,9 @@ import { useAuth } from '../../context/AuthContext'
 import { logo } from '../../assets'
 
 export default function TiepTanLogin() {
-  const [username, setUsername] = useState('letan')
-  const [password, setPassword] = useState('MatKhauAdmin@2026')
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const { loginWithPassword, logout } = useAuth()
@@ -13,6 +14,11 @@ export default function TiepTanLogin() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!username.trim() || !password) {
+      setError('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.')
+      return
+    }
+
     setLoading(true)
     setError('')
     try {
@@ -25,121 +31,242 @@ export default function TiepTanLogin() {
       navigate('/tiep-tan')
     } catch (err) {
       console.error('Lỗi đăng nhập tiếp tân:', err)
-      setError(err.message || 'Đăng nhập không thành công. Vui lòng kiểm tra lại tài khoản hoặc mật khẩu.')
+      setError(err.message || 'Tên đăng nhập hoặc mật khẩu không chính xác.')
     } finally {
       setLoading(false)
     }
   }
 
-  const fillAccount = (u, p) => {
-    setUsername(u)
-    setPassword(p)
-    setError('')
-  }
-
   return (
-    <div style={{ minHeight: '100vh', background: '#F0F4F8', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, fontFamily: 'inherit' }}>
-      <div style={{ width: '100%', maxWidth: 460, background: '#fff', borderRadius: 24, padding: '36px 32px', boxShadow: '0 10px 40px rgba(30,58,138,0.08)', border: '2px solid #BFDBFE' }}>
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <img src={logo} alt="Chúc Từ" style={{ width: 64, height: 64, objectFit: 'contain', margin: '0 auto 12px' }} />
-          <div style={{ display: 'inline-block', background: '#DBEAFE', color: '#1E40AF', padding: '4px 14px', borderRadius: 999, fontSize: 13, fontWeight: 800, marginBottom: 8 }}>
-            💁‍♀️ CỔNG TIẾP TÂN & ĐIỀU PHỐI
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #F0F5FA 0%, #E2ECF6 100%)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '32px 16px',
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+    }}>
+      {/* Card đăng nhập chính */}
+      <div style={{
+        width: '100%',
+        maxWidth: 440,
+        background: '#FFFFFF',
+        borderRadius: 20,
+        padding: '36px 32px 28px',
+        boxShadow: '0 20px 40px -12px rgba(30, 58, 138, 0.1), 0 0 1px 1px rgba(30, 58, 138, 0.06)',
+        border: '1px solid #D1E1F3',
+        boxSizing: 'border-box'
+      }}>
+        {/* Header thương hiệu */}
+        <div style={{ textAlign: 'center', marginBottom: 26 }}>
+          <img
+            src={logo}
+            alt="Phòng Khám Chúc Từ"
+            style={{ width: 68, height: 68, objectFit: 'contain', margin: '0 auto 12px', display: 'block' }}
+          />
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            background: '#EFF6FF',
+            color: '#1D4ED8',
+            padding: '4px 12px',
+            borderRadius: 999,
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+            marginBottom: 8
+          }}>
+            <span>💁‍♀️</span> Bàn Tiếp Tân & Đón Tiếp
           </div>
-          <h1 style={{ fontFamily: "'Noto Serif', Georgia, serif", fontSize: 24, fontWeight: 700, color: '#1E3A8A', margin: 0 }}>
+          <h1 style={{
+            fontFamily: "'Noto Serif', Georgia, serif",
+            fontSize: 24,
+            fontWeight: 700,
+            color: '#1E3A8A',
+            margin: '0 0 4px',
+            letterSpacing: '-0.02em'
+          }}>
             Phòng Khám Chúc Từ
           </h1>
-          <div style={{ fontSize: 15, color: '#4B5563', marginTop: 4 }}>
-            Bàn Đón Tiếp, Điểm Danh & Cấp Số Thứ Tự (STT)
-          </div>
+          <p style={{ fontSize: 14, color: '#4B5563', margin: 0 }}>
+            Tiếp nhận người bệnh, Điểm danh & Cấp số thứ tự (STT)
+          </p>
         </div>
 
-        {/* Khối gợi ý tài khoản mẫu */}
-        <div style={{ background: '#EFF6FF', border: '1.5px solid #93C5FD', borderRadius: 14, padding: '12px 16px', marginBottom: 20 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#1E40AF', marginBottom: 4 }}>
-            🔑 TÀI KHOẢN TIẾP TÂN MẪU:
-          </div>
-          <div style={{ fontSize: 15, color: '#1F2937', lineHeight: 1.6 }}>
-            <div>Tên đăng nhập: <strong style={{ color: '#1D4ED8', fontFamily: 'monospace', fontSize: 16 }}>letan</strong></div>
-            <div>Mật khẩu: <strong style={{ color: '#1D4ED8', fontFamily: 'monospace', fontSize: 16 }}>MatKhauAdmin@2026</strong></div>
-          </div>
-          <button
-            type="button"
-            onClick={() => fillAccount('letan', 'MatKhauAdmin@2026')}
-            style={{ marginTop: 8, padding: '6px 12px', borderRadius: 8, background: '#1D4ED8', color: '#fff', border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-          >
-            ✓ Tự động điền tài khoản Tiếp tân
-          </button>
-        </div>
-
+        {/* Thông báo lỗi */}
         {error && (
-          <div style={{ background: '#FFF1F2', border: '1px solid #FECDD3', borderRadius: 12, padding: '12px 16px', color: '#991B1B', fontSize: 15, marginBottom: 20 }}>
-            ❌ {error}
+          <div style={{
+            background: '#FEF2F2',
+            border: '1px solid #FECACA',
+            borderRadius: 12,
+            padding: '12px 14px',
+            color: '#991B1B',
+            fontSize: 14,
+            lineHeight: 1.5,
+            marginBottom: 20,
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 8
+          }}>
+            <span style={{ fontSize: 16 }}>⚠️</span>
+            <span style={{ flex: 1 }}>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* Form đăng nhập */}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div>
-            <label style={{ display: 'block', fontSize: 15, fontWeight: 600, color: '#1F2937', marginBottom: 6 }}>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#1F2937', marginBottom: 6 }}>
               Tên đăng nhập
             </label>
             <input
               type="text"
               value={username}
-              onChange={e => setUsername(e.target.value)}
+              onChange={e => { setUsername(e.target.value); setError('') }}
               placeholder="Nhập tên đăng nhập tiếp tân..."
               required
+              autoFocus
               style={{
-                width: '100%', minHeight: 46, padding: '0 14px',
-                borderRadius: 12, border: '1.5px solid #BFDBFE',
-                fontSize: 16, fontFamily: 'inherit', boxSizing: 'border-box'
+                width: '100%',
+                height: 48,
+                padding: '0 14px',
+                borderRadius: 10,
+                border: '1.5px solid #BFDBFE',
+                fontSize: 15,
+                color: '#111827',
+                outline: 'none',
+                boxSizing: 'border-box',
+                transition: 'border-color 0.2s, box-shadow 0.2s'
               }}
+              onFocus={e => { e.target.style.borderColor = '#2563EB'; e.target.style.boxShadow = '0 0 0 3px rgba(37,99,235,0.12)' }}
+              onBlur={e => { e.target.style.borderColor = '#BFDBFE'; e.target.style.boxShadow = 'none' }}
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: 15, fontWeight: 600, color: '#1F2937', marginBottom: 6 }}>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#1F2937', marginBottom: 6 }}>
               Mật khẩu
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Nhập mật khẩu..."
-              required
-              style={{
-                width: '100%', minHeight: 46, padding: '0 14px',
-                borderRadius: 12, border: '1.5px solid #BFDBFE',
-                fontSize: 16, fontFamily: 'inherit', boxSizing: 'border-box'
-              }}
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={e => { setPassword(e.target.value); setError('') }}
+                placeholder="Nhập mật khẩu..."
+                required
+                style={{
+                  width: '100%',
+                  height: 48,
+                  padding: '0 44px 0 14px',
+                  borderRadius: 10,
+                  border: '1.5px solid #BFDBFE',
+                  fontSize: 15,
+                  color: '#111827',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  transition: 'border-color 0.2s, box-shadow 0.2s'
+                }}
+                onFocus={e => { e.target.style.borderColor = '#2563EB'; e.target.style.boxShadow = '0 0 0 3px rgba(37,99,235,0.12)' }}
+                onBlur={e => { e.target.style.borderColor = '#BFDBFE'; e.target.style.boxShadow = 'none' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+                title={showPassword ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'}
+                style={{
+                  position: 'absolute',
+                  right: 8,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#6B7280',
+                  padding: 8,
+                  fontSize: 16,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
             style={{
-              width: '100%', minHeight: 48, borderRadius: 12,
-              background: '#1D4ED8', color: '#fff', border: 'none',
-              fontSize: 17, fontWeight: 700, cursor: 'pointer',
-              marginTop: 6, boxShadow: '0 4px 12px rgba(29,78,216,0.25)'
+              width: '100%',
+              height: 48,
+              borderRadius: 10,
+              background: '#1D4ED8',
+              color: '#FFFFFF',
+              border: 'none',
+              fontSize: 16,
+              fontWeight: 700,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              marginTop: 4,
+              boxShadow: '0 4px 14px rgba(29, 78, 216, 0.28)',
+              transition: 'background 0.2s, transform 0.1s',
+              opacity: loading ? 0.7 : 1
             }}
+            onMouseEnter={e => { if (!loading) e.target.style.background = '#1E40AF' }}
+            onMouseLeave={e => { if (!loading) e.target.style.background = '#1D4ED8' }}
           >
             {loading ? 'Đang xác thực...' : 'Đăng nhập Bàn Tiếp tân'}
           </button>
         </form>
 
-        {/* Footer chuyển cổng */}
-        <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
-          <Link to="/bac-si/dang-nhap" style={{ color: '#047857', fontWeight: 600, textDecoration: 'none' }}>
+        {/* Chuyển hướng các cổng khác */}
+        <div style={{
+          marginTop: 26,
+          paddingTop: 18,
+          borderTop: '1px solid #E5E7EB',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          fontSize: 13,
+          color: '#6B7280'
+        }}>
+          <Link
+            to="/bac-si/dang-nhap"
+            style={{ color: '#059669', fontWeight: 600, textDecoration: 'none' }}
+          >
             👨‍⚕️ Cổng Bác sĩ →
           </Link>
-          <Link to="/admin/login" style={{ color: '#991B1B', fontWeight: 600, textDecoration: 'none' }}>
+          <Link
+            to="/admin/login"
+            style={{ color: '#5C3A21', fontWeight: 600, textDecoration: 'none' }}
+          >
             👑 Cổng Quản trị Admin →
           </Link>
         </div>
       </div>
+
+      {/* Nút về trang chủ */}
+      <div style={{ marginTop: 20, textAlign: 'center' }}>
+        <Link
+          to="/"
+          style={{
+            color: '#4B5563',
+            fontSize: 14,
+            fontWeight: 500,
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6
+          }}
+        >
+          <span>←</span> Quay lại Trang chủ phòng khám
+        </Link>
+      </div>
     </div>
   )
 }
-

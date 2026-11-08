@@ -5,8 +5,9 @@ import { logo } from '../../assets'
 
 export default function NoiBoLogin() {
   const [roleTab, setRoleTab] = useState('STAFF') // 'STAFF' | 'DOCTOR'
-  const [username, setUsername] = useState('letan')
-  const [password, setPassword] = useState('MatKhauAdmin@2026')
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const { loginWithPassword, logout } = useAuth()
@@ -15,17 +16,17 @@ export default function NoiBoLogin() {
   const switchTab = (tab) => {
     setRoleTab(tab)
     setError('')
-    if (tab === 'STAFF') {
-      setUsername('letan')
-      setPassword('MatKhauAdmin@2026')
-    } else {
-      setUsername('bacsi')
-      setPassword('MatKhauAdmin@2026')
-    }
+    setUsername('')
+    setPassword('')
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!username.trim() || !password) {
+      setError('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.')
+      return
+    }
+
     setLoading(true)
     setError('')
     try {
@@ -45,37 +46,85 @@ export default function NoiBoLogin() {
       }
     } catch (err) {
       console.error('Lỗi đăng nhập nội bộ:', err)
-      setError(err.message || 'Đăng nhập không thành công. Vui lòng kiểm tra lại tài khoản hoặc mật khẩu.')
+      setError(err.message || 'Tên đăng nhập hoặc mật khẩu không chính xác.')
     } finally {
       setLoading(false)
     }
   }
 
+  const isStaff = roleTab === 'STAFF'
+  const primaryColor = isStaff ? '#1E40AF' : '#15803D'
+  const borderColor = isStaff ? '#BFDBFE' : '#BBF7D0'
+  const focusShadow = isStaff ? 'rgba(30, 64, 175, 0.12)' : 'rgba(21, 128, 61, 0.12)'
+
   return (
-    <div style={{ minHeight: '100vh', background: '#F4F7F6', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, fontFamily: 'inherit' }}>
-      <div style={{ width: '100%', maxWidth: 480, background: '#fff', borderRadius: 24, padding: '36px 32px', boxShadow: '0 10px 40px rgba(0,0,0,0.06)', border: '2px solid #D6E0DC' }}>
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #F3F6F5 0%, #E3EBE7 100%)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '32px 16px',
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+    }}>
+      {/* Card đăng nhập */}
+      <div style={{
+        width: '100%',
+        maxWidth: 450,
+        background: '#FFFFFF',
+        borderRadius: 20,
+        padding: '36px 32px 28px',
+        boxShadow: '0 20px 40px -12px rgba(0, 0, 0, 0.08), 0 0 1px 1px rgba(0, 0, 0, 0.05)',
+        border: '1px solid #D6E0DC',
+        boxSizing: 'border-box'
+      }}>
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <img src={logo} alt="Chúc Từ" style={{ width: 64, height: 64, objectFit: 'contain', margin: '0 auto 10px' }} />
-          <h1 style={{ fontFamily: "'Noto Serif', Georgia, serif", fontSize: 24, fontWeight: 700, color: '#1B3C2D', margin: 0 }}>
+        <div style={{ textAlign: 'center', marginBottom: 22 }}>
+          <img
+            src={logo}
+            alt="Phòng Khám Chúc Từ"
+            style={{ width: 68, height: 68, objectFit: 'contain', margin: '0 auto 12px', display: 'block' }}
+          />
+          <h1 style={{
+            fontFamily: "'Noto Serif', Georgia, serif",
+            fontSize: 24,
+            fontWeight: 700,
+            color: '#1B3C2D',
+            margin: '0 0 4px',
+            letterSpacing: '-0.02em'
+          }}>
             Phòng Khám Chúc Từ
           </h1>
-          <div style={{ fontSize: 15, color: '#4B5563', marginTop: 4 }}>
-            Cổng Đăng Nhập Nhân Sự (Tiếp Tân & Bác Sĩ)
-          </div>
+          <p style={{ fontSize: 14, color: '#4B5563', margin: 0 }}>
+            Cổng Đăng Nhập Nhân Sự Nội Bộ
+          </p>
         </div>
 
         {/* Tab chọn Tiếp tân hay Bác sĩ */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: 4, background: '#EDF2F0', borderRadius: 12, marginBottom: 20 }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 6,
+          padding: 4,
+          background: '#F1F5F3',
+          borderRadius: 12,
+          marginBottom: 22
+        }}>
           <button
             type="button"
             onClick={() => switchTab('STAFF')}
             style={{
-              padding: '10px 0', borderRadius: 10, border: 'none',
-              background: roleTab === 'STAFF' ? '#1E40AF' : 'transparent',
-              color: roleTab === 'STAFF' ? '#fff' : '#374151',
-              fontSize: 15, fontWeight: 700, cursor: 'pointer',
-              boxShadow: roleTab === 'STAFF' ? '0 2px 8px rgba(30,64,175,0.2)' : 'none'
+              padding: '10px 0',
+              borderRadius: 8,
+              border: 'none',
+              background: isStaff ? '#1E40AF' : 'transparent',
+              color: isStaff ? '#FFFFFF' : '#4B5563',
+              fontSize: 14,
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: isStaff ? '0 2px 6px rgba(30,64,175,0.25)' : 'none'
             }}
           >
             💁‍♀️ Bàn Tiếp Tân
@@ -84,99 +133,181 @@ export default function NoiBoLogin() {
             type="button"
             onClick={() => switchTab('DOCTOR')}
             style={{
-              padding: '10px 0', borderRadius: 10, border: 'none',
-              background: roleTab === 'DOCTOR' ? '#15803D' : 'transparent',
-              color: roleTab === 'DOCTOR' ? '#fff' : '#374151',
-              fontSize: 15, fontWeight: 700, cursor: 'pointer',
-              boxShadow: roleTab === 'DOCTOR' ? '0 2px 8px rgba(21,128,61,0.2)' : 'none'
+              padding: '10px 0',
+              borderRadius: 8,
+              border: 'none',
+              background: !isStaff ? '#15803D' : 'transparent',
+              color: !isStaff ? '#FFFFFF' : '#4B5563',
+              fontSize: 14,
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: !isStaff ? '0 2px 6px rgba(21,128,61,0.25)' : 'none'
             }}
           >
             👨‍⚕️ Bác Sĩ YHCT
           </button>
         </div>
 
-        {/* Khối gợi ý tài khoản */}
-        <div style={{
-          background: roleTab === 'STAFF' ? '#EFF6FF' : '#F0FDF4',
-          border: `1.5px solid ${roleTab === 'STAFF' ? '#93C5FD' : '#86EFAC'}`,
-          borderRadius: 14, padding: '12px 16px', marginBottom: 20
-        }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: roleTab === 'STAFF' ? '#1E40AF' : '#14532D', marginBottom: 4 }}>
-            🔑 TÀI KHOẢN MẪU:
-          </div>
-          <div style={{ fontSize: 15, color: '#1F2937', lineHeight: 1.6 }}>
-            <div>Tên đăng nhập: <strong style={{ color: roleTab === 'STAFF' ? '#1D4ED8' : '#15803D', fontFamily: 'monospace', fontSize: 16 }}>{username}</strong></div>
-            <div>Mật khẩu: <strong style={{ color: roleTab === 'STAFF' ? '#1D4ED8' : '#15803D', fontFamily: 'monospace', fontSize: 16 }}>MatKhauAdmin@2026</strong></div>
-          </div>
-        </div>
-
+        {/* Thông báo lỗi */}
         {error && (
-          <div style={{ background: '#FFF1F2', border: '1px solid #FECDD3', borderRadius: 12, padding: '12px 16px', color: '#991B1B', fontSize: 15, marginBottom: 20 }}>
-            ❌ {error}
+          <div style={{
+            background: '#FEF2F2',
+            border: '1px solid #FECACA',
+            borderRadius: 12,
+            padding: '12px 14px',
+            color: '#991B1B',
+            fontSize: 14,
+            lineHeight: 1.5,
+            marginBottom: 20,
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 8
+          }}>
+            <span style={{ fontSize: 16 }}>⚠️</span>
+            <span style={{ flex: 1 }}>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* Form đăng nhập */}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div>
-            <label style={{ display: 'block', fontSize: 15, fontWeight: 600, color: '#1F2937', marginBottom: 6 }}>
-              Tên đăng nhập
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#1F2937', marginBottom: 6 }}>
+              Tên đăng nhập {isStaff ? 'tiếp tân' : 'bác sĩ'}
             </label>
             <input
               type="text"
               value={username}
-              onChange={e => setUsername(e.target.value)}
-              placeholder="Nhập tên đăng nhập..."
+              onChange={e => { setUsername(e.target.value); setError('') }}
+              placeholder={isStaff ? 'Nhập tên đăng nhập tiếp tân...' : 'Nhập tên đăng nhập bác sĩ...'}
               required
+              autoFocus
               style={{
-                width: '100%', minHeight: 46, padding: '0 14px',
-                borderRadius: 12, border: '1.5px solid #CBD5E1',
-                fontSize: 16, fontFamily: 'inherit', boxSizing: 'border-box'
+                width: '100%',
+                height: 48,
+                padding: '0 14px',
+                borderRadius: 10,
+                border: `1.5px solid ${borderColor}`,
+                fontSize: 15,
+                color: '#111827',
+                outline: 'none',
+                boxSizing: 'border-box',
+                transition: 'border-color 0.2s, box-shadow 0.2s'
               }}
+              onFocus={e => { e.target.style.borderColor = primaryColor; e.target.style.boxShadow = `0 0 0 3px ${focusShadow}` }}
+              onBlur={e => { e.target.style.borderColor = borderColor; e.target.style.boxShadow = 'none' }}
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: 15, fontWeight: 600, color: '#1F2937', marginBottom: 6 }}>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#1F2937', marginBottom: 6 }}>
               Mật khẩu
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Nhập mật khẩu..."
-              required
-              style={{
-                width: '100%', minHeight: 46, padding: '0 14px',
-                borderRadius: 12, border: '1.5px solid #CBD5E1',
-                fontSize: 16, fontFamily: 'inherit', boxSizing: 'border-box'
-              }}
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={e => { setPassword(e.target.value); setError('') }}
+                placeholder="Nhập mật khẩu..."
+                required
+                style={{
+                  width: '100%',
+                  height: 48,
+                  padding: '0 44px 0 14px',
+                  borderRadius: 10,
+                  border: `1.5px solid ${borderColor}`,
+                  fontSize: 15,
+                  color: '#111827',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  transition: 'border-color 0.2s, box-shadow 0.2s'
+                }}
+                onFocus={e => { e.target.style.borderColor = primaryColor; e.target.style.boxShadow = `0 0 0 3px ${focusShadow}` }}
+                onBlur={e => { e.target.style.borderColor = borderColor; e.target.style.boxShadow = 'none' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+                title={showPassword ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'}
+                style={{
+                  position: 'absolute',
+                  right: 8,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#6B7280',
+                  padding: 8,
+                  fontSize: 16,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
             style={{
-              width: '100%', minHeight: 48, borderRadius: 12,
-              background: roleTab === 'STAFF' ? '#1E40AF' : '#15803D',
-              color: '#fff', border: 'none', fontSize: 17, fontWeight: 700,
-              cursor: 'pointer', marginTop: 6,
-              boxShadow: roleTab === 'STAFF' ? '0 4px 12px rgba(30,64,175,0.25)' : '0 4px 12px rgba(21,128,61,0.25)'
+              width: '100%',
+              height: 48,
+              borderRadius: 10,
+              background: primaryColor,
+              color: '#FFFFFF',
+              border: 'none',
+              fontSize: 16,
+              fontWeight: 700,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              marginTop: 4,
+              boxShadow: `0 4px 14px ${focusShadow}`,
+              transition: 'background 0.2s, transform 0.1s',
+              opacity: loading ? 0.7 : 1
             }}
           >
-            {loading ? 'Đang xác thực...' : `Đăng nhập ${roleTab === 'STAFF' ? 'Bàn Tiếp Tân' : 'Bác Sĩ YHCT'}`}
+            {loading ? 'Đang xác thực...' : `Đăng nhập ${isStaff ? 'Bàn Tiếp Tân' : 'Bàn Bác Sĩ'}`}
           </button>
         </form>
 
-        {/* Footer chuyển Admin */}
-        <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #E5E7EB', textAlign: 'center', fontSize: 14 }}>
-          <span style={{ color: '#6B7280' }}>Bạn là Quản trị viên phòng khám? </span>
-          <Link to="/admin/login" style={{ color: '#991B1B', fontWeight: 700, textDecoration: 'none' }}>
-            Đăng nhập Quản trị Admin →
+        {/* Link chuyển Admin */}
+        <div style={{
+          marginTop: 26,
+          paddingTop: 18,
+          borderTop: '1px solid #E5E7EB',
+          textAlign: 'center',
+          fontSize: 13
+        }}>
+          <Link
+            to="/admin/login"
+            style={{ color: '#5C3A21', fontWeight: 600, textDecoration: 'none' }}
+          >
+            👑 Dành cho Quản trị viên Admin →
           </Link>
         </div>
+      </div>
+
+      {/* Nút về trang chủ */}
+      <div style={{ marginTop: 20, textAlign: 'center' }}>
+        <Link
+          to="/"
+          style={{
+            color: '#4B5563',
+            fontSize: 14,
+            fontWeight: 500,
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6
+          }}
+        >
+          <span>←</span> Quay lại Trang chủ phòng khám
+        </Link>
       </div>
     </div>
   )
 }
-

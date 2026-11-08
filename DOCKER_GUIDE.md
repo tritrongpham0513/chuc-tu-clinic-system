@@ -27,7 +27,7 @@ Container sẽ tự động tải các image cần thiết, biên dịch Backend
 | **Giao diện Người dùng & Admin** | [http://localhost:3000](http://localhost:3000) | Trang chủ đặt lịch, Cổng Admin, Bàn Bác sĩ, Bàn Lễ tân |
 | **Backend REST API** | [http://localhost:8080](http://localhost:8080) | Cổng API Spring Boot phục vụ trực tiếp |
 | **Tài liệu Swagger / OpenAPI** | [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html) | Kiểm thử trực tiếp 20+ endpoint API |
-| **MySQL Database** | `localhost:3306` | User: `root` \| Password: `root` \| DB: `phongkham_chuctu` |
+| **MySQL Database** | `localhost:3307` | User: `root` \| Password: `root` \| DB: `phongkham_chuctu` (tránh trùng cổng 3306 máy thật) |
 
 ---
 
