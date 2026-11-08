@@ -82,24 +82,80 @@ Hệ thống hỗ trợ 4 vai trò rõ ràng:
 
 ## 5. HƯỚNG DẪN KHỞI CHẠY (QUICK START)
 
-### Bước 1: Khởi tạo Cơ sở Dữ liệu MySQL
-Mở MySQL Workbench hoặc MySQL CLI:
+### CÁCH 1: KHỞI CHẠY SIÊU TỐC BẰNG DOCKER (KHUYÊN DÙNG - 1 LỆNH DUY NHẤT)
+
+> **Yêu cầu**: Máy tính đã cài đặt **Docker Desktop**. Bạn không cần cài thêm Java, Maven, Node.js hay MySQL.
+
+1. **Clone mã nguồn và chuyển sang nhánh tính năng:**
+   ```bash
+   git clone https://github.com/tritrongpham0513/chuc-tu-clinic-system.git
+   cd chuc-tu-clinic-system
+   git checkout feat/clinic-management-system
+   ```
+
+2. **Chạy 1 lệnh duy nhất để khởi động toàn bộ hệ thống:**
+   ```bash
+   docker compose up --build -d
+   ```
+   *(Hệ thống sẽ tự động build Backend, Frontend, dựng Database MySQL, nạp 21 bảng và 3 tài khoản mẫu)*
+
+3. **Mở trình duyệt truy cập:**
+   - **Giao diện Website & Quản trị**: [http://localhost:3000](http://localhost:3000)
+   - **Tài liệu API Swagger**: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+
+---
+
+### CÁCH 2: KHỞI CHẠY THỦ CÔNG TỪNG PHẦN (LOCAL DEVELOPMENT)
+
+> **Yêu cầu**: Đã cài đặt Java 17+, MySQL 8.0+, Node.js 18+.
+
+#### Bước 1: Khởi tạo Cơ sở Dữ liệu MySQL
+Mở MySQL Workbench hoặc Terminal và chạy lần lượt 3 file script:
 ```bash
-mysql -u root -p < database/001_schema.sql
+mysql -u root -p < database/001_schema_v2.sql
+mysql -u root -p < database/002_add_patient_fields.sql
+mysql -u root -p < database/seed_staff_and_doctor.sql
 ```
 
+#### Bước 2: Thiết lập file môi trường (.env)
+Sao chép file mẫu thành file `.env` tại thư mục gốc:
+```bash
+# Windows PowerShell:
+Copy-Item .env.example .env
 
-### Bước 2: Khởi chạy Backend (Spring Boot)
+# Linux / macOS:
+cp .env.example .env
+```
+Mở file `.env` và điền mật khẩu MySQL của máy bạn (`DB_PASSWORD=...`).
+
+#### Bước 3: Khởi chạy Backend (Spring Boot)
 ```bash
 cd backend
-mvn clean spring-boot:run
+# Windows:
+.\mvnw.cmd spring-boot:run
+
+# Linux / macOS:
+./mvnw spring-boot:run
 ```
 *API sẵn sàng tại:* `http://localhost:8080/api/v1`
 
-### Bước 3: Khởi chạy Frontend (React + Vite)
+#### Bước 4: Khởi chạy Frontend (React + Vite)
+Mở cửa sổ Terminal mới:
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 *Giao diện sẵn sàng tại:* `http://localhost:5173`
+
+---
+
+## 6. DANH SÁCH TÀI KHOẢN MẪU CÓ SẴN (TESTING ACCOUNTS)
+
+Hệ thống đã chuẩn bị sẵn 3 tài khoản để bạn có thể đăng nhập kiểm thử ngay:
+
+| Vai trò | Tên đăng nhập | Mật khẩu mặc định | Đường dẫn đăng nhập |
+| :--- | :--- | :--- | :--- |
+| **Quản trị viên (ADMIN)** | `admin` | `MatKhauAdmin@2026` | `/admin/login` |
+| **Tiếp tân / Điều dưỡng (STAFF)** | `letan` | `MatKhauAdmin@2026` | `/staff/login` |
+| **Bác sĩ YHCT (DOCTOR)** | `bacsi` | `MatKhauAdmin@2026` | `/doctor/login` |
