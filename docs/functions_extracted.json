@@ -1,0 +1,622 @@
+[
+  {
+    "module_num": 1,
+    "module_name": "Tài khoản người dùng",
+    "release": 1,
+    "id": "F.1.1",
+    "feature": "Đăng ký tài khoản người dùng",
+    "priority": "Cao",
+    "description": "Người dùng mới nhập họ tên, số điện thoại, ngày sinh, giới tính, địa chỉ và xác nhận bằng mã 6 số gửi qua tin nhắn (Firebase Phone Auth); không cần mật khẩu. Hệ thống tạo luôn hồ sơ chính chủ.",
+    "actor": "Người dùng"
+  },
+  {
+    "module_num": 1,
+    "module_name": "Tài khoản người dùng",
+    "release": 1,
+    "id": "F.1.2",
+    "feature": "Đăng nhập tài khoản người dùng",
+    "priority": "Cao",
+    "description": "Đăng nhập bằng số điện thoại; trên thiết bị mới phải xác nhận lại bằng mã 6 số (có tuỳ chọn giữ đăng nhập).",
+    "actor": "Người dùng"
+  },
+  {
+    "module_num": 1,
+    "module_name": "Tài khoản người dùng",
+    "release": 1,
+    "id": "F.1.3",
+    "feature": "Đăng xuất tài khoản người dùng",
+    "priority": "Cao",
+    "description": "Người dùng đăng xuất khỏi tài khoản hiện tại.",
+    "actor": "Người dùng"
+  },
+  {
+    "module_num": 1,
+    "module_name": "Tài khoản người dùng",
+    "release": 1,
+    "id": "F.1.4",
+    "feature": "Xem thông tin tài khoản",
+    "priority": "Trung Bình",
+    "description": "Xem thông tin tài khoản cá nhân và mã bệnh nhân liên kết.",
+    "actor": "Người dùng"
+  },
+  {
+    "module_num": 1,
+    "module_name": "Tài khoản người dùng",
+    "release": 1,
+    "id": "F.1.5",
+    "feature": "Cập nhật thông tin tài khoản",
+    "priority": "Trung Bình",
+    "description": "Cập nhật họ tên, ngày sinh, giới tính, địa chỉ; số điện thoại là tên đăng nhập nên không tự sửa.",
+    "actor": "Người dùng"
+  },
+  {
+    "module_num": 1,
+    "module_name": "Tài khoản người dùng",
+    "release": 1,
+    "id": "F.1.6",
+    "feature": "Xem danh sách và chi tiết hồ sơ khám",
+    "priority": "Cao",
+    "description": "Xem danh sách hồ sơ khám của bản thân và người thân (tối đa 10 hồ sơ) và chi tiết từng hồ sơ.",
+    "actor": "Người dùng"
+  },
+  {
+    "module_num": 1,
+    "module_name": "Tài khoản người dùng",
+    "release": 1,
+    "id": "F.1.7",
+    "feature": "Thêm và sửa hồ sơ khám",
+    "priority": "Cao",
+    "description": "Thêm hoặc sửa hồ sơ khám cho bản thân và người thân (họ tên, số điện thoại, ngày sinh, giới tính, quan hệ, địa chỉ).",
+    "actor": "Người dùng"
+  },
+  {
+    "module_num": 1,
+    "module_name": "Tài khoản người dùng",
+    "release": 1,
+    "id": "F.1.8",
+    "feature": "Xoá hồ sơ khám",
+    "priority": "Trung Bình",
+    "description": "Xoá hồ sơ khám khỏi danh sách của tài khoản (hồ sơ chính chủ không xoá được; hồ sơ đã có lịch sử khám chỉ được tách khỏi tài khoản).",
+    "actor": "Người dùng"
+  },
+  {
+    "module_num": 2,
+    "module_name": "Tài khoản quản trị viên",
+    "release": 1,
+    "id": "F.2.1",
+    "feature": "Đăng nhập tài khoản quản trị viên",
+    "priority": "Cao",
+    "description": "Admin đăng nhập bằng số điện thoại hoặc email và mật khẩu tại khu nội bộ, được chuyển đến trang tổng quan quản trị.",
+    "actor": "Admin"
+  },
+  {
+    "module_num": 2,
+    "module_name": "Tài khoản quản trị viên",
+    "release": 1,
+    "id": "F.2.2",
+    "feature": "Đăng xuất tài khoản quản trị viên",
+    "priority": "Cao",
+    "description": "Admin đăng xuất khỏi hệ thống quản trị.",
+    "actor": "Admin"
+  },
+  {
+    "module_num": 2,
+    "module_name": "Tài khoản quản trị viên",
+    "release": 1,
+    "id": "F.2.3",
+    "feature": "Xem tổng quan trong ngày",
+    "priority": "Trung Bình",
+    "description": "Xem số phiếu khám hôm nay, số hồ sơ bệnh nhân, bài viết, tài khoản, sơ đồ ghế theo khung giờ và bài viết bản nháp.",
+    "actor": "Admin"
+  },
+  {
+    "module_num": 3,
+    "module_name": "Tài khoản tiếp tân",
+    "release": 1,
+    "id": "F.3.1",
+    "feature": "Đăng nhập tài khoản tiếp tân",
+    "priority": "Cao",
+    "description": "Tiếp tân đăng nhập bằng số điện thoại hoặc email và mật khẩu.",
+    "actor": "Tiếp tân"
+  },
+  {
+    "module_num": 3,
+    "module_name": "Tài khoản tiếp tân",
+    "release": 1,
+    "id": "F.3.2",
+    "feature": "Đăng xuất tài khoản tiếp tân",
+    "priority": "Cao",
+    "description": "Tiếp tân đăng xuất khỏi hệ thống quản lý.",
+    "actor": "Tiếp tân"
+  },
+  {
+    "module_num": 3,
+    "module_name": "Tài khoản tiếp tân",
+    "release": 1,
+    "id": "F.3.3",
+    "feature": "Quên và đặt lại mật khẩu",
+    "priority": "Trung Bình",
+    "description": "Tài khoản nội bộ nhập email, nhận mã 6 số qua email, nhập mã và mật khẩu mới (3 bước).",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 3,
+    "module_name": "Tài khoản tiếp tân",
+    "release": 1,
+    "id": "F.3.4",
+    "feature": "Đổi mật khẩu",
+    "priority": "Trung Bình",
+    "description": "Đổi mật khẩu khi biết mật khẩu hiện tại; tài khoản dùng mật khẩu tạm bắt buộc đổi trước khi làm việc.",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 3,
+    "module_name": "Tài khoản tiếp tân",
+    "release": 1,
+    "id": "F.3.5",
+    "feature": "Cập nhật họ tên và email nội bộ",
+    "priority": "Thấp",
+    "description": "Sửa họ tên và đổi email (xác nhận bằng mã gửi tới email mới).",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 4,
+    "module_name": "Xem bài viết",
+    "release": 1,
+    "id": "F.4.1",
+    "feature": "Xem danh sách bài viết",
+    "priority": "Cao",
+    "description": "Người dùng xem danh sách các bài viết được công khai trên website; bài được ghim hiển thị nổi bật đầu danh sách.",
+    "actor": "Người dùng"
+  },
+  {
+    "module_num": 4,
+    "module_name": "Xem bài viết",
+    "release": 1,
+    "id": "F.4.2",
+    "feature": "Xem chi tiết bài viết",
+    "priority": "Cao",
+    "description": "Người dùng xem nội dung chi tiết của một bài viết.",
+    "actor": "Người dùng"
+  },
+  {
+    "module_num": 4,
+    "module_name": "Xem bài viết",
+    "release": 1,
+    "id": "F.4.3",
+    "feature": "Xem trang thông tin phòng khám",
+    "priority": "Trung Bình",
+    "description": "Xem các trang Giới thiệu, Dịch vụ, Hướng dẫn đặt lịch và Liên hệ.",
+    "actor": "Người dùng"
+  },
+  {
+    "module_num": 5,
+    "module_name": "Quản lý bài viết",
+    "release": 1,
+    "id": "F.5.1",
+    "feature": "Tạo bài viết",
+    "priority": "Cao",
+    "description": "Tạo bài viết mới bằng trình soạn thảo (nhập từ Word, tải ảnh lên) gồm tiêu đề, chuyên mục, ảnh thu nhỏ, tác giả, thời gian và nội dung; lưu bản nháp, xem thử trước khi đăng.",
+    "actor": "Admin"
+  },
+  {
+    "module_num": 5,
+    "module_name": "Quản lý bài viết",
+    "release": 1,
+    "id": "F.5.2",
+    "feature": "Sửa bài viết",
+    "priority": "Cao",
+    "description": "Admin chỉnh sửa nội dung của bài viết trong hệ thống, kể cả bốn trang thông tin cố định.",
+    "actor": "Admin"
+  },
+  {
+    "module_num": 5,
+    "module_name": "Quản lý bài viết",
+    "release": 1,
+    "id": "F.5.3",
+    "feature": "Xóa bài viết",
+    "priority": "Cao",
+    "description": "Admin xóa bài viết theo quyền quản trị (không xóa được bốn trang thông tin cố định).",
+    "actor": "Admin"
+  },
+  {
+    "module_num": 5,
+    "module_name": "Quản lý bài viết",
+    "release": 1,
+    "id": "F.5.4",
+    "feature": "Xem danh sách bài viết quản lý",
+    "priority": "Cao",
+    "description": "Admin xem danh sách các bài viết trong trang quản trị, lọc theo trạng thái và chuyên mục.",
+    "actor": "Admin"
+  },
+  {
+    "module_num": 5,
+    "module_name": "Quản lý bài viết",
+    "release": 1,
+    "id": "F.5.5",
+    "feature": "Xem chi tiết bài viết quản lý",
+    "priority": "Cao",
+    "description": "Admin xem thông tin chi tiết của bài viết trong trang quản trị.",
+    "actor": "Admin"
+  },
+  {
+    "module_num": 5,
+    "module_name": "Quản lý bài viết",
+    "release": 1,
+    "id": "F.5.6",
+    "feature": "Ghim / bỏ ghim bài viết",
+    "priority": "Thấp",
+    "description": "Admin ghim một bài đã đăng lên đầu danh sách tin tức; mỗi lúc chỉ có một bài được ghim.",
+    "actor": "Admin"
+  },
+  {
+    "module_num": 6,
+    "module_name": "Đặt lịch khám",
+    "release": 1,
+    "id": "F.6.1",
+    "feature": "Chọn thông tin khám",
+    "priority": "Cao",
+    "description": "Người dùng đã đăng nhập chọn nội dung khám, ngày khám (từ hôm nay đến 30 ngày tới) và khung giờ dự kiến; khung đủ 6 phiếu hoặc đã bắt đầu không chọn được.",
+    "actor": "Người dùng"
+  },
+  {
+    "module_num": 6,
+    "module_name": "Đặt lịch khám",
+    "release": 1,
+    "id": "F.6.2",
+    "feature": "Chọn hồ sơ người khám",
+    "priority": "Cao",
+    "description": "Chọn hồ sơ có sẵn hoặc tạo hồ sơ mới cho bản thân hoặc người thân; đặt cho người thân phải khai quan hệ.",
+    "actor": "Người dùng"
+  },
+  {
+    "module_num": 6,
+    "module_name": "Đặt lịch khám",
+    "release": 1,
+    "id": "F.6.3",
+    "feature": "Xác nhận và đặt lịch khám",
+    "priority": "Cao",
+    "description": "Xem lại thông tin rồi đặt lịch; hệ thống giữ chỗ khung giờ và cấp ngay phiếu khám, không cần Tiếp tân duyệt.",
+    "actor": "Người dùng"
+  },
+  {
+    "module_num": 6,
+    "module_name": "Đặt lịch khám",
+    "release": 1,
+    "id": "F.6.4",
+    "feature": "Xem danh sách phiếu khám của tôi",
+    "priority": "Cao",
+    "description": "Xem các phiếu khám của mình và người thân, lọc theo trạng thái.",
+    "actor": "Người dùng"
+  },
+  {
+    "module_num": 6,
+    "module_name": "Đặt lịch khám",
+    "release": 1,
+    "id": "F.6.5",
+    "feature": "Xem chi tiết phiếu khám",
+    "priority": "Cao",
+    "description": "Xem phiếu khám gồm mã phiếu khám, giờ khám dự kiến, người đi khám, nội dung khám và trạng thái.",
+    "actor": "Người dùng"
+  },
+  {
+    "module_num": 6,
+    "module_name": "Đặt lịch khám",
+    "release": 1,
+    "id": "F.6.6",
+    "feature": "Huỷ phiếu khám",
+    "priority": "Cao",
+    "description": "Người dùng huỷ phiếu chưa được tiếp nhận (chưa check-in), có thể ghi lý do; phiếu đã huỷ không còn giá trị. Phiếu đã check-in do Tiếp tân huỷ.",
+    "actor": "Người dùng"
+  },
+  {
+    "module_num": 6,
+    "module_name": "Đặt lịch khám",
+    "release": 1,
+    "id": "F.6.7",
+    "feature": "Đặt lại phiếu khám đã huỷ",
+    "priority": "Trung Bình",
+    "description": "Từ phiếu đã huỷ, người dùng chọn Đặt lại để đặt một buổi khám mới.",
+    "actor": "Người dùng"
+  },
+  {
+    "module_num": 6,
+    "module_name": "Đặt lịch khám",
+    "release": 1,
+    "id": "F.6.8",
+    "feature": "Xem kết quả khám",
+    "priority": "Cao",
+    "description": "Xem phiếu kết quả khám thuộc hồ sơ của mình sau khi phòng khám xác nhận.",
+    "actor": "Người dùng"
+  },
+  {
+    "module_num": 6,
+    "module_name": "Đặt lịch khám",
+    "release": 1,
+    "id": "F.6.9",
+    "feature": "Xem lịch sử khám/điều trị",
+    "priority": "Cao",
+    "description": "Xem các lượt khám trước của mình và người thân.",
+    "actor": "Người dùng"
+  },
+  {
+    "module_num": 7,
+    "module_name": "Quản lý lịch khám",
+    "release": 1,
+    "id": "F.7.1",
+    "feature": "Xem lịch khám trong ngày",
+    "priority": "Cao",
+    "description": "Xem phiếu khám theo ngày, lọc theo trạng thái (Chưa đến, Đã check-in, Đã vào khám, Đã hoàn thành, Đã huỷ).",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 7,
+    "module_name": "Quản lý lịch khám",
+    "release": 1,
+    "id": "F.7.2",
+    "feature": "Tra cứu phiếu khám",
+    "priority": "Cao",
+    "description": "Tra cứu phiếu bằng mã phiếu khám hoặc tên bệnh nhân.",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 7,
+    "module_name": "Quản lý lịch khám",
+    "release": 1,
+    "id": "F.7.3",
+    "feature": "Tiếp nhận / Check-in bệnh nhân",
+    "priority": "Cao",
+    "description": "Xác nhận bệnh nhân đã đến (trong giờ nhận bệnh 8:00–16:30), ghi nhận thời điểm tiếp nhận và xếp vào hàng đợi.",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 7,
+    "module_name": "Quản lý lịch khám",
+    "release": 1,
+    "id": "F.7.4",
+    "feature": "Hoàn tác check-in",
+    "priority": "Trung Bình",
+    "description": "Đưa phiếu về trạng thái Chưa đến khi check-in nhầm người.",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 7,
+    "module_name": "Quản lý lịch khám",
+    "release": 1,
+    "id": "F.7.5",
+    "feature": "Đặt hộ lịch khám tại quầy",
+    "priority": "Cao",
+    "description": "Tìm hoặc tạo hồ sơ cho bệnh nhân đến trực tiếp rồi đặt lịch khám (từ hôm nay đến 7 ngày tới) và có thể check-in ngay nếu khám trong ngày.",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 7,
+    "module_name": "Quản lý lịch khám",
+    "release": 1,
+    "id": "F.7.6",
+    "feature": "Đổi giờ khám",
+    "priority": "Trung Bình",
+    "description": "Đổi ngày và khung giờ của phiếu; tính như đặt mới vào khung mới và không được trùng ngày với phiếu khác của bệnh nhân.",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 7,
+    "module_name": "Quản lý lịch khám",
+    "release": 1,
+    "id": "F.7.7",
+    "feature": "Huỷ phiếu khám tại quầy",
+    "priority": "Trung Bình",
+    "description": "Huỷ phiếu theo lý do (bệnh nhân xin huỷ, không đến được, đặt nhầm, khác).",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 8,
+    "module_name": "Quản lý tài khoản",
+    "release": 1,
+    "id": "F.8.1",
+    "feature": "Xem danh sách tài khoản",
+    "priority": "Cao",
+    "description": "Admin xem, tìm theo tên hoặc số điện thoại, lọc theo vai trò và phân trang danh sách tài khoản.",
+    "actor": "Admin"
+  },
+  {
+    "module_num": 8,
+    "module_name": "Quản lý tài khoản",
+    "release": 1,
+    "id": "F.8.2",
+    "feature": "Thêm tài khoản",
+    "priority": "Trung Bình",
+    "description": "Admin tạo tài khoản với họ tên, số điện thoại, email, vai trò và mật khẩu tạm.",
+    "actor": "Admin"
+  },
+  {
+    "module_num": 8,
+    "module_name": "Quản lý tài khoản",
+    "release": 1,
+    "id": "F.8.3",
+    "feature": "Sửa thông tin tài khoản",
+    "priority": "Trung Bình",
+    "description": "Admin cập nhật thông tin tài khoản.",
+    "actor": "Admin"
+  },
+  {
+    "module_num": 8,
+    "module_name": "Quản lý tài khoản",
+    "release": 1,
+    "id": "F.8.4",
+    "feature": "Khóa / mở khóa tài khoản",
+    "priority": "Cao",
+    "description": "Admin khóa tài khoản để ngừng quyền truy cập (phiếu đã đặt giữ nguyên) và mở khóa lại khi phù hợp.",
+    "actor": "Admin"
+  },
+  {
+    "module_num": 8,
+    "module_name": "Quản lý tài khoản",
+    "release": 1,
+    "id": "F.8.5",
+    "feature": "Phân quyền người dùng",
+    "priority": "Cao",
+    "description": "Admin thay đổi vai trò (Người dùng, Tiếp tân, Quản trị viên) của tài khoản.",
+    "actor": "Admin"
+  },
+  {
+    "module_num": 9,
+    "module_name": "Quản lý bệnh nhân & hồ sơ bệnh án",
+    "release": 1,
+    "id": "F.9.1",
+    "feature": "Xem danh sách bệnh nhân",
+    "priority": "Cao",
+    "description": "Tiếp tân hoặc Admin xem danh sách bệnh nhân.",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 9,
+    "module_name": "Quản lý bệnh nhân & hồ sơ bệnh án",
+    "release": 1,
+    "id": "F.9.2",
+    "feature": "Tìm kiếm bệnh nhân",
+    "priority": "Cao",
+    "description": "Tìm hồ sơ theo họ tên, số điện thoại hoặc mã bệnh nhân.",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 9,
+    "module_name": "Quản lý bệnh nhân & hồ sơ bệnh án",
+    "release": 1,
+    "id": "F.9.3",
+    "feature": "Xem hồ sơ bệnh nhân",
+    "priority": "Cao",
+    "description": "Xem chi tiết hồ sơ bệnh nhân và lịch sử khám.",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 9,
+    "module_name": "Quản lý bệnh nhân & hồ sơ bệnh án",
+    "release": 1,
+    "id": "F.9.4",
+    "feature": "Thêm hồ sơ bệnh nhân",
+    "priority": "Cao",
+    "description": "Thêm hồ sơ bệnh nhân mới (kiểm tra trùng số điện thoại, tự sinh mã bệnh nhân).",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 9,
+    "module_name": "Quản lý bệnh nhân & hồ sơ bệnh án",
+    "release": 1,
+    "id": "F.9.5",
+    "feature": "Cập nhật thông tin bệnh nhân",
+    "priority": "Cao",
+    "description": "Cập nhật thông tin hồ sơ bệnh nhân.",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 9,
+    "module_name": "Quản lý bệnh nhân & hồ sơ bệnh án",
+    "release": 1,
+    "id": "F.9.6",
+    "feature": "Khoá / mở khoá hồ sơ bệnh nhân",
+    "priority": "Trung Bình",
+    "description": "Admin khoá hồ sơ để không chọn được khi đặt lịch, không ghi nhận lượt khám mới; lịch sử vẫn xem được.",
+    "actor": "Admin"
+  },
+  {
+    "module_num": 9,
+    "module_name": "Quản lý bệnh nhân & hồ sơ bệnh án",
+    "release": 1,
+    "id": "F.9.7",
+    "feature": "Ghi nhận lượt khám (lập phiếu kết quả)",
+    "priority": "Cao",
+    "description": "Ghi nhận chẩn đoán, mạch, huyết áp, ghi chú điều trị (châm cứu, bấm huyệt, khác), tiền sử bệnh, hẹn tái khám và bác sĩ điều trị.",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 9,
+    "module_name": "Quản lý bệnh nhân & hồ sơ bệnh án",
+    "release": 1,
+    "id": "F.9.8",
+    "feature": "Xem lịch sử khám/điều trị",
+    "priority": "Cao",
+    "description": "Xem lịch sử khám và điều trị của bệnh nhân.",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 9,
+    "module_name": "Quản lý bệnh nhân & hồ sơ bệnh án",
+    "release": 1,
+    "id": "F.9.9",
+    "feature": "Sửa phiếu kết quả khám",
+    "priority": "Cao",
+    "description": "Cập nhật phiếu kết quả đã được phòng khám xác nhận (trong 24 giờ sau khi lập); hệ thống ghi nhận lịch sử sửa.",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 10,
+    "module_name": "Hàng đợi khám",
+    "release": 1,
+    "id": "F.10.1",
+    "feature": "Xem hàng đợi khám",
+    "priority": "Cao",
+    "description": "Xem người đang trong phòng khám (tối đa 5 ghế) và hàng chờ theo nhóm Ưu tiên / Thường, giờ check-in, thời gian đã chờ.",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 10,
+    "module_name": "Hàng đợi khám",
+    "release": 1,
+    "id": "F.10.2",
+    "feature": "Mời bệnh nhân vào khám",
+    "priority": "Cao",
+    "description": "Mời người đầu hàng chờ vào ghế trống; ghi nhận giờ vào khám.",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 10,
+    "module_name": "Hàng đợi khám",
+    "release": 1,
+    "id": "F.10.3",
+    "feature": "Hoàn tác vào khám",
+    "priority": "Trung Bình",
+    "description": "Đưa người đã vào khám trở lại hàng chờ đúng vị trí theo giờ check-in.",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 10,
+    "module_name": "Hàng đợi khám",
+    "release": 1,
+    "id": "F.10.4",
+    "feature": "Hoàn tất lượt khám",
+    "priority": "Cao",
+    "description": "Lưu phiếu kết quả để chuyển phiếu sang Đã hoàn thành, rời hàng đợi và mời người kế tiếp.",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 10,
+    "module_name": "Hàng đợi khám",
+    "release": 1,
+    "id": "F.10.5",
+    "feature": "Xem hàng đợi thu gọn và sơ đồ khung giờ",
+    "priority": "Trung Bình",
+    "description": "Xem nhanh số người trong phòng, đang chờ và sơ đồ ghế theo khung giờ hôm nay.",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 10,
+    "module_name": "Hàng đợi khám",
+    "release": 1,
+    "id": "F.10.6",
+    "feature": "Bật / tắt tự động mời người kế tiếp",
+    "priority": "Trung Bình",
+    "description": "Bật hoặc tắt chế độ hệ thống tự mời người đầu hàng chờ vào khi có ghế trống.",
+    "actor": "Tiếp tân / Admin"
+  },
+  {
+    "module_num": 10,
+    "module_name": "Hàng đợi khám",
+    "release": 1,
+    "id": "F.10.7",
+    "feature": "Màn hình hàng đợi ở phòng chờ",
+    "priority": "Thấp",
+    "description": "Trang chỉ xem, tự làm mới mỗi 5 giây và phát chuông khi có người được mời vào, dùng để chiếu lên TV phòng chờ.",
+    "actor": "Tiếp tân / Admin"
+  }
+]

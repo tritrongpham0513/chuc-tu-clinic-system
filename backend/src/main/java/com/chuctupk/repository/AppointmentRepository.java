@@ -16,6 +16,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     Optional<Appointment> findByBookingCode(String bookingCode);
 
+    long countByAppointmentDate(LocalDate appointmentDate);
+
     boolean existsByBookingCode(String bookingCode);
 
     List<Appointment> findByAppointmentDateOrderByTimeSlotStartTimeAsc(LocalDate appointmentDate);
@@ -48,4 +50,15 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             @Param("timeSlotId") Long timeSlotId,
             @Param("excludeStatus") AppointmentStatus excludeStatus
     );
+
+    // --- Module 1: Patient Profile Management ---
+    boolean existsByPatientId(Long patientId);
+    List<Appointment> findByPatient_UserIdOrderByAppointmentDateDesc(Long userId);
+    List<Appointment> findByPatient_UserIdAndStatusNotOrderByAppointmentDateDesc(Long userId, AppointmentStatus status);
+
+    // --- Module 6: Booking (JWT auth) ---
+    List<Appointment> findByPatient_UserIdOrderByAppointmentDateDescCreatedAtDesc(Long userId);
+
+    @Query("SELECT a FROM Appointment a WHERE a.patient.user.id = :userId AND a.status IN :statuses ORDER BY a.appointmentDate DESC, a.createdAt DESC")
+    List<Appointment> findByUserIdAndStatuses(@Param("userId") Long userId, @Param("statuses") List<AppointmentStatus> statuses);
 }

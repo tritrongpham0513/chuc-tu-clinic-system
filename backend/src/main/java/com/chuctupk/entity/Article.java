@@ -45,6 +45,10 @@ public class Article {
     @Builder.Default
     private Boolean isPublished = false;
 
+    @Column(name = "is_pinned", nullable = false)
+    @Builder.Default
+    private Boolean isPinned = false;
+
     @Column(name = "published_at")
     private LocalDateTime publishedAt;
 

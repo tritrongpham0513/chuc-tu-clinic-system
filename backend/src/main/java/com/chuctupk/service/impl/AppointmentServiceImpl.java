@@ -315,7 +315,8 @@ public class AppointmentServiceImpl implements AppointmentService {
      * phục vụ sinh mã hệ thống. Mọi API / CMS quản trị cấu hình phòng khám sau này PHẢI LOẠI TRỪ
      * (filter out / ẩn) các khóa này để tránh người dùng hay nhân viên chỉnh sửa sai lệch.
      */
-    String generateNextPatientCode() {
+    @Override
+    public String generateNextPatientCode() {
         return generateNextPatientCode(LocalDate.now(clock).getYear());
     }
 

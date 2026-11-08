@@ -17,8 +17,9 @@ desktop.ini
 
 # --- Environment Variables & Secrets ---
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+!.env.*.example
 *.secret
 *.pem
 *.key

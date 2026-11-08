@@ -1,7 +1,8 @@
 package com.chuctupk.entity.enums;
 
 public enum Role {
-    ADMIN, // Toàn quyền quản trị hệ thống
-    DOCTOR, // Bác sĩ — xem lịch khám trong ngày
-    STAFF // Lễ tân — tiếp nhận, xác nhận lịch hẹn
+    ADMIN,    // Toàn quyền quản trị hệ thống
+    DOCTOR,   // Bác sĩ — xem lịch khám trong ngày
+    STAFF,    // Lễ tân — tiếp nhận, xác nhận lịch hẹn
+    PATIENT   // Bệnh nhân — xem hồ sơ, lịch hẹn cá nhân
 }

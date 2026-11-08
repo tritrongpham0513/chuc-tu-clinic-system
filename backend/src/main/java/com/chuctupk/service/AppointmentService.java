@@ -8,5 +8,6 @@ public interface AppointmentService {
     AppointmentResponse createAppointment(AppointmentCreateRequest request);
     AppointmentResponse getAppointmentByBookingCode(String bookingCode, String xPhone);
     AppointmentResponse cancelAppointment(String bookingCode, String xPhone, AppointmentCancelRequest request);
+    String generateNextPatientCode();
 }
 

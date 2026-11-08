@@ -14,4 +14,11 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
     List<Patient> findByPhone(String phone);
     List<Patient> findByUserId(Long userId);
     long countByPatientCodeStartingWith(String prefix);
+
+    // --- Module 1: Patient Profile Management ---
+    List<Patient> findByUserIdAndIsActiveTrue(Long userId);
+    Optional<Patient> findByUserIdAndIsPrimaryTrue(Long userId);
+    long countByUserIdAndIsActiveTrue(Long userId);
+    boolean existsByIdAndIsPrimaryTrue(Long id);
+    Optional<Patient> findByIdAndUserId(Long id, Long userId);
 }

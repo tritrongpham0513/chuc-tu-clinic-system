@@ -1,0 +1,210 @@
+/* Phòng khám Chúc Từ — CSS dùng chung (gộp từ phần <helmet> của các trang thiết kế) */
+
+body { margin: 0; background: #FBF6EC; font-family: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif; color: #4A3F33; }
+* { box-sizing: border-box; }
+a { color: #2E5B37; }
+a:hover { color: #1F4327; }
+.nav-a { white-space: nowrap; }
+.nav-a:hover { background: #F4EADB; color: #2E5B37; text-decoration: underline; }
+.btn-primary:hover { background: #2E5B37; }
+.btn-ghost:hover { background: #E4EFE2; }
+.btn-gold:hover { background: #F7EBD2; }
+.card-link:hover { text-decoration: underline; }
+.soft-card { transition: box-shadow 180ms ease; }
+.soft-card:hover { box-shadow: 0 12px 32px rgba(42, 33, 24, 0.14); }
+a:focus-visible, button:focus-visible { outline: 3px solid #8A6012; outline-offset: 2px; }
+.clinic-hours {
+  position: static;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 16px auto 0;
+  padding: 12px 20px 12px 14px;
+  background: #FFFCF6;
+  border: 1px solid #E0D3BC;
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(42, 33, 24, 0.14);
+}
+.clinic-hours-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  background: #F7EBD2;
+  border: 1px solid #EAD6AE;
+  border-radius: 50%;
+}
+.clinic-hours-copy { display: flex; flex-direction: column; gap: 2px; }
+.clinic-hours-label { color: #6B5E4E; font-size: 13px; font-weight: 600; letter-spacing: 0.03em; }
+.clinic-hours-time { color: #2A2118; font-size: 21px; font-weight: 700; line-height: 1.3; white-space: nowrap; }
+input:hover { border-color: #6B5E4E; }
+input::placeholder { color: #6B5E4E; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid #8A6012; outline-offset: 2px; }
+/* Khung ô nhập: khi bấm vào, viền xanh đậm kèm quầng sáng mềm (thay vòng vàng) */
+input:not([type="checkbox"]):not([type="radio"]):not(.sdt-in), select, textarea { transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+input:not([type="checkbox"]):not([type="radio"]):not(.sdt-in):focus, input:not([type="checkbox"]):not([type="radio"]):not(.sdt-in):focus-visible, select:focus, select:focus-visible, textarea:focus, textarea:focus-visible {
+  outline: none !important;
+  border-color: #3B7145 !important;
+  box-shadow: 0 0 0 4px rgba(59, 113, 69, 0.22) !important;
+}
+input[aria-invalid="true"]:not(.sdt-in):focus, input[aria-invalid="true"]:not(.sdt-in):focus-visible, select[aria-invalid="true"]:focus, textarea[aria-invalid="true"]:focus {
+  border-color: #90372A !important;
+  box-shadow: 0 0 0 4px rgba(144, 55, 42, 0.18) !important;
+}
+input[readonly]:not(.sdt-in):focus { border-color: #8C7B5E !important; box-shadow: 0 0 0 4px rgba(140, 123, 94, 0.2) !important; }
+/* Ô số điện thoại: tiền tố +84 cố định, nhập 9 đến 10 số */
+.sdt-wrap {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  background: #FFFFFF;
+  border: 2px solid #8C7B5E;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.sdt-wrap:hover { border-color: #6B5E4E; }
+.sdt-wrap:focus-within { border-color: #3B7145; box-shadow: 0 0 0 4px rgba(59, 113, 69, 0.22); }
+.sdt-pre {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0 14px 0 16px;
+  background: #F4EADB;
+  border-right: 2px solid #D5C7AC;
+  font-weight: 700;
+  color: #2A2118;
+  white-space: nowrap;
+  user-select: none;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.sdt-wrap:focus-within .sdt-pre { background: #E4EFE2; border-right-color: #3B7145; color: #2E5B37; }
+.sdt-in {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  padding: 0 16px;
+  background: transparent;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  font-family: inherit;
+  color: #2A2118;
+}
+.sdt-in::placeholder { color: #6B5E4E; }
+.sdt-wrap:has(.sdt-in[aria-invalid="true"]) { border-color: #90372A; background: #FFF8F6; }
+.sdt-wrap:has(.sdt-in[aria-invalid="true"]) .sdt-pre { border-right-color: #90372A; }
+.sdt-wrap:has(.sdt-in[aria-invalid="true"]):focus-within { box-shadow: 0 0 0 4px rgba(144, 55, 42, 0.18); }
+.sdt-wrap:has(.sdt-in[aria-invalid="true"]):focus-within .sdt-pre { background: #F6E0DC; color: #90372A; }
+.sdt-wrap.sdt-ro { background: #F4EADB; border-color: #B0A083; }
+.sdt-wrap.sdt-ro .sdt-pre { background: #EADFC9; border-right-color: #B0A083; color: #4A3F33; }
+.sdt-wrap.sdt-ro .sdt-in { color: #4A3F33; }
+input:hover, select:hover, textarea:hover { border-color: #6B5E4E; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid #8A6012;
+  outline-offset: 2px;
+}
+.user-btn:hover { background: #F4EADB; }
+.user-menu .menu-list { display: none; }
+.user-menu:hover .menu-list, .user-menu:focus-within .menu-list { display: flex; }
+.user-menu:hover .user-btn, .user-menu:focus-within .user-btn { background: #E4EFE2; }
+.menu-item:hover { background: #F4EADB; text-decoration: underline; }
+
+/* RESP-v1 */
+@media (max-width: 900px) {
+[style*="grid-template-columns: 200px minmax(0, 1fr) 160px 190px"],
+[style*="grid-template-columns: 200px minmax(0px, 1fr) 160px 190px"],
+[style*="grid-template-columns: minmax(0, 1fr) 170px 210px"],
+[style*="grid-template-columns: minmax(0px, 1fr) 170px 210px"],
+[style*="grid-template-columns: 200px minmax(0, 1fr) 150px 170px 190px"],
+[style*="grid-template-columns: 200px minmax(0px, 1fr) 150px 170px 190px"],
+[style*="grid-template-columns: 170px minmax(0, 2fr) minmax(0, 1.5fr)"],
+[style*="grid-template-columns: 170px minmax(0px, 2fr) minmax(0px, 1.5fr)"],
+[style*="grid-template-columns: minmax(250px, 1fr) 152px"],
+[style*="grid-template-columns: minmax(150px, 1.4fr) minmax(120px, 0.9fr)"],
+[style*="grid-template-columns: 220px minmax(0, 1.4fr) 120px"],
+[style*="grid-template-columns: 220px minmax(0px, 1.4fr) 120px"] { min-width: 760px; }
+:has(> [style*="grid-template-columns: 200px minmax(0, 1fr) 160px 190px"]),
+:has(> [style*="grid-template-columns: 200px minmax(0px, 1fr) 160px 190px"]),
+:has(> [style*="grid-template-columns: minmax(0, 1fr) 170px 210px"]),
+:has(> [style*="grid-template-columns: minmax(0px, 1fr) 170px 210px"]),
+:has(> [style*="grid-template-columns: 200px minmax(0, 1fr) 150px 170px 190px"]),
+:has(> [style*="grid-template-columns: 200px minmax(0px, 1fr) 150px 170px 190px"]),
+:has(> [style*="grid-template-columns: 170px minmax(0, 2fr) minmax(0, 1.5fr)"]),
+:has(> [style*="grid-template-columns: 170px minmax(0px, 2fr) minmax(0px, 1.5fr)"]),
+:has(> [style*="grid-template-columns: minmax(250px, 1fr) 152px"]),
+:has(> [style*="grid-template-columns: minmax(150px, 1.4fr) minmax(120px, 0.9fr)"]),
+:has(> [style*="grid-template-columns: 220px minmax(0, 1.4fr) 120px"]),
+:has(> [style*="grid-template-columns: 220px minmax(0px, 1.4fr) 120px"]) { overflow-x: auto !important; }
+[style*="grid-template-columns: repeat(4, minmax(0, 1fr))"],
+[style*="grid-template-columns: repeat(4, minmax(0px, 1fr))"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+[style*="grid-template-columns: repeat(5, minmax(0, 1fr))"],
+[style*="grid-template-columns: repeat(5, minmax(0px, 1fr))"] { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+}
+.m-t { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+.m-burger { display: none; }
+.m-burger .ic-x { display: none; }
+.m-t:focus-visible ~ * .m-burger { outline: 3px solid #C9963F; outline-offset: 2px; }
+@media (max-width: 1100px) {
+.m-burger.pub { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 16px; border: 2px solid #8C7B5E; border-radius: 12px; font-size: 17px; font-weight: 600; color: #2E5B37; background: #FFFCF6; cursor: pointer; order: 1; margin-left: auto; user-select: none; }
+.m-t:checked ~ * .m-burger.pub { background: #E4EFE2; }
+.m-t:checked ~ * .m-burger .ic-o { display: none; }
+.m-t:checked ~ * .m-burger .ic-x { display: inline; }
+header nav[aria-label="Điều hướng chính"] { display: none !important; }
+.m-t:checked ~ header nav[aria-label="Điều hướng chính"],
+.m-t:checked ~ * header nav[aria-label="Điều hướng chính"] { display: flex !important; flex-direction: column; align-items: stretch !important; flex: 1 1 100% !important; order: 2; margin: 0 !important; overflow: visible !important; padding: 8px; gap: 2px !important; background: #FFFCF6; border: 1px solid #E0D3BC; border-radius: 16px; }
+.m-t:checked ~ header nav[aria-label="Điều hướng chính"] > a,
+.m-t:checked ~ * header nav[aria-label="Điều hướng chính"] > a { display: flex; align-items: center; min-height: 48px; padding: 0 14px !important; }
+.m-burger.pub ~ div { order: 3; flex: 1 1 100% !important; margin-left: 0 !important; }
+.m-burger.pub ~ div > a { flex: 1; justify-content: center; }
+.m-burger.pub ~ .user-menu > .user-btn { width: 100%; justify-content: center; }
+}
+@media (max-width: 920px) {
+.m-burger.dk { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 16px; border: 2px solid #FFFFFF; border-radius: 12px; font-size: 16px; font-weight: 600; color: #FFFFFF; background: transparent; cursor: pointer; order: 1; margin-left: auto; user-select: none; }
+.m-t:checked ~ * .m-burger.dk { background: rgba(255, 255, 255, 0.18); }
+.m-burger.dk ~ div { order: 3; flex: 1 1 100% !important; margin-left: 0 !important; justify-content: space-between; }
+div:has(> nav[aria-label^="Chức năng"]) { display: contents !important; }
+nav[aria-label^="Chức năng"] { display: none !important; order: -1; }
+.m-t:checked ~ * nav[aria-label^="Chức năng"] { display: flex !important; flex: 1 1 100% !important; flex-direction: column !important; }
+[data-sc-name="HangDoiMini"], dc-import[name="HangDoiMini"] { order: 9; flex: 1 1 100%; }
+}
+@media (max-width: 600px) {
+.m-topbar { display: none !important; }
+header a[aria-label^="Về trang chủ"] > span > span:last-child { display: none; }
+.m-burger.dk .m-lbl { display: none; }
+.m-burger.dk { padding: 0 12px; }
+span:has(+ .m-burger.dk) > svg { display: none; }
+span:has(+ .m-burger.dk) { margin-left: 0 !important; }
+}
+@media (max-width: 600px) {
+[style*="grid-template-columns: 190px minmax(0, 1fr)"],
+[style*="grid-template-columns: 190px minmax(0px, 1fr)"],
+[style*="grid-template-columns: 150px minmax(0, 1fr)"],
+[style*="grid-template-columns: 150px minmax(0px, 1fr)"] { grid-template-columns: minmax(0, 1fr) !important; gap: 2px !important; }
+[style*="grid-template-columns: repeat(4, minmax(0, 1fr))"],
+[style*="grid-template-columns: repeat(4, minmax(0px, 1fr))"],
+[style*="grid-template-columns: repeat(3, minmax(0, 1fr))"],
+[style*="grid-template-columns: repeat(3, minmax(0px, 1fr))"],
+[style*="grid-template-columns: repeat(2, minmax(0, 1fr))"],
+[style*="grid-template-columns: repeat(2, minmax(0px, 1fr))"] { grid-template-columns: minmax(0, 1fr) !important; }
+li > a[style*="white-space: nowrap"] { white-space: normal !important; }
+[style*="font-size: 48px"] { font-size: 32px !important; line-height: 42px !important; }
+[style*="font-size: 38px"] { font-size: 28px !important; line-height: 38px !important; }
+[style*="font-size: 44px"] { font-size: 32px !important; line-height: 42px !important; }
+[style*="font-size: 42px"] { font-size: 30px !important; line-height: 40px !important; }
+[style*="font-size: 34px"] { font-size: 28px !important; line-height: 38px !important; }
+[style*="font-size: 40px"] { font-size: 30px !important; line-height: 40px !important; }
+}
+/* /RESP-v1 */
+
+/* React: để khung trang (min-height: 100%) kéo dài hết màn hình, footer luôn nằm cuối */
+html, body, #root { height: 100%; }
+@media (max-width: 600px) {
+  .clinic-hours { gap: 10px; padding: 10px 14px 10px 10px; }
+  .clinic-hours-icon { width: 40px; height: 40px; }
+  .clinic-hours-time { font-size: 19px; }
+}

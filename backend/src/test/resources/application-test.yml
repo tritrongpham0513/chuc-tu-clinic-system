@@ -30,4 +30,6 @@ app:
     password: ${ADMIN_PASSWORD:test_password_123}
     phone: ${ADMIN_PHONE:0987654321}
     full-name: Quản trị viên Test
+  sms:
+    enabled: false
 

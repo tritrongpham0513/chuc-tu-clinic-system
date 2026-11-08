@@ -37,7 +37,7 @@ CREATE TABLE `users` (
   `full_name`     VARCHAR(100) NOT NULL,
   `email`         VARCHAR(100) DEFAULT NULL,
   `phone`         VARCHAR(15)  NOT NULL,
-  `role`          ENUM('ADMIN','DOCTOR','STAFF') NOT NULL DEFAULT 'STAFF' COMMENT 'ADMIN: Quản trị, DOCTOR: Bác sĩ, STAFF: Lễ tân/nhân viên',
+  `role`          ENUM('ADMIN','DOCTOR','STAFF','PATIENT') NOT NULL DEFAULT 'PATIENT' COMMENT 'ADMIN: Quản trị, DOCTOR: Bác sĩ, STAFF: Lễ tân/nhân viên, PATIENT: Bệnh nhân',
   `is_active`     TINYINT(1)   NOT NULL DEFAULT 1 COMMENT '0 = khóa tài khoản',
   `must_change_password` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '1 = bắt buộc đổi mật khẩu ở lần đăng nhập tới',
   `failed_login_count` INT     NOT NULL DEFAULT 0 COMMENT 'Số lần đăng nhập sai liên tiếp',
@@ -68,6 +68,19 @@ CREATE TABLE `refresh_tokens` (
   CONSTRAINT `fk_refresh_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`)
     ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB COMMENT='Refresh token JWT (đăng xuất / thu hồi phiên)';
+
+CREATE TABLE `otp_verifications` (
+  `id`            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `phone`         VARCHAR(15)  NOT NULL COMMENT 'Số điện thoại nhận OTP',
+  `otp_code`      VARCHAR(10)  NOT NULL COMMENT 'Mã OTP (thường 6 số)',
+  `otp_type`      ENUM('REGISTER','LOGIN','FORGOT_PASSWORD') NOT NULL DEFAULT 'REGISTER',
+  `expires_at`    DATETIME     NOT NULL COMMENT 'Thời hạn hết hạn (thường 5 phút)',
+  `is_verified`   TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '1 = đã xác thực thành công',
+  `attempt_count` INT          NOT NULL DEFAULT 0 COMMENT 'Số lần nhập sai',
+  `created_at`    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  INDEX `idx_otp_phone_type` (`phone`, `otp_type`, `is_verified`)
+) ENGINE=InnoDB COMMENT='Bảng lưu mã OTP gửi qua SMS';
 
 -- ============================================================================
 -- NHÓM 2: THÔNG TIN PHÒNG KHÁM
