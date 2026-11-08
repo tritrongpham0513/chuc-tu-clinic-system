@@ -101,7 +101,7 @@ Hệ thống hỗ trợ 4 vai trò rõ ràng:
 
 3. **Mở trình duyệt truy cập:**
    - **Giao diện Website & Quản trị**: [http://localhost:3000](http://localhost:3000)
-   - **Tài liệu API Swagger**: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+   - **Tài liệu API Swagger**: [http://localhost:8088/swagger-ui.html](http://localhost:8088/swagger-ui.html)
 
 ---
 
