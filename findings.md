@@ -23,3 +23,4 @@
 4. **Bảo mật và Thông tin nhạy cảm**:
    - Mọi mật khẩu và API key trong Docker Compose đều có fallback mặc định cho môi trường Dev.
    - File cấu hình thực tế sử dụng `.env` hoặc file `.env.docker` (đã nằm trong `.gitignore`).
+

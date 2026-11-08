@@ -38,3 +38,4 @@ FROM `users` WHERE `username` = 'bacsi'
 ON DUPLICATE KEY UPDATE 
   `full_name` = VALUES(`full_name`),
   `is_active` = 1;
+
