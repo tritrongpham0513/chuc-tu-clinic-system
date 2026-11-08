@@ -23,16 +23,12 @@ RUN npm run build
 # Stage 2: Nginx Web Server phục vụ static files & Proxy API
 # -------------------------------------------------------------
 FROM nginx:alpine
-WORKDIR /usr/share/nginx/html
 
-# Xóa cấu hình mặc định
-RUN rm -rf /etc/nginx/conf.d/*
-
-# Copy file cấu hình Nginx tùy chỉnh
+# Thay thế cấu hình Nginx mặc định bằng cấu hình SPA và Reverse Proxy API
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy bản build tĩnh từ stage builder
-COPY --from=builder /app/dist .
+# Copy bản build tĩnh từ stage builder vào thư mục web root
+COPY --from=builder /app/dist /usr/share/nginx/html
 
 EXPOSE 80
 
@@ -40,4 +36,3 @@ HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
   CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]
-
