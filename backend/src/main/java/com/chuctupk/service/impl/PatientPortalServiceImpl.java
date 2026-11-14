@@ -23,6 +23,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -43,6 +44,7 @@ public class PatientPortalServiceImpl implements PatientPortalService {
     private final MedicalRecordRepository medicalRecordRepository;
     private final TimeSlotRepository timeSlotRepository;
     private final SequenceGeneratorService sequenceGeneratorService;
+    private final Clock clock;
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     // =========================================================================
@@ -102,7 +104,7 @@ public class PatientPortalServiceImpl implements PatientPortalService {
             if (request.getAddress() != null) {
                 primary.setAddress(request.getAddress().trim());
             }
-            primary.setInfoUpdatedAt(LocalDateTime.now());
+            primary.setInfoUpdatedAt(LocalDateTime.now(clock));
             primary = patientRepository.save(primary);
         }
 
@@ -159,7 +161,7 @@ public class PatientPortalServiceImpl implements PatientPortalService {
                 .medicalHistory(request.getMedicalHistory() != null ? request.getMedicalHistory().trim() : "")
                 .isPrimary(false)
                 .isActive(true)
-                .infoUpdatedAt(LocalDateTime.now())
+                .infoUpdatedAt(LocalDateTime.now(clock))
                 .build();
 
         Patient saved = patientRepository.save(p);
@@ -223,7 +225,7 @@ public class PatientPortalServiceImpl implements PatientPortalService {
         if (request.getMedicalHistory() != null) {
             p.setMedicalHistory(request.getMedicalHistory().trim());
         }
-        p.setInfoUpdatedAt(LocalDateTime.now());
+        p.setInfoUpdatedAt(LocalDateTime.now(clock));
         Patient saved = patientRepository.save(p);
 
         Map<String, Object> res = new LinkedHashMap<>();
@@ -275,12 +277,12 @@ public class PatientPortalServiceImpl implements PatientPortalService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getAvailability(LocalDate queryDate) {
-        LocalDate date = queryDate != null ? queryDate : LocalDate.now();
+        LocalDate date = queryDate != null ? queryDate : LocalDate.now(clock);
         List<TimeSlot> slots = timeSlotRepository.findByIsActiveTrueOrderBySortOrderAsc();
 
         List<SlotAvailabilityDto> slotDtos = new ArrayList<>();
-        LocalDate today = LocalDate.now();
-        LocalTime nowTime = LocalTime.now();
+        LocalDate today = LocalDate.now(clock);
+        LocalTime nowTime = LocalTime.now(clock);
 
         for (TimeSlot slot : slots) {
             long booked = appointmentSeatRepository.countByAppointmentDateAndTimeSlotId(date, slot.getId());
@@ -345,12 +347,14 @@ public class PatientPortalServiceImpl implements PatientPortalService {
                     "Hồ sơ người bệnh này đang bị khóa hoặc ngưng hoạt động");
         }
 
-        // 3. Kiểm tra ngày hẹn
+        // 3. Kiểm tra ngày hẹn (chuẩn múi giờ Việt Nam)
+        LocalDate today = LocalDate.now(clock);
+        LocalTime nowTime = LocalTime.now(clock);
         LocalDate slotDate = LocalDate.parse(request.getSlotDate());
-        if (slotDate.isBefore(LocalDate.now())) {
+        if (slotDate.isBefore(today)) {
             throw new AppException(ErrorCode.BAD_REQUEST, "Không thể đặt lịch cho ngày trong quá khứ");
         }
-        if (slotDate.isAfter(LocalDate.now().plusDays(30))) {
+        if (slotDate.isAfter(today.plusDays(30))) {
             throw new AppException(ErrorCode.BAD_REQUEST, "Chỉ được phép đặt lịch trước tối đa 30 ngày");
         }
 
@@ -369,6 +373,11 @@ public class PatientPortalServiceImpl implements PatientPortalService {
                 .filter(s -> s.getStartTime().toString().startsWith(reqStart))
                 .findFirst()
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Không tìm thấy khung giờ khám " + reqStart));
+
+        // 5.1. Chặn đặt khung giờ đã trôi qua trong ngày hôm nay
+        if (slotDate.isEqual(today) && chosenSlot.getEndTime() != null && chosenSlot.getEndTime().isBefore(nowTime)) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Khung giờ này đã trôi qua. Cô chú vui lòng chọn khung giờ khác nhé");
+        }
 
         // 6. Cấp ghế đồng thời an toàn (appointment_seats <= 6)
         int maxRetries = 6;
@@ -536,7 +545,7 @@ public class PatientPortalServiceImpl implements PatientPortalService {
         }
 
         a.setStatus(AppointmentStatus.CANCELLED);
-        a.setCancelledAt(LocalDateTime.now());
+        a.setCancelledAt(LocalDateTime.now(clock));
         a.setCancelReason(reason != null && !reason.isBlank() ? reason.trim() : "Bệnh nhân chủ động hủy trên trang web");
         Appointment saved = appointmentRepository.save(a);
 

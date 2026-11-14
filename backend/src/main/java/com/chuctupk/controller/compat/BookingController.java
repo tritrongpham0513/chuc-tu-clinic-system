@@ -1,4 +1,4 @@
-package com.chuctupk.controller;
+package com.chuctupk.controller.compat;
 
 import com.chuctupk.dto.request.AppointmentCancelByPatientRequest;
 import com.chuctupk.dto.request.BookingRequest;
@@ -17,6 +17,7 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
 
+@Deprecated
 @RestController
 @RequestMapping("/api/v1/booking")
 @RequiredArgsConstructor
@@ -101,3 +102,4 @@ public class BookingController {
         return ResponseEntity.ok(ApiResponse.success(response, "Hủy phiếu khám thành công"));
     }
 }
+

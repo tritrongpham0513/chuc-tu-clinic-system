@@ -1,32 +1,40 @@
-# Kế hoạch Đóng gói Docker Hệ thống Phòng Khám Chúc Từ
+# Kế hoạch Sửa Lỗi & Tinh Chỉnh Hệ Thống (Implementation Plan)
 
 ## Mục tiêu
-Đóng gói toàn bộ hệ thống gồm MySQL 8.0, Backend (Spring Boot 3 / Java 17), và Frontend (React Vite + Nginx) thành môi trường container hóa chuẩn chỉ cần 1 lệnh duy nhất (`docker compose up --build -d`) là có thể khởi chạy hoàn chỉnh.
+Sửa toàn bộ các lỗi đã phát hiện trong quá trình kiểm tra, hoàn thiện logic đặt lịch, bảo mật cookie, đồng bộ Docker và tinh chỉnh kiến trúc hệ thống Phòng Khám Chúc Từ.
 
 ---
 
-## Các Giai Đoạn Thực Hiện
+## Các Hạng Mục Thực Hiện
 
-### Giai đoạn 1: Chuẩn bị Cấu hình Môi trường & Cơ sở Dữ liệu Docker
-- [x] Tạo `docker-compose.yml` với cấu hình 3 services: `mysql`, `backend`, `frontend` + volume & network.
-- [x] Thiết lập thư mục script khởi tạo database tự động (`docker/mysql/init/`) chạy khi container MySQL tạo mới lần đầu.
-- [x] Tạo file biến môi trường Docker mẫu `.env.docker.example` và cấu hình fallback mặc định trong `docker-compose.yml`.
+### Bước 1: Sửa Logic Đặt Lịch Khám & Chuẩn Hóa Múi Giờ
+- [x] Cập nhật `PatientPortalServiceImpl.java`:
+  - Inject Bean `Clock clock` (múi giờ `Asia/Ho_Chi_Minh`), thay thế toàn bộ `LocalDate.now()` / `LocalTime.now()`.
+  - Bổ sung kiểm tra chặt chẽ: Chặn đặt lịch vào khung giờ đã trôi qua trong ngày hôm nay (`slotDate.equals(today) && chosenSlot.getEndTime().isBefore(nowTime)`).
+  - Rà soát đồng bộ với `StaffServiceImpl.java` (kiểm tra khung giờ đã qua khi tạo phiếu tại quầy không check-in ngay).
 
-### Giai đoạn 2: Đóng gói Backend (Java Spring Boot)
-- [x] Tạo `backend/Dockerfile` multi-stage:
-  - Stage 1: Maven build (`maven:3.9-eclipse-temurin-17-alpine`) để compile mã nguồn thành file JAR (cache dependency hiệu quả).
-  - Stage 2: Runtime JRE (`eclipse-temurin:17-jre-alpine`) siêu nhẹ, an toàn, non-root user.
-- [x] Tạo `backend/.dockerignore` loại bỏ `.git`, `target/`, `.env`, logs...
+### Bước 2: Bảo Mật Cookie & Loại Bỏ Cookie Không HttpOnly
+- [x] Cập nhật `CookieHelper.java`:
+  - Thiết lập `httpOnly(true)` cho mọi cookie (`ct_session` và `ct_token`) để ngăn ngừa triệt để nguy cơ lộ token qua tấn công XSS.
 
-### Giai đoạn 3: Đóng gói Frontend (React Vite + Nginx)
-- [x] Tạo `frontend/Dockerfile` multi-stage:
-  - Stage 1: Node.js build (`node:20-alpine`) chạy `npm run build`.
-  - Stage 2: Web server Nginx (`nginx:alpine`) phục vụ static files và cấu hình proxy `/api/` trỏ về backend service.
-- [x] Tạo `frontend/nginx.conf` với cấu hình SPA routing (`try_files $uri /index.html;`), gzip compression, và proxy API.
-- [x] Tạo `frontend/.dockerignore` loại bỏ `node_modules/`, `dist/`, `.env`, `.git`.
+### Bước 3: Tinh Chỉnh Tạo Tài Khoản Người Bệnh Phía Admin
+- [x] Cập nhật `AdminCreateAccountRequest.java`: Bổ sung `birthYear` (Integer) và `gender` (String), duy trì constructor cũ để tương thích 100% với các bài test.
+- [x] Cập nhật `AdminServiceImpl.java`: Tiếp nhận năm sinh và giới tính người dùng truyền vào, loại bỏ hardcode 1970.
 
-### Giai đoạn 4: Kiểm tra Cú pháp, Đồng bộ & Hướng dẫn Sử dụng
-- [x] Kiểm tra cú pháp `docker-compose.yml` (`docker-compose config`).
-- [x] Tạo file hướng dẫn chạy nhanh `DOCKER_GUIDE.md` (tiếng Việt, 1 click / 1 command).
-- [x] Cập nhật file trí nhớ `findings.md`, `progress.md`.
-- [x] Đẩy commit lên nhánh `feat/clinic-management-system`.
+### Bước 4: Đồng Bộ Cấu Hình Docker, Môi Trường & Seed Data
+- [x] Cập nhật `docker-compose.yml`: Đồng bộ biến `VITE_API_URL` khớp với `frontend/Dockerfile` và `api.js`.
+- [x] Thêm file `docker/mysql/init/08-seed-articles.sql` (từ `database/seed_articles.sql`) để cơ sở dữ liệu Docker khi khởi tạo có sẵn bài viết cẩm nang y học cổ truyền.
+- [x] Đặt mặc định an toàn `SMS_ENABLED=false` trong file gốc `.env`.
+
+### Bước 5: Dọn Dẹp & Chuẩn Hóa Các Controller Trùng Lặp
+- [x] Di chuyển 10 controller trùng lặp/bypass repository sang `com.chuctupk.controller.compat`:
+  - `AdminAppointmentController`, `ReceptionistController`, `AdminDashboardController`, `AdminMedicalRecordController`, `AdminUserController`, `AdminPatientController`, `DoctorWorkspaceController`, `BookingController`, `PatientProfileController`, `QueueController`.
+- [x] Đánh dấu `@Deprecated` trên từng class controller cũ.
+- [x] Nâng cấp `ArchitectureConventionTest.java` sử dụng `classLoader.getResources` quét toàn diện classpath, kiểm tra 100% controller chính thức tuân thủ Layered Architecture.
+
+### Bước 6: Kiểm Tra & Xác Minh Toàn Diện
+- [x] Chạy `mvnw test-compile` trên Backend (Thành công 100%, 222 source files).
+- [x] Chạy 46 bài test Slice API (`V1*SliceTest`) trên Backend (46/46 passed).
+- [x] Chạy `ArchitectureConventionTest` (2/2 passed).
+- [x] Chạy `npm run build` trên Frontend (Thành công 100% trong 4.08s).
+- [x] Cập nhật `findings.md`, `progress.md` và `task_plan.md`.

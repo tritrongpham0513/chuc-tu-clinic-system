@@ -1,4 +1,4 @@
-package com.chuctupk.controller;
+package com.chuctupk.controller.compat;
 
 import com.chuctupk.dto.request.WalkInAppointmentRequest;
 import com.chuctupk.dto.response.ApiResponse;
@@ -24,11 +24,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Random;
 
+@Deprecated
 @RestController
-@RequestMapping("/api/v1/receptionist")
+@RequestMapping("/api/v1/admin/appointments")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
-public class ReceptionistController {
+@PreAuthorize("hasAnyRole('ADMIN', 'STAFF', 'DOCTOR')")
+public class AdminAppointmentController {
 
     private final AppointmentRepository appointmentRepository;
     private final PatientRepository patientRepository;
@@ -46,9 +47,9 @@ public class ReceptionistController {
     }
 
     /**
-     * Danh sách lịch hẹn phục vụ bàn tiếp tân
+     * Danh sách lịch hẹn phục vụ lễ tân & điều phối
      */
-    @GetMapping("/appointments")
+    @GetMapping
     public ResponseEntity<ApiResponse<List<AppointmentDetailResponse>>> getAppointments(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(required = false) AppointmentStatus status,
@@ -71,7 +72,7 @@ public class ReceptionistController {
         }
 
         List<AppointmentDetailResponse> res = list.stream().map(this::toDetailResponse).toList();
-        return ResponseEntity.ok(ApiResponse.success(res, "Lấy danh sách tiếp nhận thành công"));
+        return ResponseEntity.ok(ApiResponse.success(res, "Lấy danh sách lịch hẹn thành công"));
     }
 
     /**
@@ -107,7 +108,7 @@ public class ReceptionistController {
                     return patientRepository.save(newP);
                 });
 
-        // 2. Khung giờ khám (nếu không chọn thì lấy khung giờ đầu tiên đang hoạt động)
+        // 2. Khung giờ
         TimeSlot slot;
         if (request.getTimeSlotId() != null) {
             slot = timeSlotRepository.findById(request.getTimeSlotId())
@@ -115,7 +116,7 @@ public class ReceptionistController {
         } else {
             slot = timeSlotRepository.findByIsActiveTrueOrderBySortOrderAsc().stream()
                     .findFirst()
-                    .orElseThrow(() -> AppException.notFound("Chưa có khung giờ khám"));
+                    .orElseThrow(() -> AppException.notFound("Chưa có khung giờ khám trong hệ thống"));
         }
 
         Doctor doctor = null;
@@ -128,7 +129,7 @@ public class ReceptionistController {
             service = clinicServiceRepository.findById(request.getServiceId()).orElse(null);
         }
 
-        // 3. Sinh mã phiếu và lưu trạng thái CONFIRMED (đã có mặt)
+        // 3. Sinh mã và lưu trạng thái CONFIRMED (đã có mặt tại phòng khám)
         String bookingCode = generateBookingCode(today);
         Appointment appointment = Appointment.builder()
                 .bookingCode(bookingCode)
@@ -147,13 +148,56 @@ public class ReceptionistController {
                 .build();
 
         appointment = appointmentRepository.save(appointment);
-        return ResponseEntity.ok(ApiResponse.success(toDetailResponse(appointment), "Tiếp nhận bệnh nhân tại quầy thành công"));
+        return ResponseEntity.ok(ApiResponse.success(toDetailResponse(appointment), "Tiếp nhận bệnh nhân thành công"));
+    }
+
+    /**
+     * Bác sĩ hoặc lễ tân lấy danh sách hàng đợi khám trong ngày
+     */
+    @GetMapping("/doctor-queue")
+    public ResponseEntity<ApiResponse<List<AppointmentDetailResponse>>> getDoctorQueue(
+            @RequestParam(required = false) Long doctorId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        LocalDate queryDate = date != null ? date : LocalDate.now();
+        List<Appointment> list = appointmentRepository.findByAppointmentDateOrderByTimeSlotStartTimeAsc(queryDate);
+
+        // Lọc ca đang ngồi sảnh (CONFIRMED) hoặc đang trong phòng khám (IN_PROGRESS)
+        list = list.stream().filter(a ->
+                a.getStatus() == AppointmentStatus.CONFIRMED ||
+                a.getStatus() == AppointmentStatus.IN_PROGRESS
+        ).toList();
+
+        Long targetDoctorId = doctorId;
+        if (targetDoctorId == null) {
+            User current = getCurrentStaff();
+            if (current != null) {
+                Doctor myDoc = doctorRepository.findByUserId(current.getId()).orElse(null);
+                if (myDoc != null) {
+                    targetDoctorId = myDoc.getId();
+                }
+            }
+        }
+
+        if (targetDoctorId != null) {
+            final Long finalDocId = targetDoctorId;
+            list = list.stream().filter(a -> a.getDoctor() == null || a.getDoctor().getId().equals(finalDocId)).toList();
+        }
+
+        // Ưu tiên IN_PROGRESS lên đầu, tiếp theo là CONFIRMED theo giờ khám
+        list = list.stream().sorted((a, b) -> {
+            if (a.getStatus() == AppointmentStatus.IN_PROGRESS && b.getStatus() != AppointmentStatus.IN_PROGRESS) return -1;
+            if (a.getStatus() != AppointmentStatus.IN_PROGRESS && b.getStatus() == AppointmentStatus.IN_PROGRESS) return 1;
+            return a.getTimeSlot().getStartTime().compareTo(b.getTimeSlot().getStartTime());
+        }).toList();
+
+        return ResponseEntity.ok(ApiResponse.success(list.stream().map(this::toDetailResponse).toList(), "Hàng đợi khám hôm nay"));
     }
 
     /**
      * Điểm danh Check-in khi bệnh nhân có mặt tại quầy
      */
-    @PatchMapping("/appointments/{id}/check-in")
+    @PatchMapping("/{id}/check-in")
     @Transactional
     public ResponseEntity<ApiResponse<AppointmentDetailResponse>> checkIn(@PathVariable Long id) {
         User staff = getCurrentStaff();
@@ -167,68 +211,55 @@ public class ReceptionistController {
     }
 
     /**
-     * F.7.4 - Hoàn tác Check-in (chuyển trạng thái từ CONFIRMED về lại PENDING)
+     * Bác sĩ mời bệnh nhân vào buồng khám
      */
-    @PatchMapping("/appointments/{id}/undo-checkin")
+    @PatchMapping("/{id}/call-in")
     @Transactional
-    public ResponseEntity<ApiResponse<AppointmentDetailResponse>> undoCheckIn(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<AppointmentDetailResponse>> callIn(@PathVariable Long id) {
         Appointment a = appointmentRepository.findById(id)
                 .orElseThrow(() -> AppException.notFound("Không tìm thấy lịch hẹn"));
-        if (a.getStatus() != AppointmentStatus.CONFIRMED) {
-            throw AppException.badRequest("Chỉ có thể hoàn tác check-in khi ca khám đang ở trạng thái 'Đã tiếp nhận (CONFIRMED)'.");
+        a.setStatus(AppointmentStatus.IN_PROGRESS);
+        if (a.getDoctor() == null) {
+            User staff = getCurrentStaff();
+            if (staff != null) {
+                doctorRepository.findByUserId(staff.getId()).ifPresent(a::setDoctor);
+            }
         }
-        a.setStatus(AppointmentStatus.PENDING);
-        a.setConfirmedAt(null);
         a = appointmentRepository.save(a);
-        return ResponseEntity.ok(ApiResponse.success(toDetailResponse(a), "Hoàn tác check-in thành công. Lịch hẹn chuyển về trạng thái Chờ tiếp nhận."));
+        return ResponseEntity.ok(ApiResponse.success(toDetailResponse(a), "Mời bệnh nhân vào phòng khám"));
     }
 
     /**
-     * F.7.6 - Đổi giờ khám / ngày khám cho bệnh nhân
+     * Cập nhật trạng thái phiếu khám (Check-in, Bắt đầu khám, Hoàn thành, Hủy)
      */
-    @PatchMapping("/appointments/{id}/reschedule")
+    @PatchMapping("/{id}/status")
     @Transactional
-    public ResponseEntity<ApiResponse<AppointmentDetailResponse>> rescheduleAppointment(
+    public ResponseEntity<ApiResponse<AppointmentDetailResponse>> updateStatus(
             @PathVariable Long id,
-            @Valid @RequestBody com.chuctupk.dto.request.RescheduleAppointmentRequest req
+            @RequestParam AppointmentStatus status,
+            @RequestParam(required = false) String cancelReason
     ) {
-        Appointment a = appointmentRepository.findById(id)
+        User staff = getCurrentStaff();
+        Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> AppException.notFound("Không tìm thấy lịch hẹn"));
 
-        if (a.getStatus() == AppointmentStatus.COMPLETED || a.getStatus() == AppointmentStatus.CANCELLED) {
-            throw AppException.badRequest("Không thể đổi giờ cho ca khám đã hoàn tất hoặc đã bị hủy.");
+        appointment.setStatus(status);
+        if (status == AppointmentStatus.CONFIRMED && appointment.getConfirmedAt() == null) {
+            appointment.setConfirmedBy(staff);
+            appointment.setConfirmedAt(LocalDateTime.now());
+        }
+        if (status == AppointmentStatus.CANCELLED) {
+            appointment.setCancelReason(cancelReason != null ? cancelReason : "Lễ tân hủy lịch");
         }
 
-        TimeSlot newSlot = timeSlotRepository.findById(req.getNewTimeSlotId())
-                .orElseThrow(() -> AppException.notFound("Không tìm thấy khung giờ khám được chọn"));
-
-        if (!Boolean.TRUE.equals(newSlot.getIsActive())) {
-            throw AppException.badRequest("Khung giờ khám này hiện không khả dụng.");
-        }
-
-        long countInNewSlot = appointmentRepository.countBookedSlotsTotal(
-                req.getNewDate(),
-                newSlot.getId(),
-                AppointmentStatus.CANCELLED
-        );
-
-        if (countInNewSlot >= newSlot.getMaxPatients()) {
-            throw AppException.badRequest("Khung giờ " + newSlot.getSlotLabel() + " vào ngày " + req.getNewDate() + " đã đủ số lượng bệnh nhân.");
-        }
-
-        a.setAppointmentDate(req.getNewDate());
-        a.setTimeSlot(newSlot);
-        if (req.getReason() != null && !req.getReason().isBlank()) {
-            a.setSymptoms((a.getSymptoms() != null ? a.getSymptoms() + " | " : "") + "Dời lịch: " + req.getReason().trim());
-        }
-        a = appointmentRepository.save(a);
-        return ResponseEntity.ok(ApiResponse.success(toDetailResponse(a), "Đổi ngày và giờ khám thành công"));
+        appointment = appointmentRepository.save(appointment);
+        return ResponseEntity.ok(ApiResponse.success(toDetailResponse(appointment), "Cập nhật trạng thái thành công"));
     }
 
     /**
-     * Chỉ định hoặc đổi bác sĩ buồng khám
+     * Chỉ định bác sĩ khám
      */
-    @PatchMapping("/appointments/{id}/assign-doctor")
+    @PatchMapping("/{id}/assign-doctor")
     @Transactional
     public ResponseEntity<ApiResponse<AppointmentDetailResponse>> assignDoctor(
             @PathVariable Long id,
@@ -245,32 +276,14 @@ public class ReceptionistController {
         return ResponseEntity.ok(ApiResponse.success(toDetailResponse(appointment), "Chỉ định bác sĩ thành công"));
     }
 
-    /**
-     * Tiếp tân hủy lịch theo yêu cầu bệnh nhân
-     */
-    @PatchMapping("/appointments/{id}/cancel")
-    @Transactional
-    public ResponseEntity<ApiResponse<AppointmentDetailResponse>> cancelAppointment(
-            @PathVariable Long id,
-            @RequestParam(required = false) String cancelReason
-    ) {
-        Appointment appointment = appointmentRepository.findById(id)
-                .orElseThrow(() -> AppException.notFound("Không tìm thấy lịch hẹn"));
-
-        appointment.setStatus(AppointmentStatus.CANCELLED);
-        appointment.setCancelReason(cancelReason != null && !cancelReason.isBlank() ? cancelReason.trim() : "Tiếp tân hủy lịch");
-        appointment = appointmentRepository.save(appointment);
-        return ResponseEntity.ok(ApiResponse.success(toDetailResponse(appointment), "Hủy lịch hẹn thành công"));
-    }
-
     private String generateBookingCode(LocalDate date) {
-        String dateStr = date.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        String code;
-        do {
-            int randomNum = 1000 + RANDOM.nextInt(9000);
-            code = String.format("PK-%s-%d", dateStr, randomNum);
-        } while (appointmentRepository.existsByBookingCode(code));
-        return code;
+        String dateStr = date.format(DateTimeFormatter.BASIC_ISO_DATE);
+        for (int i = 0; i < 10; i++) {
+            int num = RANDOM.nextInt(9000) + 1000;
+            String code = "PKCT-" + dateStr + "-" + num;
+            if (!appointmentRepository.existsByBookingCode(code)) return code;
+        }
+        return "PKCT-" + dateStr + "-" + (System.currentTimeMillis() % 10000);
     }
 
     private AppointmentDetailResponse toDetailResponse(Appointment a) {

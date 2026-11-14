@@ -1,4 +1,4 @@
-package com.chuctupk.controller;
+package com.chuctupk.controller.compat;
 
 import com.chuctupk.dto.request.PatientProfileRequest;
 import com.chuctupk.dto.response.ApiResponse;
@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.List;
 
+@Deprecated
 @RestController
 @RequestMapping("/api/v1/patient-profiles")
 @RequiredArgsConstructor
@@ -65,3 +66,4 @@ public class PatientProfileController {
         return ResponseEntity.ok(ApiResponse.success(null, "Xóa hồ sơ thành công"));
     }
 }
+

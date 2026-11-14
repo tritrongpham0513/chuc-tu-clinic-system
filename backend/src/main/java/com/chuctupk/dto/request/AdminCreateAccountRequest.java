@@ -11,6 +11,12 @@ public record AdminCreateAccountRequest(
 
         String email,
         String role,
-        String tempPassword
-) {}
+        String tempPassword,
+        Integer birthYear,
+        String gender
+) {
+    public AdminCreateAccountRequest(String fullName, String phone, String email, String role, String tempPassword) {
+        this(fullName, phone, email, role, tempPassword, null, null);
+    }
+}
 

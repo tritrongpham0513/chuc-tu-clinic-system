@@ -1,4 +1,4 @@
-package com.chuctupk.controller;
+package com.chuctupk.controller.compat;
 
 import com.chuctupk.dto.request.CreateMedicalRecordRequest;
 import com.chuctupk.dto.response.ApiResponse;
@@ -25,6 +25,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Deprecated
 @RestController
 @RequestMapping("/api/v1/admin/medical-records")
 @RequiredArgsConstructor
@@ -187,4 +188,5 @@ public class AdminMedicalRecordController {
         private LocalDateTime createdAt;
     }
 }
+
 

@@ -1,4 +1,4 @@
-package com.chuctupk.controller;
+package com.chuctupk.controller.compat;
 
 import com.chuctupk.dto.response.ApiResponse;
 import com.chuctupk.entity.Appointment;
@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
+@Deprecated
 @RestController
 @RequestMapping("/api/v1/queue")
 @RequiredArgsConstructor
@@ -104,4 +105,5 @@ public class QueueController {
         private AppointmentStatus status;
     }
 }
+
 

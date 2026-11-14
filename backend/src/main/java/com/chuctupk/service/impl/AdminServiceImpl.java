@@ -6,6 +6,7 @@ import com.chuctupk.dto.request.*;
 import com.chuctupk.dto.response.*;
 import com.chuctupk.entity.*;
 import com.chuctupk.entity.enums.AppointmentStatus;
+import com.chuctupk.entity.enums.Gender;
 import com.chuctupk.entity.enums.Role;
 import com.chuctupk.exception.AppException;
 import com.chuctupk.exception.ErrorCode;
@@ -204,12 +205,18 @@ public class AdminServiceImpl implements AdminService {
         User saved = userRepository.save(user);
 
         if (!isStaff) {
+            int year = (request.birthYear() != null && request.birthYear() >= 1900 && request.birthYear() <= LocalDate.now(clock).getYear())
+                    ? request.birthYear()
+                    : 1970;
+            Gender gender = request.gender() != null ? ContractMapper.toDbGender(request.gender()) : Gender.MALE;
+
             Patient p = Patient.builder()
                     .patientCode(sequenceGeneratorService.nextPatientCode())
                     .user(saved)
                     .fullName(saved.getFullName())
                     .phone(saved.getPhone())
-                    .yearOfBirth(1970)
+                    .yearOfBirth(year)
+                    .gender(gender)
                     .relationship("BAN_THAN")
                     .isPrimary(true)
                     .isActive(true)

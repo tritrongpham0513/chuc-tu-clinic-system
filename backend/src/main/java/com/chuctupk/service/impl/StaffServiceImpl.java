@@ -212,6 +212,11 @@ public class StaffServiceImpl implements StaffService {
                 .findFirst()
                 .orElseThrow(() -> AppException.notFound("Không tìm thấy khung giờ khám " + reqStart));
 
+        if (slotDate.isEqual(today) && !Boolean.TRUE.equals(request.checkInNow())
+                && chosenSlot.getEndTime() != null && chosenSlot.getEndTime().isBefore(LocalTime.now(clock))) {
+            throw AppException.badRequest("Khung giờ này đã trôi qua. Vui lòng chọn khung giờ hiện tại hoặc kế tiếp");
+        }
+
         // Allocate seat (1..6)
         int capacity = chosenSlot.getMaxPatients() != null && chosenSlot.getMaxPatients() > 0 ? chosenSlot.getMaxPatients() : 6;
         int maxRetries = 6;
@@ -251,7 +256,7 @@ public class StaffServiceImpl implements StaffService {
                     Appointment appt = Appointment.builder()
                             .bookingCode(bookingCode)
                             .patient(patient)
-                            .serviceType(ContractMapper.toFeServiceType(request.serviceType()))
+                            .serviceType(ContractMapper.toDbServiceType(request.serviceType()))
                             .appointmentDate(slotDate)
                             .timeSlot(chosenSlot)
                             .source(AppointmentSource.WALK_IN)

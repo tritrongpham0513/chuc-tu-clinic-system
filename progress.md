@@ -1,9 +1,22 @@
-# Nhật ký Tiến độ Đóng gói Docker (Progress Log)
+# Nhật ký Tiến độ Đánh giá & Sửa Lỗi Hệ Thống (Progress Log)
 
-- **2026-11-08 22:25**: Bắt đầu giai đoạn đóng gói Docker. Khởi tạo `task_plan.md`, `findings.md`, `progress.md`.
-- **2026-11-08 22:28**: Hoàn tất cấu hình MySQL init scripts (`01-schema.sql`, `02-patient-fields.sql`, `03-seed-users.sql`).
-- **2026-11-08 22:30**: Hoàn thành `backend/Dockerfile` (Eclipse Temurin JDK/JRE 17 multi-stage), `backend/.dockerignore`.
-- **2026-11-08 22:32**: Hoàn thành `frontend/Dockerfile` (Node 20 + Vite + Nginx Alpine multi-stage), `frontend/nginx.conf`, `frontend/.dockerignore`.
-- **2026-11-08 22:34**: Tạo `docker-compose.yml`, kiểm tra cú pháp bằng `docker-compose config` đạt kết quả 100% hợp lệ.
-- **2026-11-08 22:35**: Tạo tài liệu hướng dẫn khởi chạy nhanh `DOCKER_GUIDE.md` và mẫu `.env.docker.example`.
-- **Trạng thái hiện tại**: Hoàn thành toàn bộ cấu hình đóng gói Docker. Sẵn sàng commit và đẩy lên nhánh GitHub.
+- **2026-11-14 14:33**: Khởi tạo kế hoạch kiểm tra toàn diện hệ thống.
+- **2026-11-14 14:53**: Hoàn tất kiểm tra, phát hiện 5 lỗi nghiêm trọng và 6 điểm bất hợp lý kiến trúc.
+- **2026-11-14 14:57**: 
+  - Khắc phục lỗ hổng đặt lịch khung giờ quá khứ trong ngày hôm nay tại `PatientPortalServiceImpl` và `StaffServiceImpl`.
+  - Inject Bean `Clock` Việt Nam vào `PatientPortalServiceImpl`, chuẩn hóa múi giờ `Asia/Ho_Chi_Minh`.
+- **2026-11-14 14:58**: 
+  - Cập nhật `CookieHelper.java`: Thiết lập `httpOnly: true` cho toàn bộ cookie JWT.
+- **2026-11-14 14:59**: 
+  - Bổ sung `birthYear` và `gender` cho `AdminCreateAccountRequest` và `AdminServiceImpl`, xóa bỏ gán cứng 1970.
+  - Sửa `docker-compose.yml` đồng bộ ARG `VITE_API_URL`.
+  - Bổ sung `08-seed-articles.sql` vào `docker/mysql/init/`.
+  - Cập nhật `.env` đặt `SMS_ENABLED=false` mặc định an toàn cho môi trường phát triển.
+- **2026-11-14 15:02**: 
+  - Tách 10 controller trùng lặp vào package `com.chuctupk.controller.compat`, gắn chú thích `@Deprecated`.
+  - Nâng cấp `ArchitectureConventionTest.java` quét toàn bộ classpath.
+- **2026-11-14 15:04**: 
+  - Chạy `ArchitectureConventionTest`: 2/2 bài test PASS 100%.
+  - Chạy 46 bài test Slice API (`V1*SliceTest`): 46/46 PASS 100%.
+  - Chạy `npm run build` trên Frontend: 538 module transformed, build hoàn tất trong 4.08s.
+  - Hệ thống đạt trạng thái ổn định, an toàn và sạch sẽ.

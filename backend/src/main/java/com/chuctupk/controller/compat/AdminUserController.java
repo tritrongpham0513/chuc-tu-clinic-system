@@ -1,4 +1,4 @@
-package com.chuctupk.controller;
+package com.chuctupk.controller.compat;
 
 import com.chuctupk.dto.request.CreateUserAccountRequest;
 import com.chuctupk.dto.request.ResetPasswordRequest;
@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
+@Deprecated
 @RestController
 @RequestMapping("/api/v1/admin/users")
 @RequiredArgsConstructor
@@ -257,4 +258,5 @@ public class AdminUserController {
                 .build();
     }
 }
+
 

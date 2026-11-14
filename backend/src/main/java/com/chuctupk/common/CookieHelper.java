@@ -59,7 +59,7 @@ public final class CookieHelper {
                 response.addHeader("Set-Cookie", sessionCookie.toString());
 
                 ResponseCookie legacyCookie = ResponseCookie.from(LEGACY_TOKEN_COOKIE_NAME, token)
-                                .httpOnly(false)
+                                .httpOnly(true)
                                 .secure(isSecure)
                                 .path("/")
                                 .maxAge(maxAgeSeconds)
@@ -79,7 +79,7 @@ public final class CookieHelper {
                 response.addHeader("Set-Cookie", sessionCookie.toString());
 
                 ResponseCookie legacyCookie = ResponseCookie.from(LEGACY_TOKEN_COOKIE_NAME, "")
-                                .httpOnly(false)
+                                .httpOnly(true)
                                 .secure(isSecure)
                                 .path("/")
                                 .maxAge(0)

@@ -1,4 +1,4 @@
-package com.chuctupk.controller;
+package com.chuctupk.controller.compat;
 
 import com.chuctupk.dto.request.PatientProfileRequest;
 import com.chuctupk.dto.response.ApiResponse;
@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
 
+@Deprecated
 @RestController
 @RequestMapping("/api/v1/admin/patients")
 @RequiredArgsConstructor
@@ -134,4 +135,5 @@ public class AdminPatientController {
                 .build();
     }
 }
+
 
