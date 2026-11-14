@@ -153,7 +153,7 @@ class AppointmentControllerTest {
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.data.phone", notNullValue()));
+                .andExpect(jsonPath("$.fields.phone", notNullValue()));
     }
 
     @Test

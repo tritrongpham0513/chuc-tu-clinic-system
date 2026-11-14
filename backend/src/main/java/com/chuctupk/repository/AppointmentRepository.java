@@ -22,6 +22,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     List<Appointment> findByAppointmentDateOrderByTimeSlotStartTimeAsc(LocalDate appointmentDate);
 
+    List<Appointment> findByAppointmentDateBetween(LocalDate start, LocalDate end);
+
     List<Appointment> findByPatientPhoneOrderByAppointmentDateDesc(String phone);
 
     List<Appointment> findByStatusOrderByAppointmentDateDesc(AppointmentStatus status);
@@ -53,6 +55,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     // --- Module 1: Patient Profile Management ---
     boolean existsByPatientId(Long patientId);
+    List<Appointment> findByPatientId(Long patientId);
+    boolean existsByPatientIdAndAppointmentDateAndStatusNot(Long patientId, LocalDate appointmentDate, AppointmentStatus excludeStatus);
     List<Appointment> findByPatient_UserIdOrderByAppointmentDateDesc(Long userId);
     List<Appointment> findByPatient_UserIdAndStatusNotOrderByAppointmentDateDesc(Long userId, AppointmentStatus status);
 
@@ -61,4 +65,16 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     @Query("SELECT a FROM Appointment a WHERE a.patient.user.id = :userId AND a.status IN :statuses ORDER BY a.appointmentDate DESC, a.createdAt DESC")
     List<Appointment> findByUserIdAndStatuses(@Param("userId") Long userId, @Param("statuses") List<AppointmentStatus> statuses);
+
+    @Query("SELECT a FROM Appointment a WHERE UPPER(a.bookingCode) = UPPER(:code) " +
+           "OR a.patient.phone = :code OR UPPER(a.patient.patientCode) = UPPER(:code) " +
+           "ORDER BY a.appointmentDate DESC, a.createdAt DESC")
+    List<Appointment> lookupByCodeOrPhoneOrPatientCode(@Param("code") String code);
+
+    @Query("SELECT a.patient.id, MAX(a.appointmentDate) FROM Appointment a " +
+           "WHERE a.status = 'COMPLETED' AND a.patient.id IN :patientIds " +
+           "GROUP BY a.patient.id")
+    List<Object[]> findLatestCompletedVisitDates(@Param("patientIds") List<Long> patientIds);
+
+    List<Appointment> findByAppointmentDateAndStatus(LocalDate appointmentDate, AppointmentStatus status);
 }

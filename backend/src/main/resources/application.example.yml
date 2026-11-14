@@ -7,7 +7,7 @@
 # ============================================================================
 
 server:
-  port: ${PORT:8080}
+  port: ${PORT:4000}
   servlet:
     context-path: /
 
@@ -37,6 +37,14 @@ spring:
   jackson:
     time-zone: Asia/Ho_Chi_Minh
     date-format: yyyy-MM-dd HH:mm:ss
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
 
 # Tài khoản ADMIN đầu tiên (chỉ tạo khi hệ thống chưa có admin nào)
 app:

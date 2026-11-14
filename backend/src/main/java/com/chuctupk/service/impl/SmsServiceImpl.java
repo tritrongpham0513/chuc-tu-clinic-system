@@ -42,6 +42,11 @@ public class SmsServiceImpl implements SmsService {
             .build();
 
     @Override
+    public boolean isEnabled() {
+        return smsEnabled && apiKey != null && !apiKey.isBlank();
+    }
+
+    @Override
     public boolean sendOtp(String phone, String otpCode) {
         String cleanPhone = cleanPhone(phone);
         String message = String.format("Ma xac thuc phong kham Chuc Tu cua ban la %s. Hieu luc trong 5 phut.", otpCode);
@@ -70,7 +75,7 @@ public class SmsServiceImpl implements SmsService {
         }
         log.info("=================================================");
 
-        return true;
+        return false;
     }
 
     private boolean sendRealSms(String phone, String content, String otpCode) throws Exception {

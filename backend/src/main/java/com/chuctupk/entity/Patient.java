@@ -4,6 +4,7 @@ import com.chuctupk.entity.enums.Gender;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -29,10 +30,19 @@ public class Patient {
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
 
+    @Column(name = "dob")
+    private LocalDate dob;
+
+    @Column(name = "national_id", length = 20)
+    private String nationalId;
+
     @Column(nullable = false, length = 15)
     private String phone;
 
-    @Column(name = "year_of_birth", nullable = false)
+    @Column(name = "email", length = 100)
+    private String email;
+
+    @Column(name = "year_of_birth")
     private Integer yearOfBirth;
 
     @Enumerated(EnumType.STRING)
@@ -55,6 +65,12 @@ public class Patient {
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;
+
+    @Column(name = "locked_at")
+    private LocalDateTime lockedAt;
+
+    @Column(name = "info_updated_at")
+    private LocalDateTime infoUpdatedAt;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

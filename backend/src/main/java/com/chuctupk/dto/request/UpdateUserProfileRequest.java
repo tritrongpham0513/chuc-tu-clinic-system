@@ -22,4 +22,6 @@ public class UpdateUserProfileRequest {
     private Gender gender;
 
     private String address;
+
+    private String email;
 }

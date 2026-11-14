@@ -1,0 +1,6200 @@
+openapi: 3.1.0
+info:
+  title: Phòng Khám Chúc Từ — API v1 Specification
+  description: Tài liệu đặc tả hợp đồng RESTful API chính thức của Hệ thống Quản lý
+    và Tiếp nhận Bệnh nhân Phòng Khám Chúc Từ.
+  contact:
+    name: Đội ngũ Kỹ thuật Chúc Từ PK
+    email: hotro@chuctu.vn
+  license:
+    name: Nội bộ
+    url: https://chuctu.vn
+  version: v1.0.0
+servers:
+- url: /
+  description: Server hiện tại (Cùng domain / reverse proxy)
+- url: http://localhost:4000
+  description: Môi trường Local Development (Port 4000)
+security:
+- bearerAuth: []
+tags:
+- name: Phân hệ Người bệnh (Me v1)
+  description: "Quản lý thông tin cá nhân, hồ sơ người thân, kiểm tra lịch trống và\
+    \ đặt hẹn khám bệnh"
+- name: Admin Management API
+  description: "Phân hệ quản trị toàn quyền: Dashboard, tài khoản, bài viết, khoá\
+    \ hồ sơ và upload ảnh"
+- name: Xác thực & Phiên làm việc (Auth v1)
+  description: "Các API đăng ký, đăng nhập OTP, đăng nhập nội bộ, đổi mật khẩu và\
+    \ quản lý phiên"
+- name: Staff Patient Management API
+  description: "Quản lý hồ sơ bệnh nhân phía nhân viên: tra cứu, trùng SĐT, lập hồ\
+    \ sơ mới, sửa hồ sơ"
+- name: Staff Medical Record API
+  description: Quản lý phiếu kết quả khám bệnh và bệnh án Y học cổ truyền
+- name: Public Post API
+  description: "Đọc tin tức, cẩm nang sức khỏe và hoạt động thiện nguyện công khai"
+- name: Meta
+  description: Thông tin cấu hình và dữ liệu nền tảng của phòng khám
+- name: Health
+  description: Kiểm tra tình trạng hoạt động của hệ thống
+- name: Media Storage API
+  description: Tải và phục vụ ảnh media công khai với bộ nhớ đệm immutable
+- name: Tài khoản nội bộ (Staff Account v1)
+  description: "Xem và cập nhật họ tên, email của tài khoản lễ tân / bác sĩ / quả\
+    n trị viên"
+- name: Staff Portal API
+  description: "Phân hệ nội bộ: Lịch khám, Đặt hộ, Check-in, Hàng đợi 5 ghế"
+paths:
+  /api/v1/admin/accounts/{id}/role:
+    put:
+      tags:
+      - Admin Management API
+      summary: "Đổi vai trò người dùng (USER, RECEPTIONIST, ADMIN)"
+      operationId: changeRole
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminChangeRoleRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+    patch:
+      tags:
+      - Admin Management API
+      summary: "Đổi vai trò người dùng (USER, RECEPTIONIST, ADMIN)"
+      operationId: changeRole_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminChangeRoleRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/admin/posts/{id}/pin:
+    post:
+      tags:
+      - Admin Management API
+      summary: Ghim bài viết lên đầu trang Tin tức (chỉ 1 bài duy nhất được ghim)
+      operationId: pinPost
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+    patch:
+      tags:
+      - Admin Management API
+      summary: Ghim bài viết lên đầu trang Tin tức (chỉ 1 bài duy nhất được ghim)
+      operationId: pinPost_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/admin/patients/{id}/toggle-status:
+    post:
+      tags:
+      - Admin Management API
+      summary: Khóa hoặc mở khóa hồ sơ bệnh nhân
+      operationId: togglePatientStatus
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: boolean
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponsePatientDto"
+    patch:
+      tags:
+      - Admin Management API
+      summary: Khóa hoặc mở khóa hồ sơ bệnh nhân
+      operationId: togglePatientStatus_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: boolean
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponsePatientDto"
+  /api/v1/admin/accounts/{id}/toggle-status:
+    post:
+      tags:
+      - Admin Management API
+      summary: Khóa hoặc mở khóa tài khoản
+      operationId: toggleAccountStatus
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: boolean
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAccountDto"
+    patch:
+      tags:
+      - Admin Management API
+      summary: Khóa hoặc mở khóa tài khoản
+      operationId: toggleAccountStatus_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: boolean
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAccountDto"
+  /api/v1/auth/refresh:
+    get:
+      tags:
+      - Xác thực & Phiên làm việc (Auth v1)
+      summary: Làm mới Access Token bằng Refresh Token (Cookie hoặc Header)
+      operationId: refreshToken
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+    post:
+      tags:
+      - Xác thực & Phiên làm việc (Auth v1)
+      summary: Làm mới Access Token bằng Refresh Token (Cookie hoặc Header)
+      operationId: refreshToken_1
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/staff/records/{id}:
+    get:
+      tags:
+      - Staff Medical Record API
+      summary: Xem chi tiết phiếu kết quả khám bệnh kèm lịch sử chỉnh sửa
+      operationId: getRecord
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseRecordDetailResponse"
+    put:
+      tags:
+      - Staff Medical Record API
+      summary: Chỉnh sửa phiếu kết quả khám bệnh trong vòng 24 giờ kể từ khi lập
+      operationId: updateRecord
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRecordRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseRecordDetailResponse"
+  /api/v1/staff/queue/auto-invite:
+    put:
+      tags:
+      - Staff Portal API
+      summary: Bật/tắt chế độ tự động mời người kế tiếp khi có ghế trống
+      operationId: setAutoInvite
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AutoInviteRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseQueueStateDto"
+  /api/v1/patient-profiles/{id}:
+    get:
+      tags:
+      - patient-profile-controller
+      operationId: getProfileById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponsePatientProfileResponse"
+    put:
+      tags:
+      - patient-profile-controller
+      operationId: updateProfile
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatientProfileRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponsePatientProfileResponse"
+    delete:
+      tags:
+      - patient-profile-controller
+      operationId: deleteProfile
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+  /api/v1/doctor/medical-records/{id}:
+    put:
+      tags:
+      - doctor-workspace-controller
+      operationId: updateMedicalRecord
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMedicalRecordRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseDoctorMedicalRecordResponse"
+  /api/v1/auth/profile:
+    put:
+      tags:
+      - Xác thực & Phiên làm việc (Auth v1)
+      summary: Nhân sự cập nhật họ tên & email nội bộ
+      operationId: updateStaffProfile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStaffProfileRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseUserResponse"
+  /api/v1/auth/me:
+    get:
+      tags:
+      - Xác thực & Phiên làm việc (Auth v1)
+      summary: "Lấy thông tin tài khoản đang đăng nhập (trả về user: null nếu khá\
+        ch)"
+      operationId: getMe
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+    put:
+      tags:
+      - Xác thực & Phiên làm việc (Auth v1)
+      summary: Cập nhật thông tin tài khoản người dùng
+      operationId: updateProfile_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserProfileRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseUserResponse"
+  /api/v1/articles/admin/{id}:
+    put:
+      tags:
+      - article-controller
+      operationId: updateArticle
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ArticleRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseArticleResponse"
+    delete:
+      tags:
+      - article-controller
+      operationId: deleteArticle
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+  /api/v1/admin/users/{id}:
+    put:
+      tags:
+      - admin-user-controller
+      operationId: updateUser
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserAccountRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseUserAdminDetailResponse"
+  /api/v1/admin/posts/{id}:
+    get:
+      tags:
+      - Admin Management API
+      summary: Xem chi tiết một bài viết để chỉnh sửa
+      operationId: getAdminPost
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+    put:
+      tags:
+      - Admin Management API
+      summary: Cập nhật bài viết
+      operationId: updateAdminPost
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminSavePostRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+    delete:
+      tags:
+      - Admin Management API
+      summary: Xóa bài viết
+      operationId: deletePost
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+  /api/v1/admin/patients/{id}:
+    get:
+      tags:
+      - admin-patient-controller
+      operationId: getPatient
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponsePatientProfileResponse"
+    put:
+      tags:
+      - admin-patient-controller
+      operationId: updatePatient
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatientProfileRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponsePatientProfileResponse"
+  /api/v1/uploads:
+    post:
+      tags:
+      - Media Storage API
+      summary: "Tải ảnh media lên máy chủ (≤ 3MB, JPG/PNG/WEBP/GIF)"
+      operationId: uploadImage
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                rawBytes:
+                  type: string
+                  format: byte
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                rawBytes:
+                  type: string
+                  format: byte
+          image/*:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                rawBytes:
+                  type: string
+                  format: byte
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties: {}
+  /api/v1/staff/queue/{id}/undo-enter:
+    post:
+      tags:
+      - Staff Portal API
+      summary: Hoàn tác vào khám (đưa người bệnh trở lại hàng chờ)
+      operationId: undoEnter
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseQueueStateDto"
+  /api/v1/staff/queue/invite:
+    post:
+      tags:
+      - Staff Portal API
+      summary: Mời người kế tiếp trong hàng chờ vào ghế khám còn trống
+      operationId: inviteNext
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseQueueStateDto"
+  /api/v1/staff/patients:
+    get:
+      tags:
+      - Staff Patient Management API
+      summary: Tìm kiếm và phân trang danh sách hồ sơ bệnh nhân
+      operationId: getPatients
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: locked
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 1
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 10
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseStaffPatientListResponse"
+    post:
+      tags:
+      - Staff Patient Management API
+      summary: Tạo hồ sơ bệnh nhân mới tại quầy tiếp tân (tự sinh mã BN)
+      operationId: createPatient
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StaffCreatePatientRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/staff/appointments:
+    get:
+      tags:
+      - Staff Portal API
+      summary: Lấy danh sách lịch khám theo ngày kèm thống kê
+      operationId: getAppointments
+      parameters:
+      - name: date
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseStaffAppointmentListResponse"
+    post:
+      tags:
+      - Staff Portal API
+      summary: Tiếp tân tạo phiếu hẹn khám tại quầy (tuỳ chọn check-in ngay)
+      operationId: createCounterAppointment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StaffCreateAppointmentRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/staff/appointments/{id}/undo-checkin:
+    post:
+      tags:
+      - Staff Portal API
+      summary: Hoàn tác check-in khi tiếp nhận nhầm người
+      operationId: undoCheckin
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseStaffAppointmentLookupResponse"
+  /api/v1/staff/appointments/{id}/reschedule:
+    post:
+      tags:
+      - Staff Portal API
+      summary: Đổi giờ khám sang ngày/khung giờ mới (cấp phiếu mới)
+      operationId: rescheduleAppointment
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RescheduleAppointmentRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseStaffAppointmentLookupResponse"
+  /api/v1/staff/appointments/{id}/record:
+    post:
+      tags:
+      - Staff Medical Record API
+      summary: Lập phiếu kết quả khám bệnh cho phiếu hẹn đang khám (chuyển trạng thái
+        COMPLETED)
+      operationId: createRecord
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRecordRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseRecordDetailResponse"
+  /api/v1/staff/appointments/{id}/enter:
+    post:
+      tags:
+      - Staff Portal API
+      summary: Mời đích danh một người vào khám trước (xếp vào ghế trống tiếp theo)
+      operationId: enterRoom
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseStaffAppointmentLookupResponse"
+  /api/v1/staff/appointments/{id}/checkin:
+    post:
+      tags:
+      - Staff Portal API
+      summary: Tiếp nhận check-in bệnh nhân (kiểm tra ngày và giờ tiếp nhận 08:00
+        - 16:30)
+      operationId: checkin
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseStaffAppointmentLookupResponse"
+  /api/v1/staff/appointments/{id}/cancel:
+    post:
+      tags:
+      - Staff Portal API
+      summary: Huỷ phiếu khám tại quầy (bắt buộc nêu lý do)
+      operationId: cancelAppointment
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelAppointmentStaffRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseStaffAppointmentLookupResponse"
+  /api/v1/staff/account/email:
+    post:
+      tags:
+      - Tài khoản nội bộ (Staff Account v1)
+      summary: Yêu cầu đổi email — gửi mã xác minh 6 số tới email mới
+      operationId: requestEmailChange
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeStaffEmailRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/staff/account/email/verify:
+    post:
+      tags:
+      - Tài khoản nội bộ (Staff Account v1)
+      summary: Xác minh mã 6 số và cập nhật email mới
+      operationId: verifyEmailChange
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyStaffEmailRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/receptionist/walk-in:
+    post:
+      tags:
+      - receptionist-controller
+      operationId: createWalkInAppointment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WalkInAppointmentRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAppointmentDetailResponse"
+  /api/v1/patient-profiles:
+    get:
+      tags:
+      - patient-profile-controller
+      operationId: getMyProfiles
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseListPatientProfileResponse"
+    post:
+      tags:
+      - patient-profile-controller
+      operationId: addProfile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatientProfileRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponsePatientProfileResponse"
+  /api/v1/me/patients:
+    get:
+      tags:
+      - Phân hệ Người bệnh (Me v1)
+      summary: Lấy danh sách hồ sơ khám của tài khoản (tối đa 10)
+      operationId: getMyPatients
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+    post:
+      tags:
+      - Phân hệ Người bệnh (Me v1)
+      summary: Thêm mới hồ sơ người thân
+      operationId: createPatient_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatientProfileUpsertRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/me/appointments:
+    get:
+      tags:
+      - Phân hệ Người bệnh (Me v1)
+      summary: Lấy danh sách phiếu khám của tôi
+      operationId: getMyAppointments
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          default: ACTIVE
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+    post:
+      tags:
+      - Phân hệ Người bệnh (Me v1)
+      summary: Đặt lịch khám mới (hỗ trợ Idempotency-Key và kiểm soát đồng thời)
+      operationId: bookAppointment
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatientBookAppointmentRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/me/appointments/{id}/cancel:
+    post:
+      tags:
+      - Phân hệ Người bệnh (Me v1)
+      summary: Bệnh nhân chủ động hủy phiếu khám trước giờ check-in
+      operationId: cancelAppointment_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/doctor/settings/auto-call:
+    get:
+      tags:
+      - doctor-workspace-controller
+      operationId: getAutoCallSetting
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseBoolean"
+    post:
+      tags:
+      - doctor-workspace-controller
+      operationId: toggleAutoCallSetting
+      parameters:
+      - name: enabled
+        in: query
+        required: true
+        schema:
+          type: boolean
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseBoolean"
+  /api/v1/doctor/medical-records:
+    post:
+      tags:
+      - doctor-workspace-controller
+      operationId: createMedicalRecord
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMedicalRecordRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseDoctorMedicalRecordResponse"
+  /api/v1/booking:
+    post:
+      tags:
+      - booking-controller
+      operationId: bookAppointment_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAppointmentDetailResponse"
+  /api/v1/booking/my/{id}/cancel:
+    post:
+      tags:
+      - booking-controller
+      operationId: cancelMyAppointment
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppointmentCancelByPatientRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAppointmentDetailResponse"
+  /api/v1/auth/verify-otp:
+    post:
+      tags:
+      - Xác thực & Phiên làm việc (Auth v1)
+      summary: Xác thực mã OTP (tương thích cũ)
+      operationId: verifyOtpLegacy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyOtpRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseBoolean"
+  /api/v1/auth/staff/reset-password:
+    post:
+      tags:
+      - Xác thực & Phiên làm việc (Auth v1)
+      summary: Đặt lại mật khẩu nhân viên bằng reset token
+      operationId: staffResetPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StaffResetPasswordRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/auth/staff/login:
+    post:
+      tags:
+      - Xác thực & Phiên làm việc (Auth v1)
+      summary: "Đăng nhập dành cho Bác sĩ, Điều dưỡng, Tiếp tân, Quản trị viên"
+      operationId: loginStaff
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StaffLoginRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/auth/staff/forgot-password:
+    post:
+      tags:
+      - Xác thực & Phiên làm việc (Auth v1)
+      summary: Nhân viên yêu cầu mã khôi phục mật khẩu qua Email / SMS
+      operationId: staffForgotPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/auth/staff/forgot-password/verify:
+    post:
+      tags:
+      - Xác thực & Phiên làm việc (Auth v1)
+      summary: Xác thực mã OTP khôi phục mật khẩu nhân viên
+      operationId: staffVerifyForgotPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StaffForgotPasswordVerifyRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/auth/send-otp:
+    post:
+      tags:
+      - Xác thực & Phiên làm việc (Auth v1)
+      summary: Gửi mã xác thực OTP qua SMS (tương thích cũ)
+      operationId: sendOtpLegacy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendOtpRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+  /api/v1/auth/register:
+    post:
+      tags:
+      - Xác thực & Phiên làm việc (Auth v1)
+      summary: Đăng ký tài khoản bệnh nhân mới (gửi mã OTP)
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatientRegisterRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/auth/register/verify:
+    post:
+      tags:
+      - Xác thực & Phiên làm việc (Auth v1)
+      summary: Xác thực mã OTP hoàn tất đăng ký tài khoản
+      operationId: verifyRegister
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterVerifyRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/auth/quick-login:
+    post:
+      tags:
+      - Xác thực & Phiên làm việc (Auth v1)
+      summary: Đăng nhập nhanh trên thiết bị đã ghi nhớ bằng số điện thoại
+      operationId: quickLoginLegacy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendOtpRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAuthResponse"
+  /api/v1/auth/otp/resend:
+    post:
+      tags:
+      - Xác thực & Phiên làm việc (Auth v1)
+      summary: Gửi lại mã OTP qua SMS (cooldown 60 giây)
+      operationId: resendOtp
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpResendRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/auth/logout:
+    post:
+      tags:
+      - Xác thực & Phiên làm việc (Auth v1)
+      summary: Đăng xuất tài khoản và thu hồi Refresh Token
+      operationId: logout
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/auth/login:
+    post:
+      tags:
+      - Xác thực & Phiên làm việc (Auth v1)
+      summary: Yêu cầu gửi mã OTP đăng nhập cho bệnh nhân
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: {}
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/auth/login/verify:
+    post:
+      tags:
+      - Xác thực & Phiên làm việc (Auth v1)
+      summary: Xác thực mã OTP đăng nhập bệnh nhân
+      operationId: verifyLogin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginVerifyRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/auth/change-password:
+    post:
+      tags:
+      - Xác thực & Phiên làm việc (Auth v1)
+      summary: Đổi mật khẩu tài khoản hiện tại
+      operationId: changePassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/articles/admin:
+    post:
+      tags:
+      - article-controller
+      operationId: createArticle
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ArticleRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseArticleResponse"
+  /api/v1/appointments:
+    post:
+      tags:
+      - appointment-controller
+      operationId: createAppointment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppointmentCreateRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAppointmentResponse"
+  /api/v1/admin/users:
+    get:
+      tags:
+      - admin-user-controller
+      operationId: getUsers
+      parameters:
+      - name: role
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - ADMIN
+          - DOCTOR
+          - STAFF
+          - PATIENT
+      - name: search
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseListUserAdminDetailResponse"
+    post:
+      tags:
+      - admin-user-controller
+      operationId: createUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserAccountRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseUserAdminDetailResponse"
+  /api/v1/admin/users/{id}/reset-password:
+    post:
+      tags:
+      - admin-user-controller
+      operationId: resetPassword
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+  /api/v1/admin/uploads:
+    post:
+      tags:
+      - Admin Management API
+      summary: "Tải ảnh bài viết lên máy chủ (≤ 3MB, JPG/PNG/WEBP/GIF)"
+      operationId: uploadImage_1
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                rawBytes:
+                  type: string
+                  format: byte
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                rawBytes:
+                  type: string
+                  format: byte
+          image/*:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                rawBytes:
+                  type: string
+                  format: byte
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties: {}
+  /api/v1/admin/posts:
+    get:
+      tags:
+      - Admin Management API
+      summary: Danh sách bài viết quản trị kèm bộ lọc trạng thái và chuyên mục
+      operationId: getAdminPosts
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: category
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 1
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 10
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAdminPostListResponse"
+    post:
+      tags:
+      - Admin Management API
+      summary: Tạo bài viết mới (bản nháp hoặc công khai)
+      operationId: createAdminPost
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminSavePostRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/admin/posts/{id}/unpin:
+    post:
+      tags:
+      - Admin Management API
+      summary: Bỏ ghim bài viết
+      operationId: unpinPost
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/admin/patients:
+    get:
+      tags:
+      - admin-patient-controller
+      operationId: searchPatients
+      parameters:
+      - name: search
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseListPatientProfileResponse"
+    post:
+      tags:
+      - admin-patient-controller
+      operationId: createPatient_2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatientProfileRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponsePatientProfileResponse"
+  /api/v1/admin/patients/{id}/unlock:
+    post:
+      tags:
+      - Admin Management API
+      summary: Mở khóa hồ sơ bệnh nhân
+      operationId: unlockPatient
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/admin/patients/{id}/lock:
+    post:
+      tags:
+      - Admin Management API
+      summary: Khóa hồ sơ bệnh nhân
+      operationId: lockPatient
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/admin/medical-records:
+    post:
+      tags:
+      - admin-medical-record-controller
+      operationId: createMedicalRecord_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMedicalRecordRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMedicalRecordDetailResponse"
+  /api/v1/admin/appointments/walk-in:
+    post:
+      tags:
+      - admin-appointment-controller
+      operationId: createWalkInAppointment_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WalkInAppointmentRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAppointmentDetailResponse"
+  /api/v1/admin/accounts:
+    get:
+      tags:
+      - Admin Management API
+      summary: Tìm kiếm và phân trang danh sách tài khoản hệ thống
+      operationId: getAccounts
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: role
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 1
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 10
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAdminAccountListResponse"
+    post:
+      tags:
+      - Admin Management API
+      summary: Tạo tài khoản mới (nhân viên bắt buộc email và mật khẩu tạm ≥ 8 ký
+        tự)
+      operationId: createAccount
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminCreateAccountRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAccountDto"
+  /api/v1/admin/accounts/{id}/unlock:
+    post:
+      tags:
+      - Admin Management API
+      summary: Mở khóa tài khoản
+      operationId: unlockAccount
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAccountDto"
+  /api/v1/admin/accounts/{id}/reset-password:
+    post:
+      tags:
+      - Admin Management API
+      summary: Cấp mật khẩu tạm thời cho tài khoản nhân viên
+      operationId: resetPassword_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminResetPasswordRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+  /api/v1/admin/accounts/{id}/lock:
+    post:
+      tags:
+      - Admin Management API
+      summary: Khóa tài khoản (không thể tự khóa tài khoản chính mình)
+      operationId: lockAccount
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAccountDto"
+  /api/v1/staff/patients/{id}:
+    get:
+      tags:
+      - Staff Patient Management API
+      summary: Xem chi tiết hồ sơ bệnh nhân cùng toàn bộ lịch sử khám và phiếu kết
+        quả
+      operationId: getPatientDetail
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseStaffPatientDetailResponse"
+    patch:
+      tags:
+      - Staff Patient Management API
+      summary: Chỉnh sửa thông tin hồ sơ bệnh nhân (hỗ trợ khóa lạc quan STALE)
+      operationId: updatePatient_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StaffUpdatePatientRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/staff/account:
+    get:
+      tags:
+      - Tài khoản nội bộ (Staff Account v1)
+      summary: Xem thông tin tài khoản đang đăng nhập
+      operationId: getAccount
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+    patch:
+      tags:
+      - Tài khoản nội bộ (Staff Account v1)
+      summary: Cập nhật họ tên của tài khoản đang đăng nhập
+      operationId: updateAccount
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStaffAccountRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/receptionist/appointments/{id}/undo-checkin:
+    patch:
+      tags:
+      - receptionist-controller
+      operationId: undoCheckIn
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAppointmentDetailResponse"
+  /api/v1/receptionist/appointments/{id}/reschedule:
+    patch:
+      tags:
+      - receptionist-controller
+      operationId: rescheduleAppointment_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RescheduleAppointmentRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAppointmentDetailResponse"
+  /api/v1/receptionist/appointments/{id}/check-in:
+    patch:
+      tags:
+      - receptionist-controller
+      operationId: checkIn
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAppointmentDetailResponse"
+  /api/v1/receptionist/appointments/{id}/cancel:
+    patch:
+      tags:
+      - receptionist-controller
+      operationId: cancelAppointment_2
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: cancelReason
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAppointmentDetailResponse"
+  /api/v1/receptionist/appointments/{id}/assign-doctor:
+    patch:
+      tags:
+      - receptionist-controller
+      operationId: assignDoctor
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: doctorId
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAppointmentDetailResponse"
+  /api/v1/me:
+    get:
+      tags:
+      - Phân hệ Người bệnh (Me v1)
+      summary: Lấy thông tin tài khoản và hồ sơ chính chủ hiện tại
+      operationId: getMyAccount
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+    patch:
+      tags:
+      - Phân hệ Người bệnh (Me v1)
+      summary: Cập nhật thông tin tài khoản và hồ sơ chính chủ
+      operationId: updateMyAccount
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMeRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/me/patients/{id}:
+    get:
+      tags:
+      - Phân hệ Người bệnh (Me v1)
+      summary: Lấy chi tiết một hồ sơ bệnh nhân theo ID
+      operationId: getPatient_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+    delete:
+      tags:
+      - Phân hệ Người bệnh (Me v1)
+      summary: Xóa hồ sơ bệnh nhân (tách hồ sơ nếu đã có lịch sử)
+      operationId: deletePatient
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+    patch:
+      tags:
+      - Phân hệ Người bệnh (Me v1)
+      summary: Cập nhật hồ sơ bệnh nhân
+      operationId: updatePatient_2
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatientProfileUpsertRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/doctor/appointments/{id}/undo-call-in:
+    patch:
+      tags:
+      - doctor-workspace-controller
+      operationId: undoCallIn
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAppointmentDetailResponse"
+  /api/v1/doctor/appointments/{id}/call-in:
+    patch:
+      tags:
+      - doctor-workspace-controller
+      operationId: callIn
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAppointmentDetailResponse"
+  /api/v1/articles/admin/{id}/pin:
+    patch:
+      tags:
+      - article-controller
+      operationId: togglePinArticle
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseArticleResponse"
+  /api/v1/appointments/{bookingCode}:
+    get:
+      tags:
+      - appointment-controller
+      operationId: getAppointment
+      parameters:
+      - name: bookingCode
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: X-Phone
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAppointmentResponse"
+    patch:
+      tags:
+      - appointment-controller
+      operationId: cancelAppointment_3
+      parameters:
+      - name: bookingCode
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: X-Phone
+        in: header
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppointmentCancelRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAppointmentResponse"
+  /api/v1/admin/users/{id}/status:
+    patch:
+      tags:
+      - admin-user-controller
+      operationId: toggleUserStatus
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: isActive
+        in: query
+        required: true
+        schema:
+          type: boolean
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseUserAdminDetailResponse"
+  /api/v1/admin/users/{id}/role:
+    patch:
+      tags:
+      - admin-user-controller
+      operationId: updateUserRole
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRoleRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseUserAdminDetailResponse"
+  /api/v1/admin/patients/{id}/status:
+    patch:
+      tags:
+      - admin-patient-controller
+      operationId: togglePatientStatus_2
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponsePatientProfileResponse"
+  /api/v1/admin/appointments/{id}/status:
+    patch:
+      tags:
+      - admin-appointment-controller
+      operationId: updateStatus
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: status
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - PENDING
+          - CONFIRMED
+          - IN_PROGRESS
+          - COMPLETED
+          - CANCELLED
+          - NO_SHOW
+      - name: cancelReason
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAppointmentDetailResponse"
+  /api/v1/admin/appointments/{id}/check-in:
+    patch:
+      tags:
+      - admin-appointment-controller
+      operationId: checkIn_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAppointmentDetailResponse"
+  /api/v1/admin/appointments/{id}/call-in:
+    patch:
+      tags:
+      - admin-appointment-controller
+      operationId: callIn_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAppointmentDetailResponse"
+  /api/v1/admin/appointments/{id}/assign-doctor:
+    patch:
+      tags:
+      - admin-appointment-controller
+      operationId: assignDoctor_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: doctorId
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAppointmentDetailResponse"
+  /api/v1/admin/accounts/{id}:
+    get:
+      tags:
+      - Admin Management API
+      summary: Xem chi tiết một tài khoản
+      operationId: getAccount_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAccountDto"
+    patch:
+      tags:
+      - Admin Management API
+      summary: Chỉnh sửa thông tin tài khoản (hỗ trợ khóa lạc quan STALE)
+      operationId: updateAccount_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminUpdateAccountRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAccountDto"
+  /api/v1/uploads/{id}:
+    get:
+      tags:
+      - Media Storage API
+      summary: Xem ảnh media công khai
+      operationId: getMedia
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: byte
+  /api/v1/time-slots:
+    get:
+      tags:
+      - time-slot-controller
+      operationId: getTimeSlots
+      parameters:
+      - name: date
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+      - name: doctorId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseListTimeSlotResponse"
+  /api/v1/staff/queue:
+    get:
+      tags:
+      - Staff Portal API
+      summary: Lấy trạng thái hàng đợi 5 ghế khám và danh sách hàng chờ
+      operationId: getQueueState
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseQueueStateDto"
+  /api/v1/staff/patients/duplicates:
+    get:
+      tags:
+      - Staff Patient Management API
+      summary: Kiểm tra trùng số điện thoại với các hồ sơ đang có
+      operationId: getDuplicates
+      parameters:
+      - name: phone
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: excludeId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/staff/availability:
+    get:
+      tags:
+      - Staff Portal API
+      summary: Kiểm tra tình trạng khung giờ khả dụng tại quầy (tối đa 7 ngày)
+      operationId: getAvailability
+      parameters:
+      - name: date
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseStaffAvailabilityResponse"
+  /api/v1/staff/appointments/{id}:
+    get:
+      tags:
+      - Staff Portal API
+      summary: Xem chi tiết phiếu khám và hồ sơ bệnh án
+      operationId: getAppointmentDetail
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseStaffAppointmentDetailResponse"
+  /api/v1/staff/appointments/lookup:
+    get:
+      tags:
+      - Staff Portal API
+      summary: "Tra cứu phiếu khám theo mã phiếu, SĐT hoặc mã bệnh nhân"
+      operationId: lookupAppointment
+      parameters:
+      - name: code
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseStaffAppointmentLookupResponse"
+  /api/v1/staff/appointments/dates:
+    get:
+      tags:
+      - Staff Portal API
+      summary: Lấy danh sách các ngày có lịch khám trong tháng
+      operationId: getAppointmentDates
+      parameters:
+      - name: month
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseStaffAppointmentDatesResponse"
+  /api/v1/services:
+    get:
+      tags:
+      - clinic-service-controller
+      operationId: getServices
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseListClinicServiceResponse"
+  /api/v1/receptionist/appointments:
+    get:
+      tags:
+      - receptionist-controller
+      operationId: getAppointments_1
+      parameters:
+      - name: date
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - PENDING
+          - CONFIRMED
+          - IN_PROGRESS
+          - COMPLETED
+          - CANCELLED
+          - NO_SHOW
+      - name: search
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseListAppointmentDetailResponse"
+  /api/v1/queue/today:
+    get:
+      tags:
+      - queue-controller
+      operationId: getQueueToday
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseQueueTodayResponse"
+  /api/v1/posts:
+    get:
+      tags:
+      - Public Post API
+      summary: Lấy danh sách bài viết đã xuất bản (hỗ trợ lọc chuyên mục và tách bài
+        nổi bật)
+      operationId: getPosts
+      parameters:
+      - name: category
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 1
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 9
+      - name: featured
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponsePublicPostListResponse"
+  /api/v1/posts/{slugOrId}:
+    get:
+      tags:
+      - Public Post API
+      summary: Xem chi tiết bài viết theo mã định danh hoặc slug
+      operationId: getPostDetail
+      parameters:
+      - name: slugOrId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/meta:
+    get:
+      tags:
+      - Meta
+      summary: Lấy dữ liệu cấu hình hệ thống phục vụ hiển thị cho Frontend
+      operationId: getMeta
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/me/history:
+    get:
+      tags:
+      - Phân hệ Người bệnh (Me v1)
+      summary: Xem lịch sử các lần khám trước đây của tài khoản
+      operationId: getMyHistory
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/me/availability:
+    get:
+      tags:
+      - Phân hệ Người bệnh (Me v1)
+      summary: Tra cứu tình trạng ghế trống các khung giờ trong ngày
+      operationId: getAvailability_1
+      parameters:
+      - name: date
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/me/appointments/{id}:
+    get:
+      tags:
+      - Phân hệ Người bệnh (Me v1)
+      summary: Xem chi tiết phiếu khám theo ID
+      operationId: getAppointmentDetail_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/me/appointments/{id}/result:
+    get:
+      tags:
+      - Phân hệ Người bệnh (Me v1)
+      summary: Xem kết quả khám bệnh của phiếu khám
+      operationId: getAppointmentResult
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/health:
+    get:
+      tags:
+      - Health
+      summary: Kiểm tra sức khỏe hệ thống
+      operationId: checkHealth
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMapStringObject"
+  /api/v1/doctors:
+    get:
+      tags:
+      - doctor-controller
+      operationId: getDoctors
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseListDoctorResponse"
+  /api/v1/doctor/my-queue:
+    get:
+      tags:
+      - doctor-workspace-controller
+      operationId: getMyQueue
+      parameters:
+      - name: doctorId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: date
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseListAppointmentDetailResponse"
+  /api/v1/doctor/medical-records/patient/{patientId}:
+    get:
+      tags:
+      - doctor-workspace-controller
+      operationId: getPatientHistory
+      parameters:
+      - name: patientId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseListDoctorMedicalRecordResponse"
+  /api/v1/booking/slots:
+    get:
+      tags:
+      - booking-controller
+      operationId: getAvailableSlots
+      parameters:
+      - name: date
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseListSlotAvailabilityResponse"
+  /api/v1/booking/my/{id}:
+    get:
+      tags:
+      - booking-controller
+      operationId: getMyAppointmentById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAppointmentDetailResponse"
+  /api/v1/booking/my/upcoming:
+    get:
+      tags:
+      - booking-controller
+      operationId: getMyUpcoming
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseListAppointmentDetailResponse"
+  /api/v1/booking/my/history:
+    get:
+      tags:
+      - booking-controller
+      operationId: getMyHistory_1
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseListAppointmentDetailResponse"
+  /api/v1/articles:
+    get:
+      tags:
+      - article-controller
+      operationId: getPublishedArticles
+      parameters:
+      - name: category
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: size
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 10
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponsePageArticleResponse"
+  /api/v1/articles/{slug}:
+    get:
+      tags:
+      - article-controller
+      operationId: getArticleBySlug
+      parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseArticleResponse"
+  /api/v1/articles/categories:
+    get:
+      tags:
+      - article-controller
+      operationId: getCategories
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseListMapStringObject"
+  /api/v1/articles/admin/all:
+    get:
+      tags:
+      - article-controller
+      operationId: getAllArticlesAdmin
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: size
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 20
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponsePageArticleResponse"
+  /api/v1/admin/medical-records/patient/{patientId}:
+    get:
+      tags:
+      - admin-medical-record-controller
+      operationId: getByPatient
+      parameters:
+      - name: patientId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseListMedicalRecordDetailResponse"
+  /api/v1/admin/medical-records/appointment/{appointmentId}:
+    get:
+      tags:
+      - admin-medical-record-controller
+      operationId: getByAppointment
+      parameters:
+      - name: appointmentId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseMedicalRecordDetailResponse"
+  /api/v1/admin/dashboard:
+    get:
+      tags:
+      - Admin Management API
+      summary: Lấy dữ liệu tổng quan cho trang Dashboard Admin
+      operationId: getDashboard
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseAdminDashboardResponse"
+  /api/v1/admin/dashboard/stats:
+    get:
+      tags:
+      - admin-dashboard-controller
+      operationId: getStats
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseDashboardStatsResponse"
+  /api/v1/admin/appointments:
+    get:
+      tags:
+      - admin-appointment-controller
+      operationId: getAppointments_2
+      parameters:
+      - name: date
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - PENDING
+          - CONFIRMED
+          - IN_PROGRESS
+          - COMPLETED
+          - CANCELLED
+          - NO_SHOW
+      - name: search
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseListAppointmentDetailResponse"
+  /api/v1/admin/appointments/doctor-queue:
+    get:
+      tags:
+      - admin-appointment-controller
+      operationId: getDoctorQueue
+      parameters:
+      - name: doctorId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: date
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponseListAppointmentDetailResponse"
+components:
+  schemas:
+    AdminChangeRoleRequest:
+      type: object
+      properties:
+        role:
+          type: string
+          minLength: 1
+        tempPassword:
+          type: string
+        email:
+          type: string
+      required:
+      - role
+    ApiResponseMapStringObject:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          type: object
+          additionalProperties: {}
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    ApiResponsePatientDto:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/PatientDto"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    PatientDto:
+      type: object
+      properties:
+        id:
+          type: string
+        patientCode:
+          type: string
+        fullName:
+          type: string
+        phone:
+          type: string
+        dob:
+          type: string
+        birthYear:
+          type: integer
+          format: int32
+        gender:
+          type: string
+        relationship:
+          type: string
+        address:
+          type: string
+        medicalHistory:
+          type: string
+        isPrimary:
+          type: boolean
+        isLocked:
+          type: boolean
+        active:
+          type: boolean
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        infoUpdatedAt:
+          type: string
+        lastVisitDate:
+          type: string
+    AccountDto:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        fullName:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        isActive:
+          type: boolean
+        mustChangePassword:
+          type: boolean
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        infoUpdatedAt:
+          type: string
+    ApiResponseAccountDto:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/AccountDto"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    UpdateRecordRequest:
+      type: object
+      properties:
+        diagnosis:
+          type: string
+        pulse:
+          type: string
+        bloodPressure:
+          type: string
+        treatmentNotes:
+          type: object
+          additionalProperties:
+            type: string
+        treatment:
+          type: string
+        prescription:
+          type: string
+        advice:
+          type: string
+        medicalHistory:
+          type: string
+        followUpDate:
+          type: string
+        doctorName:
+          type: string
+    ApiResponseRecordDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/RecordDetailResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    MedicalRecordPatientDto:
+      type: object
+      properties:
+        id:
+          type: string
+        appointmentId:
+          type: string
+        patientId:
+          type: string
+        doctorName:
+          type: string
+        visitDate:
+          type: string
+        diagnosis:
+          type: string
+        pulse:
+          type: string
+        bloodPressure:
+          type: string
+        pulseBp:
+          type: string
+        treatment:
+          type: string
+        treatmentNotes:
+          type: object
+          additionalProperties:
+            type: string
+        prescription:
+          type: string
+        advice:
+          type: string
+        followUpDate:
+          type: string
+        createdAt:
+          type: string
+        editableUntil:
+          type: string
+        editable:
+          type: boolean
+        medicalHistory:
+          type: string
+        editHistory:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+    RecordDetailResponse:
+      type: object
+      properties:
+        record:
+          $ref: "#/components/schemas/MedicalRecordPatientDto"
+    AutoInviteRequest:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+    ApiResponseQueueStateDto:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/QueueStateDto"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    QueueSeatDto:
+      type: object
+      properties:
+        seatNo:
+          type: integer
+          format: int32
+        empty:
+          type: boolean
+        id:
+          type: string
+        appointmentId:
+          type: string
+        ticketCode:
+          type: string
+        patient:
+          $ref: "#/components/schemas/PatientDto"
+        doctor:
+          type: string
+        enteredAt:
+          type: string
+        priorityGroup:
+          type: string
+        source:
+          type: string
+        slotStart:
+          type: string
+        checkInTime:
+          type: string
+    QueueStateDto:
+      type: object
+      properties:
+        date:
+          type: string
+        capacity:
+          type: integer
+          format: int32
+        inRoomCount:
+          type: integer
+          format: int32
+        waitingCount:
+          type: integer
+          format: int32
+        completedCount:
+          type: integer
+          format: int64
+        autoInvite:
+          type: boolean
+        seats:
+          type: array
+          items:
+            $ref: "#/components/schemas/QueueSeatDto"
+        waiting:
+          type: array
+          items:
+            $ref: "#/components/schemas/QueueWaitingDto"
+        slotMap:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int32
+    QueueWaitingDto:
+      type: object
+      properties:
+        id:
+          type: string
+        appointmentId:
+          type: string
+        queueNo:
+          type: integer
+          format: int32
+        ticketCode:
+          type: string
+        patient:
+          $ref: "#/components/schemas/PatientDto"
+        priorityGroup:
+          type: string
+        source:
+          type: string
+        slotStart:
+          type: string
+        checkInTime:
+          type: string
+        waitedMinutes:
+          type: integer
+          format: int64
+    PatientProfileRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+          maxLength: 100
+          minLength: 0
+        phone:
+          type: string
+          minLength: 1
+          pattern: "^(0[3|5|7|8|9])\\d{8}$"
+        yearOfBirth:
+          type: integer
+          format: int32
+          maximum: 2025
+          minimum: 1900
+        gender:
+          type: string
+          enum:
+          - MALE
+          - FEMALE
+          - OTHER
+        address:
+          type: string
+          maxLength: 255
+          minLength: 0
+        relationship:
+          type: string
+          minLength: 1
+        medicalHistory:
+          type: string
+          maxLength: 500
+          minLength: 0
+      required:
+      - fullName
+      - gender
+      - phone
+      - relationship
+      - yearOfBirth
+    ApiResponsePatientProfileResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/PatientProfileResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    PatientProfileResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        patientCode:
+          type: string
+        fullName:
+          type: string
+        phone:
+          type: string
+        yearOfBirth:
+          type: integer
+          format: int32
+        gender:
+          type: string
+          enum:
+          - MALE
+          - FEMALE
+          - OTHER
+        address:
+          type: string
+        relationship:
+          type: string
+        medicalHistory:
+          type: string
+        isPrimary:
+          type: boolean
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    UpdateMedicalRecordRequest:
+      type: object
+      properties:
+        pulseBp:
+          type: string
+        diagnosis:
+          type: string
+        treatment:
+          type: string
+        prescription:
+          type: string
+        advice:
+          type: string
+        followUpDate:
+          type: string
+          format: date
+    ApiResponseDoctorMedicalRecordResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/DoctorMedicalRecordResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    DoctorMedicalRecordResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        appointmentId:
+          type: integer
+          format: int64
+        bookingCode:
+          type: string
+        patientId:
+          type: integer
+          format: int64
+        patientName:
+          type: string
+        doctorName:
+          type: string
+        pulseBp:
+          type: string
+        diagnosis:
+          type: string
+        prescription:
+          type: string
+        advice:
+          type: string
+        followUpDate:
+          type: string
+          format: date
+        appointmentDate:
+          type: string
+          format: date
+    UpdateStaffProfileRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          format: email
+      required:
+      - fullName
+    ApiResponseUserResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/UserResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        fullName:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum:
+          - ADMIN
+          - DOCTOR
+          - STAFF
+          - PATIENT
+    UpdateUserProfileRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+          minLength: 1
+        yearOfBirth:
+          type: integer
+          format: int32
+        gender:
+          type: string
+          enum:
+          - MALE
+          - FEMALE
+          - OTHER
+        address:
+          type: string
+        email:
+          type: string
+      required:
+      - fullName
+      - gender
+      - yearOfBirth
+    ArticleRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        slug:
+          type: string
+        summary:
+          type: string
+          minLength: 1
+        content:
+          type: string
+          minLength: 1
+        thumbnailUrl:
+          type: string
+        categoryId:
+          type: integer
+          format: int64
+        isPublished:
+          type: boolean
+      required:
+      - content
+      - summary
+      - title
+    ApiResponseArticleResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/ArticleResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    ArticleResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        slug:
+          type: string
+        summary:
+          type: string
+        content:
+          type: string
+        thumbnailUrl:
+          type: string
+        categoryId:
+          type: integer
+          format: int64
+        categoryName:
+          type: string
+        categorySlug:
+          type: string
+        authorName:
+          type: string
+        isPublished:
+          type: boolean
+        isPinned:
+          type: boolean
+        publishedAt:
+          type: string
+          format: date-time
+        viewCount:
+          type: integer
+          format: int32
+        createdAt:
+          type: string
+          format: date-time
+    UpdateUserAccountRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          minLength: 1
+      required:
+      - fullName
+      - phone
+    ApiResponseUserAdminDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/UserAdminDetailResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    UserAdminDetailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        fullName:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum:
+          - ADMIN
+          - DOCTOR
+          - STAFF
+          - PATIENT
+        roleLabel:
+          type: string
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        lastLoginAt:
+          type: string
+          format: date-time
+        doctorId:
+          type: integer
+          format: int64
+        doctorTitle:
+          type: string
+        doctorSpecialty:
+          type: string
+    AdminSavePostRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        summary:
+          type: string
+        excerpt:
+          type: string
+        category:
+          type: string
+        status:
+          type: string
+        coverImage:
+          type: string
+        pinned:
+          type: boolean
+    StaffCreatePatientRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+          minLength: 1
+        birthYear:
+          type: integer
+          format: int32
+        dob:
+          type: string
+        gender:
+          type: string
+        address:
+          type: string
+        medicalHistory:
+          type: string
+        confirmDuplicate:
+          type: boolean
+      required:
+      - birthYear
+      - fullName
+      - phone
+    StaffCreateAppointmentRequest:
+      type: object
+      properties:
+        patientId:
+          type: integer
+          format: int64
+        serviceType:
+          type: string
+        slotDate:
+          type: string
+        slotStart:
+          type: string
+          minLength: 1
+        checkInNow:
+          type: boolean
+      required:
+      - patientId
+      - slotDate
+      - slotStart
+    ApiResponseStaffAppointmentLookupResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/StaffAppointmentLookupResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    AppointmentDto:
+      type: object
+      properties:
+        id:
+          type: string
+        bookingCode:
+          type: string
+        ticketCode:
+          type: string
+        patient:
+          $ref: "#/components/schemas/PatientDto"
+        doctor:
+          type: string
+        serviceType:
+          type: string
+        slotDate:
+          type: string
+        slotStart:
+          type: string
+        slotEnd:
+          type: string
+        expectedTime:
+          type: string
+        status:
+          type: string
+        source:
+          type: string
+        cancelReason:
+          type: string
+        bookerName:
+          type: string
+        bookerPhone:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        checkInAt:
+          type: string
+        enteredAt:
+          type: string
+        checkin:
+          type: object
+          additionalProperties: {}
+    StaffAppointmentLookupResponse:
+      type: object
+      properties:
+        appointment:
+          $ref: "#/components/schemas/AppointmentDto"
+    RescheduleAppointmentRequest:
+      type: object
+      properties:
+        slotDate:
+          type: string
+        slotStart:
+          type: string
+        newDate:
+          type: string
+          format: date
+        newTimeSlotId:
+          type: integer
+          format: int64
+        reason:
+          type: string
+    CreateRecordRequest:
+      type: object
+      properties:
+        diagnosis:
+          type: string
+          minLength: 1
+        pulse:
+          type: string
+        bloodPressure:
+          type: string
+        treatmentNotes:
+          type: object
+          additionalProperties:
+            type: string
+        treatment:
+          type: string
+        prescription:
+          type: string
+        advice:
+          type: string
+        medicalHistory:
+          type: string
+        followUpDate:
+          type: string
+        doctorName:
+          type: string
+      required:
+      - diagnosis
+    CancelAppointmentStaffRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 1
+      required:
+      - reason
+    ChangeStaffEmailRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+      required:
+      - email
+    VerifyStaffEmailRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          pattern: "^\\d{6}$"
+      required:
+      - code
+    WalkInAppointmentRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+          minLength: 1
+          pattern: "^(0[3|5|7|8|9])\\d{8}$"
+        yearOfBirth:
+          type: integer
+          format: int32
+        gender:
+          type: string
+          enum:
+          - MALE
+          - FEMALE
+          - OTHER
+        address:
+          type: string
+        timeSlotId:
+          type: integer
+          format: int64
+        doctorId:
+          type: integer
+          format: int64
+        serviceId:
+          type: integer
+          format: int64
+        symptoms:
+          type: string
+      required:
+      - fullName
+      - gender
+      - phone
+      - yearOfBirth
+    ApiResponseAppointmentDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/AppointmentDetailResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    AppointmentDetailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        bookingCode:
+          type: string
+        appointmentDate:
+          type: string
+          format: date
+        timeSlotLabel:
+          type: string
+        startTime:
+          type: string
+        endTime:
+          type: string
+        patientName:
+          type: string
+        patientCode:
+          type: string
+        relationship:
+          type: string
+        serviceName:
+          type: string
+        doctorName:
+          type: string
+        symptoms:
+          type: string
+        queueNumber:
+          type: integer
+          format: int32
+        patientPhone:
+          type: string
+        patientYearOfBirth:
+          type: integer
+          format: int32
+        source:
+          type: string
+        status:
+          type: string
+          enum:
+          - PENDING
+          - CONFIRMED
+          - IN_PROGRESS
+          - COMPLETED
+          - CANCELLED
+          - NO_SHOW
+        statusLabel:
+          type: string
+        cancelReason:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        medicalResult:
+          $ref: "#/components/schemas/MedicalResultSummary"
+    MedicalResultSummary:
+      type: object
+      properties:
+        diagnosis:
+          type: string
+        prescription:
+          type: string
+        advice:
+          type: string
+        followUpDate:
+          type: string
+          format: date
+        recordedAt:
+          type: string
+          format: date-time
+    PatientProfileUpsertRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+        birthYear:
+          type: integer
+          format: int32
+        dob:
+          type: string
+        gender:
+          type: string
+        relationship:
+          type: string
+        address:
+          type: string
+        medicalHistory:
+          type: string
+        expectedUpdatedAt:
+          type: string
+      required:
+      - fullName
+    PatientBookAppointmentRequest:
+      type: object
+      properties:
+        patientId:
+          type: integer
+          format: int64
+        serviceType:
+          type: string
+        slotDate:
+          type: string
+          minLength: 1
+        slotStart:
+          type: string
+          minLength: 1
+        rebookFromId:
+          type: integer
+          format: int64
+      required:
+      - patientId
+      - slotDate
+      - slotStart
+    ApiResponseBoolean:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          type: boolean
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    CreateMedicalRecordRequest:
+      type: object
+      properties:
+        appointmentId:
+          type: integer
+          format: int64
+        pulseBp:
+          type: string
+        bloodPressure:
+          type: string
+        pulseRate:
+          type: integer
+          format: int32
+        pulseDiagnosis:
+          type: string
+        tongueDiagnosis:
+          type: string
+        diagnosis:
+          type: string
+        traditionalDiagnosis:
+          type: string
+        treatment:
+          type: string
+        acupointTherapy:
+          type: string
+        prescription:
+          type: string
+        herbalPrescription:
+          type: string
+        advice:
+          type: string
+        dietaryAdvice:
+          type: string
+        followUpDays:
+          type: integer
+          format: int32
+        followUpDate:
+          type: string
+          format: date
+      required:
+      - appointmentId
+    BookingRequest:
+      type: object
+      properties:
+        appointmentDate:
+          type: string
+          format: date
+        timeSlotId:
+          type: integer
+          format: int64
+        patientId:
+          type: integer
+          format: int64
+        serviceId:
+          type: integer
+          format: int64
+        symptoms:
+          type: string
+          maxLength: 500
+          minLength: 0
+      required:
+      - appointmentDate
+      - patientId
+      - timeSlotId
+    AppointmentCancelByPatientRequest:
+      type: object
+      properties:
+        cancelReason:
+          type: string
+          maxLength: 255
+          minLength: 0
+    VerifyOtpRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+          minLength: 1
+          pattern: "^(0[35789]\\d{8}|[35789]\\d{8})$"
+        otpCode:
+          type: string
+          minLength: 1
+          pattern: "^\\d{6}$"
+        otpType:
+          type: string
+          enum:
+          - REGISTER
+          - LOGIN
+          - FORGOT_PASSWORD
+      required:
+      - otpCode
+      - otpType
+      - phone
+    StaffResetPasswordRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          minLength: 1
+        newPassword:
+          type: string
+          maxLength: 2147483647
+          minLength: 6
+      required:
+      - newPassword
+      - token
+    StaffLoginRequest:
+      type: object
+      properties:
+        identifier:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          minLength: 1
+      required:
+      - identifier
+      - password
+    ForgotPasswordRequest:
+      type: object
+      properties:
+        identifier:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        effectiveIdentifier:
+          type: string
+    StaffForgotPasswordVerifyRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        identifier:
+          type: string
+        code:
+          type: string
+          minLength: 1
+        effectiveIdentifier:
+          type: string
+      required:
+      - code
+    SendOtpRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+          minLength: 1
+          pattern: "^(0[35789]\\d{8}|[35789]\\d{8})$"
+        otpType:
+          type: string
+          enum:
+          - REGISTER
+          - LOGIN
+          - FORGOT_PASSWORD
+      required:
+      - otpType
+      - phone
+    ApiResponseVoid:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data: {}
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    PatientRegisterRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+          minLength: 1
+        fullName:
+          type: string
+        birthYear:
+          type: integer
+          format: int32
+        dob:
+          type: string
+        gender:
+          type: string
+        address:
+          type: string
+      required:
+      - phone
+    RegisterVerifyRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+          minLength: 1
+        code:
+          type: string
+          minLength: 1
+        fullName:
+          type: string
+        birthYear:
+          type: integer
+          format: int32
+        dob:
+          type: string
+        gender:
+          type: string
+        address:
+          type: string
+        remember:
+          type: boolean
+      required:
+      - code
+      - phone
+    ApiResponseAuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/AuthResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        tokenType:
+          type: string
+        user:
+          $ref: "#/components/schemas/UserResponse"
+    OtpResendRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+          minLength: 1
+        purpose:
+          type: string
+      required:
+      - phone
+    LoginVerifyRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+          minLength: 1
+        code:
+          type: string
+          minLength: 1
+        remember:
+          type: boolean
+      required:
+      - code
+      - phone
+    ChangePasswordRequest:
+      type: object
+      properties:
+        oldPassword:
+          type: string
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+          maxLength: 2147483647
+          minLength: 6
+        effectiveCurrentPassword:
+          type: string
+      required:
+      - newPassword
+    AppointmentCreateRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+          maxLength: 100
+          minLength: 0
+        phone:
+          type: string
+          minLength: 1
+          pattern: "^(03|05|07|08|09)\\d{8}$"
+        yearOfBirth:
+          type: integer
+          format: int32
+          minimum: 1900
+        gender:
+          type: string
+          enum:
+          - MALE
+          - FEMALE
+          - OTHER
+        address:
+          type: string
+          maxLength: 255
+          minLength: 0
+        symptoms:
+          type: string
+          maxLength: 1000
+          minLength: 0
+        appointmentDate:
+          type: string
+          format: date
+        timeSlotId:
+          type: integer
+          format: int64
+        doctorId:
+          type: integer
+          format: int64
+        serviceId:
+          type: integer
+          format: int64
+        bookerName:
+          type: string
+          maxLength: 100
+          minLength: 0
+        bookerPhone:
+          type: string
+          pattern: "^(03|05|07|08|09)\\d{8}$|^$"
+        relationship:
+          type: string
+          maxLength: 50
+          minLength: 0
+      required:
+      - appointmentDate
+      - fullName
+      - gender
+      - phone
+      - timeSlotId
+      - yearOfBirth
+    ApiResponseAppointmentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/AppointmentResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    AppointmentResponse:
+      type: object
+      properties:
+        bookingCode:
+          type: string
+        patientName:
+          type: string
+        appointmentDate:
+          type: string
+          format: date
+        timeSlot:
+          $ref: "#/components/schemas/TimeSlotSummary"
+        doctor:
+          $ref: "#/components/schemas/DoctorSummary"
+        service:
+          $ref: "#/components/schemas/ServiceSummary"
+        status:
+          type: string
+          enum:
+          - PENDING
+          - CONFIRMED
+          - IN_PROGRESS
+          - COMPLETED
+          - CANCELLED
+          - NO_SHOW
+        createdAt:
+          type: string
+          format: date-time
+    DoctorSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        fullName:
+          type: string
+    ServiceSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+    TimeSlotSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        label:
+          type: string
+        startTime:
+          type: string
+        endTime:
+          type: string
+    CreateUserAccountRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          maxLength: 50
+          minLength: 3
+        password:
+          type: string
+          maxLength: 100
+          minLength: 6
+        fullName:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+          minLength: 1
+          pattern: "^(0[3|5|7|8|9])\\d{8}$"
+        email:
+          type: string
+        role:
+          type: string
+          enum:
+          - ADMIN
+          - DOCTOR
+          - STAFF
+          - PATIENT
+        title:
+          type: string
+        specialty:
+          type: string
+      required:
+      - fullName
+      - password
+      - phone
+      - role
+      - username
+    ResetPasswordRequest:
+      type: object
+      properties:
+        newPassword:
+          type: string
+          maxLength: 100
+          minLength: 6
+      required:
+      - newPassword
+    ApiResponseMedicalRecordDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/MedicalRecordDetailResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    MedicalRecordDetailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        appointmentId:
+          type: integer
+          format: int64
+        bookingCode:
+          type: string
+        appointmentDate:
+          type: string
+          format: date
+        patientId:
+          type: integer
+          format: int64
+        patientName:
+          type: string
+        patientCode:
+          type: string
+        doctorName:
+          type: string
+        pulseBp:
+          type: string
+        diagnosis:
+          type: string
+        treatment:
+          type: string
+        prescription:
+          type: string
+        advice:
+          type: string
+        followUpDate:
+          type: string
+          format: date
+        createdAt:
+          type: string
+          format: date-time
+    AdminCreateAccountRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+          minLength: 1
+        email:
+          type: string
+        role:
+          type: string
+        tempPassword:
+          type: string
+      required:
+      - fullName
+      - phone
+    AdminResetPasswordRequest:
+      type: object
+      properties:
+        tempPassword:
+          type: string
+          minLength: 1
+      required:
+      - tempPassword
+    StaffUpdatePatientRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+        phone:
+          type: string
+        birthYear:
+          type: integer
+          format: int32
+        dob:
+          type: string
+        gender:
+          type: string
+        address:
+          type: string
+        medicalHistory:
+          type: string
+        expectedUpdatedAt:
+          type: string
+    UpdateStaffAccountRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+          maxLength: 100
+          minLength: 2
+      required:
+      - fullName
+    UpdateMeRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+        dob:
+          type: string
+        gender:
+          type: string
+        address:
+          type: string
+        email:
+          type: string
+        expectedUpdatedAt:
+          type: string
+    AppointmentCancelRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          minLength: 1
+          pattern: ^CANCELLED$
+        cancelReason:
+          type: string
+          maxLength: 255
+          minLength: 0
+      required:
+      - status
+    UpdateUserRoleRequest:
+      type: object
+      properties:
+        role:
+          type: string
+          enum:
+          - ADMIN
+          - DOCTOR
+          - STAFF
+          - PATIENT
+        title:
+          type: string
+        specialty:
+          type: string
+      required:
+      - role
+    AdminUpdateAccountRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        expectedUpdatedAt:
+          type: string
+    ApiResponseListTimeSlotResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimeSlotResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    TimeSlotResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        slotLabel:
+          type: string
+        startTime:
+          type: string
+        endTime:
+          type: string
+        period:
+          type: string
+          enum:
+          - MORNING
+          - AFTERNOON
+          - FULL_DAY
+        remaining:
+          type: integer
+          format: int32
+    ApiResponseStaffPatientListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/StaffPatientListResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    StaffPatientListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PatientDto"
+        total:
+          type: integer
+          format: int64
+        pages:
+          type: integer
+          format: int32
+        page:
+          type: integer
+          format: int32
+        limit:
+          type: integer
+          format: int32
+    ApiResponseStaffPatientDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/StaffPatientDetailResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    StaffPatientDetailResponse:
+      type: object
+      properties:
+        patient:
+          $ref: "#/components/schemas/PatientDto"
+        appointments:
+          type: array
+          items:
+            $ref: "#/components/schemas/AppointmentDto"
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/MedicalRecordPatientDto"
+    ApiResponseStaffAvailabilityResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/StaffAvailabilityResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    SlotAvailabilityDto:
+      type: object
+      properties:
+        id:
+          type: string
+        start:
+          type: string
+        end:
+          type: string
+        booked:
+          type: integer
+          format: int32
+        capacity:
+          type: integer
+          format: int32
+        remaining:
+          type: integer
+          format: int32
+        available:
+          type: boolean
+        reason:
+          type: string
+    StaffAvailabilityResponse:
+      type: object
+      properties:
+        date:
+          type: string
+        slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/SlotAvailabilityDto"
+    ApiResponseStaffAppointmentListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/StaffAppointmentListResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    StaffAppointmentListResponse:
+      type: object
+      properties:
+        date:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AppointmentDto"
+        summary:
+          $ref: "#/components/schemas/StaffAppointmentSummaryDto"
+    StaffAppointmentSummaryDto:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int32
+        checkedIn:
+          type: integer
+          format: int32
+        inProgress:
+          type: integer
+          format: int32
+        completed:
+          type: integer
+          format: int32
+        cancelled:
+          type: integer
+          format: int32
+        booked:
+          type: integer
+          format: int32
+    ApiResponseStaffAppointmentDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/StaffAppointmentDetailResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    StaffAppointmentDetailResponse:
+      type: object
+      properties:
+        appointment:
+          $ref: "#/components/schemas/AppointmentDto"
+        record:
+          $ref: "#/components/schemas/MedicalRecordPatientDto"
+    ApiResponseStaffAppointmentDatesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/StaffAppointmentDatesResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    StaffAppointmentDatesResponse:
+      type: object
+      properties:
+        month:
+          type: string
+        dates:
+          type: array
+          items:
+            type: string
+    ApiResponseListClinicServiceResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClinicServiceResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    ClinicServiceResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        durationMin:
+          type: integer
+          format: int32
+        price:
+          type: number
+        iconUrl:
+          type: string
+    ApiResponseListAppointmentDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AppointmentDetailResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    ApiResponseQueueTodayResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/QueueTodayResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    QueueItem:
+      type: object
+      properties:
+        appointmentId:
+          type: integer
+          format: int64
+        bookingCode:
+          type: string
+        patientName:
+          type: string
+        displayName:
+          type: string
+        patientCode:
+          type: string
+        timeSlotLabel:
+          type: string
+        doctorName:
+          type: string
+        serviceName:
+          type: string
+        status:
+          type: string
+          enum:
+          - PENDING
+          - CONFIRMED
+          - IN_PROGRESS
+          - COMPLETED
+          - CANCELLED
+          - NO_SHOW
+    QueueTodayResponse:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        currentTime:
+          type: string
+        inProgressList:
+          type: array
+          items:
+            $ref: "#/components/schemas/QueueItem"
+        waitingList:
+          type: array
+          items:
+            $ref: "#/components/schemas/QueueItem"
+        totalBookedToday:
+          type: integer
+          format: int32
+        completedTodayCount:
+          type: integer
+          format: int64
+    ApiResponsePublicPostListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/PublicPostListResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    PostDto:
+      type: object
+      properties:
+        id:
+          type: string
+        slug:
+          type: string
+        title:
+          type: string
+        summary:
+          type: string
+        excerpt:
+          type: string
+        content:
+          type: string
+        thumbnail:
+          type: string
+        coverImage:
+          type: string
+        category:
+          type: string
+        categoryName:
+          type: string
+        categoryLabel:
+          type: string
+        author:
+          type: string
+        pinned:
+          type: boolean
+        status:
+          type: string
+        publishedAt:
+          type: string
+        updatedAt:
+          type: string
+        createdAt:
+          type: string
+    PublicPostListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PostDto"
+        featured:
+          $ref: "#/components/schemas/PostDto"
+        total:
+          type: integer
+          format: int64
+        pages:
+          type: integer
+          format: int32
+        page:
+          type: integer
+          format: int32
+        limit:
+          type: integer
+          format: int32
+    ApiResponseListPatientProfileResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PatientProfileResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    ApiResponseListDoctorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/DoctorResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    DoctorResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        fullName:
+          type: string
+        title:
+          type: string
+        specialty:
+          type: string
+        experienceYears:
+          type: integer
+          format: int32
+        bio:
+          type: string
+        avatarUrl:
+          type: string
+    ApiResponseListDoctorMedicalRecordResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/DoctorMedicalRecordResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    ApiResponseListSlotAvailabilityResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/SlotAvailabilityResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    SlotAvailabilityResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        slotLabel:
+          type: string
+        startTime:
+          type: string
+        endTime:
+          type: string
+        period:
+          type: string
+        maxPatients:
+          type: integer
+          format: int32
+        bookedCount:
+          type: integer
+          format: int64
+        available:
+          type: integer
+          format: int64
+        isFull:
+          type: boolean
+        sortOrder:
+          type: integer
+          format: int32
+    ApiResponsePageArticleResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/PageArticleResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    PageArticleResponse:
+      type: object
+      properties:
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        first:
+          type: boolean
+        last:
+          type: boolean
+        size:
+          type: integer
+          format: int32
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/ArticleResponse"
+        number:
+          type: integer
+          format: int32
+        sort:
+          $ref: "#/components/schemas/SortObject"
+        numberOfElements:
+          type: integer
+          format: int32
+        pageable:
+          $ref: "#/components/schemas/PageableObject"
+        empty:
+          type: boolean
+    PageableObject:
+      type: object
+      properties:
+        offset:
+          type: integer
+          format: int64
+        sort:
+          $ref: "#/components/schemas/SortObject"
+        pageNumber:
+          type: integer
+          format: int32
+        paged:
+          type: boolean
+        pageSize:
+          type: integer
+          format: int32
+        unpaged:
+          type: boolean
+    SortObject:
+      type: object
+      properties:
+        empty:
+          type: boolean
+        sorted:
+          type: boolean
+        unsorted:
+          type: boolean
+    ApiResponseListMapStringObject:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    ApiResponseListUserAdminDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserAdminDetailResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    AdminPostListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PostDto"
+        total:
+          type: integer
+          format: int64
+        pages:
+          type: integer
+          format: int32
+        page:
+          type: integer
+          format: int32
+        limit:
+          type: integer
+          format: int32
+        statusCounts:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int32
+    ApiResponseAdminPostListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/AdminPostListResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    ApiResponseListMedicalRecordDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MedicalRecordDetailResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    AdminDashboardAppointments:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int32
+        active:
+          type: integer
+          format: int32
+        byStatus:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int32
+    AdminDashboardPatients:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int64
+    AdminDashboardPosts:
+      type: object
+      properties:
+        published:
+          type: integer
+          format: int32
+        draft:
+          type: integer
+          format: int32
+        hidden:
+          type: integer
+          format: int32
+    AdminDashboardResponse:
+      type: object
+      properties:
+        date:
+          type: string
+        appointments:
+          $ref: "#/components/schemas/AdminDashboardAppointments"
+        patients:
+          $ref: "#/components/schemas/AdminDashboardPatients"
+        posts:
+          $ref: "#/components/schemas/AdminDashboardPosts"
+        accounts:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int32
+        drafts:
+          type: array
+          items:
+            $ref: "#/components/schemas/PostDto"
+        queue:
+          $ref: "#/components/schemas/QueueStateDto"
+    ApiResponseAdminDashboardResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/AdminDashboardResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    ApiResponseDashboardStatsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/DashboardStatsResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+    DashboardStatsResponse:
+      type: object
+      properties:
+        today:
+          type: string
+          format: date
+        totalToday:
+          type: integer
+          format: int32
+        pendingCount:
+          type: integer
+          format: int64
+        waitingCount:
+          type: integer
+          format: int64
+        inProgressCount:
+          type: integer
+          format: int64
+        completedCount:
+          type: integer
+          format: int64
+        cancelledCount:
+          type: integer
+          format: int64
+        totalPatients:
+          type: integer
+          format: int64
+        totalArticles:
+          type: integer
+          format: int64
+        totalDoctors:
+          type: integer
+          format: int64
+    AdminAccountListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AccountDto"
+        total:
+          type: integer
+          format: int64
+        pages:
+          type: integer
+          format: int32
+        page:
+          type: integer
+          format: int32
+        limit:
+          type: integer
+          format: int32
+        roleCounts:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int32
+    ApiResponseAdminAccountListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/AdminAccountListResponse"
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        retryAfter:
+          type: integer
+          format: int32
+        timestamp:
+          type: string
+          format: date-time
+  securitySchemes:
+    bearerAuth:
+      type: http
+      description: Nhập JWT Token xác thực để thực hiện các thao tác có phân quyền
+      name: bearerAuth
+      scheme: bearer
+      bearerFormat: JWT

@@ -1,0 +1,391 @@
+BẠN LÀ SENIOR BACKEND ENGINEER (10+ NĂM, Java/Spring Boot, hệ thống y tế) PHỤ TRÁCH DỰ ÁN
+"PHÒNG KHÁM CHÚC TỪ". Bạn nhận một hệ thống đang chạy được nhưng API tầng giữa còn dở và lệch với
+frontend. Nhiệm vụ của bạn: tự thiết kế và hoàn thiện tầng API /api/v1 cho đúng chuẩn một kỹ sư lâu năm,
+nối liền frontend với backend thành MỘT website hoàn chỉnh, không lỗi, không màn hình trắng.
+
+====================================================================
+PHẦN 0 — ĐỌC TRƯỚC KHI VIẾT CODE (BẮT BUỘC, ĐÚNG THỨ TỰ)
+====================================================================
+1. AGENTS.md                          — quy tắc dự án (chuẩn envelope ApiResponse, bảo mật dữ liệu y tế, tiếng Việt)
+2. docs/PROJECT_CONTEXT.md            — ngữ cảnh, kiến trúc mong muốn
+3. database/001_schema_v2.sql         — schema THẬT đang chạy (22 bảng) — đây là nguồn chân lý về dữ liệu
+4. backend/pom.xml, application.yml   — phiên bản & cấu hình
+5. backend/src/main/java/com/chuctupk/controller/**  — toàn bộ controller hiện có, gồm cả gói `compat`
+6. frontend/src/shared/lib/api.js + các trang frontend/src/site/** và frontend/src/staff/**
+   (đọc để biết FE cần trường gì; KHÔNG sửa giao diện)
+7. docs/API.md (nếu có)               — CHỈ ĐỂ THAM KHẢO những đường dẫn FE đang gọi.
+   TUYỆT ĐỐI KHÔNG coi đây là hợp đồng bắt buộc. Không copy nguyên thiết kế trong đó.
+
+Sau khi đọc, in ra bảng ngắn: "endpoint FE đang gọi | endpoint v1 sẽ có | trạng thái (giữ/viết lại/mới)".
+Chỉ sau đó mới code.
+
+====================================================================
+PHẦN 1 — BỐI CẢNH
+====================================================================
+- Sản phẩm: website đặt lịch + quản trị cho Phòng chẩn trị YHCT từ thiện Chúc Từ.
+  Người bệnh 50–80 tuổi (mắt kém, tay run, hay bấm nhầm), con cháu đặt lịch hộ, nhân viên là tiếp tân và Admin.
+- Monorepo:
+    backend/   Java 17 + Spring Boot 3 — entity/repository/service đã có, chạy được
+    frontend/  React 18 + Vite + CSS thuần; HAI khu: trang khách "/" và nội bộ "/noi-bo/"
+    database/  001_schema_v2.sql + seed
+    docker/    mysql (3307), backend (8088), frontend (3000)
+- Frontend ĐÃ VIẾT XONG. Không thiết kế lại giao diện. Nhưng được phép sửa ĐÚNG MỘT file logic:
+    frontend/src/shared/lib/api.js   (đổi base URL sang /api/v1, thêm interceptor, thêm xử lý lỗi)
+  Mọi thay đổi khác ở FE phải nêu lý do trong báo cáo.
+- Backend hiện có 2 tầng URL chồng nhau, đây là nợ kỹ thuật phải dọn:
+    /api/v1/**   — API cũ, dùng JWT header + ApiResponse
+    /api/**      — gói `controller/compat`, viết vội để khớp FE, nhiều chỗ trả Map<String,Object> thô
+  → Kết quả cuối cùng: CHỈ CÒN MỘT tầng URL DUY NHẤT là `/api/v1/**`. Gói `compat` bị xoá và viết lại
+    thành controller/service đúng chuẩn (xem Phần 7).
+
+====================================================================
+PHẦN 2 — NGUYÊN TẮC THIẾT KẾ API (KINH NGHIỆM SENIOR — ĐÂY LÀ PHẦN QUAN TRỌNG NHẤT)
+====================================================================
+Bạn không copy thiết kế của người khác. Bạn ra quyết định và bảo vệ được quyết định đó.
+
+2.1. Phiên bản & tương thích
+- Versioning bằng URL: `/api/v1`. Không đổi breaking trong v1.
+- Chỉ được THÊM trường; cấm đổi tên/kiểu/xoá trường. Enum thêm giá trị phải chịu được client cũ
+  (client không biết giá trị mới phải hiển thị fallback, không crash).
+- Mỗi lần đổi hành vi: ghi vào `docs/API_CHANGELOG.md` (ngày, endpoint, thay đổi, lý do).
+- Hợp đồng thật = OpenAPI do code sinh ra (springdoc), export `docs/openapi-v1.yaml`, commit kèm code.
+  Test sẽ so snapshot để phát hiện breaking change ngoài ý muốn.
+
+2.2. Một envelope duy nhất cho mọi response (theo AGENTS.md)
+Thành công:
+  { "success": true, "statusCode": 200, "code": "OK", "message": "…tiếng Việt…",
+    "data": {...}, "timestamp": "2026-11-13T10:00:00" }
+Lỗi (HTTP status vẫn đúng, body cùng envelope):
+  { "success": false, "statusCode": 409, "code": "SLOT_FULL",
+    "message": "Khung giờ này đã đủ 6 người. Cô chú chọn khung khác giúp phòng khám nhé.",
+    "fields": { "phone": "Số điện thoại chưa đúng." }, "timestamp": "…" }
+Quy tắc:
+- `code` cho máy đọc (SCREAMING_SNAKE), `message` cho người đọc (tiếng Việt, gọi người bệnh là "cô chú").
+- `fields` chỉ có khi lỗi theo từng ô; khoá lồng dùng dấu chấm: "treatmentNotes.other".
+- `retryAfter` (giây) chỉ kèm 429.
+- Không bao giờ trả stack trace, không trả tên bảng/cột, không trả message tiếng Anh.
+- GIỮ NGUYÊN tên các mã lỗi mà FE đang switch on: SESSION_CHANGED, STALE, SLOT_FULL,
+  CODE_WRONG, CODE_EXPIRED, CODE_USED, CODE_LOCKED, CODE_REQUIRED, TOO_MANY_REQUESTS.
+  Các mã còn lại đặt lại cho gọn và nhất quán, cập nhật CHANGELOG.
+
+2.3. HTTP đúng nghĩa
+- 200 có data; 201 khi tạo mới + header `Location`; 204 khi xoá không cần body.
+- 400 dữ liệu sai (kèm `fields`); 401 chưa xác thực; 403 sai quyền/ bị khoá;
+  404 không có hoặc không thuộc quyền; 409 xung đột trạng thái/trùng; 422 JSON đúng cú pháp nhưng
+  sai nghiệp vụ sâu; 429 quá tần suất; 500 lỗi không lường trước.
+- Không dùng 200 cho lỗi, không dùng 400 cho "chưa đăng nhập".
+
+2.4. Danh từ số nhiều, không động từ trong URL
+- Giữ đúng các đường dẫn FE đang gọi (đổi tên hàng loạt không đáng tiền), chỉ nâng lên /api/v1:
+    /api/v1/auth/*, /api/v1/me/*, /api/v1/staff/*, /api/v1/admin/*, /api/v1/posts, /api/v1/meta,
+    /api/v1/health, /api/v1/uploads/{id}
+- Hành động không phải CRUD dùng sub-resource + POST: `/appointments/{id}/cancel`,
+  `/appointments/{id}/check-in`, `/queue/auto-invite`. Chấp nhận được, ghi chú trong OpenAPI.
+
+2.5. Đồng nhất kiểu dữ liệu (nguồn lỗi số 1 của dự án này)
+- ID trong JSON LUÔN là chuỗi ("12"), trong DB là BIGINT. Dùng một Jackson config toàn cục.
+- Thời điểm: ISO UTC đủ 3 số lẻ mili giây. Ngày: "YYYY-MM-DD". Giờ khung: "HH:mm".
+- Trường rỗng trả `null` và KHÔNG bỏ trường (trừ khi ghi rõ "không có trường").
+- Mọi tính toán "hôm nay", khung giờ, giờ nhận bệnh: theo Asia/Ho_Chi_Minh.
+- Dùng `Clock` tiêm được (`@Bean Clock`) thay cho LocalDate.now()/LocalDateTime.now() rải rác —
+  để test được job 17:00 và logic "khung đã qua" mà không phải chờ thời gian thật.
+
+2.6. Ghi dữ liệu: đừng tin "kiểm tra rồi ghi"
+- Mọi ràng buộc quan trọng phải do DATABASE bảo đảm, không chỉ do if-else trong service.
+- Đặt lịch: dùng bảng giữ chỗ có UNIQUE index (ví dụ `appointment_seats(appointment_date, time_slot_id, seat_no)`
+  với UNIQUE trên 3 cột). Cách ghi: thử ghế 1..capacity, chèn, nếu DuplicateKeyException thì thử ghế kế;
+  hết ghế → SLOT_FULL (409). Không cần khoá bi quan, vẫn an toàn tuyệt đối khi 50 người bấm cùng lúc.
+- Huỷ / đổi giờ phải nhả ghế trong CÙNG transaction.
+- Mã bệnh nhân / mã phiếu: bảng `counters` + `SELECT … FOR UPDATE`, hoặc unique + retry. Cấm MAX(id)+1.
+- Idempotency: POST tạo phiếu nhận header `Idempotency-Key`. Cùng key + cùng body → trả lại đúng response cũ
+  (lưu ở bảng `idempotency_keys`). Lý do thực tế: người cao tuổi bấm nút hai lần, mạng chậm bấm lại.
+
+2.7. Transaction & việc phụ
+- Transaction ngắn, chỉ bọc phần ghi DB.
+- TUYỆT ĐỐI không gửi SMS/email bên trong transaction (rollback → đã gửi mã mà DB không có).
+  Ghi vào bảng outbox/notification_logs trong transaction, một worker gửi sau khi commit.
+- `@Transactional(readOnly = true)` cho mọi luồng chỉ đọc. Tránh N+1 bằng fetch join/projection.
+
+2.8. Xác thực (quyết định của bạn, phải giải thích trong báo cáo)
+- JWT HS256, đặt trong cookie `ct_session` (HttpOnly, Secure khi HTTPS, SameSite=Lax, Path=/) → chống XSS
+  tốt hơn localStorage. VẪN nhận thêm `Authorization: Bearer` để Swagger/mobile dùng.
+- Cookie `ct_device` (HttpOnly, Path=/, 1 năm) để nhớ thiết bị đã xác thực OTP.
+- Access token sống 30–60 phút. Refresh token xoay vòng (rotation) lưu băm SHA-256 trong bảng `refresh_tokens`
+  có sẵn; endpoint `/api/v1/auth/refresh`. Nếu thấy rủi ro thời gian: bật/tắt bằng cờ
+  `app.security.refresh-enabled`, nhưng phải có thiết kế và test.
+- Header `X-Session-User: <id>` — FE gửi kèm; lệch với cookie → 409 SESSION_CHANGED.
+  Giữ vì nó giải quyết lỗi thật: hai tab đăng nhập hai tài khoản khác nhau.
+- CSRF: vì xác thực bằng cookie, kiểm tra header `Origin` (whitelist từ biến môi trường) cho MỌI
+  request ghi (POST/PUT/PATCH/DELETE). CORS chỉ cho origin trong whitelist, `allowCredentials=true`.
+- `GET /api/v1/auth/me` khi chưa đăng nhập: 200 với `data.user = null` (không 401) — để FE khởi động sạch.
+- Khoá tài khoản / đổi vai trò có hiệu lực NGAY: đọc lại user từ DB mỗi request, không tin role trong JWT.
+- Chống dò tài khoản: quên mật khẩu luôn trả cùng một kết quả dù email có tồn tại hay không.
+- Rate limit theo SĐT + IP cho OTP và đăng nhập (bộ đếm trong bộ nhớ là đủ; nói rõ nếu chọn Redis sau này).
+
+2.9. Không over-engineering
+Không microservice, không CQRS, không event bus, không Kubernetes. Một khối Spring Boot, PostgreSQL/MySQL,
+scheduled job trong app. Ưu tiên: đúng nghiệp vụ > dễ đọc > hiệu năng > mở rộng.
+
+2.10. Ba thứ senior luôn làm mà junior hay bỏ
+- Test tính ĐỒNG THỜI (không chỉ test tuần tự).
+- Log có correlation id, che PII (số điện thoại chỉ log 4 số cuối, không log chẩn đoán/địa chỉ/CCCD).
+- Migration KHÔNG phá dữ liệu đang có, chạy lại được nhiều lần, và có ghi chú rollback.
+
+====================================================================
+PHẦN 3 — QUYẾT ĐỊNH NGHIỆP VỤ ĐÃ CHỐT (không hỏi lại)
+====================================================================
+- Vai trò: USER, RECEPTIONIST, ADMIN. (DB đang có ADMIN/DOCTOR/STAFF/PATIENT —
+  ánh xạ STAFF→RECEPTIONIST, PATIENT→USER; xem 3.1)
+- Giới tính: NAM | NU | KHAC. Quan hệ: BAN_THAN, VO_CHONG, CON, CHA_ME, ONG_BA, ANH_CHI_EM, KHAC.
+- Dịch vụ: CHUA_RO, CHAM_CUU, VAT_LY_TRI_LIEU, XOA_BOP_BAM_HUYET, BOC_THUOC.
+- Trạng thái phiếu: BOOKED, CHECKED_IN, IN_PROGRESS, COMPLETED, CANCELLED.
+  Người dùng chỉ thấy BOOKED / COMPLETED / CANCELLED.
+- Nguồn: ONLINE, COUNTER.
+- Khung giờ: 8 khung 60 phút 08:00, 09:00, 10:00, 11:00, 13:00, 14:00, 15:00, 16:00; tối đa 6 phiếu/khung
+  (cấu hình trong `clinic_settings`, không hard-code). Nhận bệnh 08:00–16:30. Phòng chờ 5 ghế.
+- Người dùng đặt trước tối đa 30 ngày, tiếp tân đặt hộ tối đa 7 ngày, chỉ chọn khung chưa bắt đầu.
+- Một hồ sơ chỉ có MỘT phiếu còn hiệu lực mỗi ngày (kể cả khi đổi giờ) → ràng buộc DB nếu được.
+- 17:00 mỗi ngày: phiếu BOOKED trong ngày → CANCELLED, lý do "Không đến khám (hệ thống tự huỷ lúc 17:00)".
+- Hàng đợi: PRIORITY (check-in sớm nhất 15 phút trước khung đến hết khung) đứng trước NORMAL;
+  trong mỗi nhóm xếp theo giờ check-in.
+- Phiếu kết quả: chỉ sửa được trong 24 giờ sau khi tạo; mỗi lần sửa ghi lại trường nào đổi, từ → đến.
+- Mã: bệnh nhân `CT-BN-26-0001`; phiếu `CT-PK-26-2010-001` (yy, ddMM, 3 số thứ tự trong ngày).
+- OTP 6 số lưu DẠNG BĂM, hết hạn 5 phút, sai tối đa 5 lần, SMS 3 mã/giờ/SĐT, email 5 mã/giờ, chờ 60 giây.
+  `devCode` chỉ trả khi provider = console (dev), production không bao giờ trả.
+
+3.1. Ánh xạ tầng dữ liệu (anti-corruption layer)
+DB giữ nguyên, KHÔNG đổi enum, KHÔNG đổi tên cột đang có. Toàn bộ việc dịch nằm trong MỘT lớp duy nhất:
+    `module/compat/DomainMapper.java` (hoặc `common/mapping/ContractMapper.java`)
+  users.role        ADMIN/DOCTOR/STAFF/PATIENT      ↔  ADMIN/RECEPTIONIST/USER
+  appt.status       PENDING/CONFIRMED/…             ↔  BOOKED/CHECKED_IN/…
+  appt.source       WEB/PHONE/WALK_IN/ADMIN         ↔  ONLINE/COUNTER
+  patients.gender   MALE/FEMALE/OTHER               ↔  NAM/NU/KHAC
+Cấm rải if-else ánh xạ ra nhiều controller. Nếu sau này migrate DB thì chỉ sửa một chỗ này.
+
+====================================================================
+PHẦN 4 — HIỆN TRẠNG PHẢI SỬA (đã kiểm chứng, đừng khảo sát lại)
+====================================================================
+4.1. Lỗi đang làm hỏng giao diện thật
+- Queue trả `seatNumber`, FE đọc `seatNo` → màn hình TV phòng chờ hiện "Ghế undefined".
+- Queue thiếu `date`, `autoInvite`, `completedCount`, `slotMap`; `priorityGroup` trả "STANDARD"
+  trong khi FE so sánh với "PRIORITY"/"NORMAL".
+- `/admin/dashboard` thiếu `date`, `queue.seats`, `queue.waiting`, `queue.slotMap`, `drafts`
+  → trang Tổng quan Admin sẽ crash (FE gọi `data.drafts.length` và `data.queue.seats.map`).
+- `/meta` mới trả 5/14 trường FE cần: today, otp{provider,firebase}, serviceTypes, slots, slotCapacity,
+  userMaxDays, counterMaxDays, seats, priorityEarlyMinutes, slotMinutes, maxProfiles, relationships,
+  statusLabels, cancelReasons, postCategories.
+- `/staff/appointments` trả `{items}`, FE cần `{date, items, summary}` và mỗi item cần `checkin`.
+- `/staff/appointments/lookup` trả `{items}`, FE cần `{appointment}` (một phiếu hoặc null).
+- `/staff/appointments/dates` thiếu `month`.
+- Nhiều chỗ trả Long/Instant thô thay vì chuỗi ID / ISO UTC 3 số lẻ.
+
+4.2. Endpoint FE cần mà chưa có
+- GET  /api/v1/health                          → { ok: true }, công khai
+- POST /api/v1/admin/uploads                   → nhận byte ảnh thô ≤ 3MB, whitelist image/png|jpeg|webp|gif,
+                                                 trả 201 { id, url: "/api/v1/uploads/{id}" }
+- GET  /api/v1/uploads/{id}                    → trả byte ảnh, đúng Content-Type,
+                                                 Cache-Control: public, max-age=31536000, immutable
+- GET  /api/v1/staff/patients/duplicates?phone&excludeId → { items }
+- GET  /api/v1/staff/records/{id}              → { record } (hiện chỉ có PUT)
+- PUT  /api/v1/staff/queue/auto-invite         → { enabled } → QueueState
+- GET  /api/v1/auth/refresh                    → cấp lại access token (nếu bật refresh)
+
+4.3. Nợ kỹ thuật phải dọn trong đợt này
+- Toàn bộ `backend/src/main/java/com/chuctupk/controller/compat/**` trả `Map<String,Object>` thô,
+  logic nằm trong controller, không test → viết lại thành controller mỏng + service + DTO record.
+- Hai tầng URL /api và /api/v1 trùng chức năng → gộp về /api/v1.
+- `SecurityConfig` đang mở quá rộng; phải khai báo theo prefix /api/v1 rõ ràng.
+- `application.yml` đang `ddl-auto: validate` (đúng) — giữ nguyên, KHÔNG chuyển sang update.
+
+====================================================================
+PHẦN 5 — CHIẾN LƯỢC DATABASE (bắt buộc)
+====================================================================
+Giữ 22 bảng hiện có. Bổ sung bằng script MỚI, idempotent, chỉ ADD:
+    database/003_contract_alignment.sql
+    database/004_seed_slots_60min.sql
+    database/005_v1_support.sql
+Chép tương ứng vào `docker/mysql/init/` (04-, 05-, 06-) để container mới tự nạp.
+
+003 — cột còn thiếu:
+- patients: ADD dob DATE NULL, national_id VARCHAR(20) NULL, email VARCHAR(100) NULL,
+  locked_at DATETIME NULL, info_updated_at DATETIME NULL; nới year_of_birth cho phép NULL
+  (người già có khi chỉ nhớ năm sinh, có khi chỉ nhớ ngày sinh).
+- appointments: ADD service_type VARCHAR(30), expected_time TIME, cancelled_at DATETIME,
+  rescheduled_from_id BIGINT UNSIGNED, check_in_at DATETIME, entered_at DATETIME.
+  Thêm INDEX (appointment_date, time_slot_id).
+- medical_records: ADD visit_date DATE, pulse VARCHAR(50), blood_pressure VARCHAR(50),
+  treatment_acupuncture TEXT, treatment_acupressure TEXT, treatment_other TEXT,
+  doctor_name VARCHAR(100), recorded_by BIGINT UNSIGNED; cho phép doctor_id NULL
+  (tiếp tân vẫn ghi được phiếu khi chưa gán bác sĩ).
+- clinic_settings: thêm khoá slot_capacity=6, seats=5, slot_minutes=60, user_max_days=30,
+  counter_max_days=7, priority_early_minutes=15, max_profiles=10, auto_invite=0,
+  reception_open=08:00, reception_close=16:30, no_show_cancel_at=17:00.
+
+004 — khung giờ: tắt (is_active=0) các khung 30 phút cũ, thêm 8 khung 60 phút, max_patients=6.
+
+005 — bảng mới (InnoDB, utf8mb4, có FK và UNIQUE đầy đủ):
+- `checkins`            hàng đợi thật: appointment_id UNIQUE, status WAITING|IN_ROOM,
+                        priority_group PRIORITY|NORMAL, seat_no 1..5, queue_no,
+                        check_in_time, entered_at
+- `appointment_seats`   appointment_date, time_slot_id, seat_no, appointment_id
+                        + UNIQUE(appointment_date, time_slot_id, seat_no)   ← chống vượt 6/khung
+- `medical_record_edits` record_id, edited_by, edited_at, changes JSON, ghi từng lần sửa
+- `counters`            name, value, updated_at — sinh mã CT-BN / CT-PK an toàn
+- `idempotency_keys`    key_hash, user_id, endpoint, request_hash, response_json, created_at
+                        + UNIQUE(key_hash, user_id)
+
+Migration phải chạy được cả trên DB trống lẫn DB đang có dữ liệu, và ghi chú rollback ở đầu file.
+
+====================================================================
+PHẦN 6 — KIẾN TRÚC CODE
+====================================================================
+- Giữ Clean Layered: controller (mỏng) → service interface + impl (@Transactional) → repository → entity.
+- Không trả Entity ra ngoài. DTO là `record` trong dto/request, dto/response.
+- `ErrorCode` enum cho toàn bộ mã lỗi; `AppException.of(ErrorCode.X, …)` — cấm gõ tay chuỗi mã lỗi.
+- `ContractMapper` duy nhất lo Entity ↔ DTO (enum, ID chuỗi, thời gian ISO).
+- PATCH ba trạng thái: dùng JsonNode (không gửi trường = giữ nguyên; null/"" = xoá). Không map thẳng POJO.
+- `expectedUpdatedAt` (optimistic lock) → lệch thì 409 STALE.
+- Phân trang: page (từ 1) + limit (mặc định 20, tối đa 100); response { items, total, page, limit }.
+- Validate: Hibernate Validator cho hình thức; nghiệp vụ ở service. SĐT VN: 10 số, đầu 03/05/07/08/09.
+- Cấu hình bằng biến môi trường + clinic_settings, không hard-code con số nghiệp vụ.
+- Message tiếng Việt thân thiện cho người bệnh; message kỹ thuật chỉ ở log.
+- Package đề xuất: `com.chuctupk.v1.{auth,me,staff,admin,publicapi,common,config}` — hoặc giữ cấu trúc
+  config/controller/service/repository/entity/dto/exception hiện có, nhưng nhóm controller theo prefix.
+  Chọn một, ghi rõ trong báo cáo, và áp dụng nhất quán.
+
+====================================================================
+PHẦN 7 — TRÌNH TỰ THỰC HIỆN (dừng báo cáo sau mỗi giai đoạn)
+====================================================================
+G0. Nền tảng
+ - Đổi cổng backend mặc định về 4000 (server.port=${PORT:4000}), docker map 4000:4000 để `npm run dev`
+   của FE chạy ngay không cần sửa .env. Cập nhật README/DOCKER_GUIDE.
+ - Sửa frontend/src/shared/lib/api.js: base `${API_BASE}/api/v1`, giữ `credentials:'include'`,
+   thêm interceptor đọc envelope {success,code,message,fields,data}, thêm refresh-một-lần khi 401.
+ - ApiResponse hoàn chỉnh + ErrorCode + GlobalExceptionHandler trả đúng envelope cho mọi lỗi.
+ - Bean `Clock` + `@ConfigurationProperties` cho các con số nghiệp vụ.
+ - GET /api/v1/health, GET /api/v1/meta đủ 14 trường (đọc từ clinic_settings).
+ - springdoc: bật Swagger UI, export docs/openapi-v1.yaml.
+ - Migration 003/004/005.
+ DoD: FE build được, gọi /api/v1/health và /api/v1/meta OK; MySQL sạch lẫn DB có dữ liệu đều migrate xong.
+
+G1. Xác thực & OTP
+ - /auth/register, /register/verify, /login, /login/verify, /otp/resend
+ - /auth/staff/login, /staff/forgot-password, /verify, /reset-password, /auth/password (đổi mật khẩu), /logout
+ - /auth/refresh nếu bật cờ; /auth/me trả user|null (không 401)
+ - Cookie ct_session/ct_device; X-Session-User → 409 SESSION_CHANGED; kiểm tra Origin cho request ghi
+ - mustChangePassword=true chặn /staff/** và /admin/** bằng 403 đúng thông điệp
+ - OTP băm, 5 phút, 5 lần sai, rate limit, gửi sau commit (không gửi trong transaction)
+ - Seed: admin@chuctu.vn (ADMIN), letan@chuctu.vn (RECEPTIONIST), mật khẩu ChucTu@2026
+ DoD: đăng nhập/đăng xuất/đổi mật khẩu/quên mật khẩu chạy trên FE; 2 tab khác tài khoản → 409 và tab kia tự reload.
+
+G2. Người dùng: hồ sơ, đặt lịch, phiếu khám
+ - /me, /me/patients CRUD (tối đa 10, BAN_THAN không xoá được, detach khi đã có lịch sử, PROFILE_LIMIT)
+ - /me/availability?date= trả Slot {start,end,booked,capacity,remaining,available,reason}
+ - POST /me/appointments: Idempotency-Key + appointment_seats (an toàn đồng thời) + chống 1 phiếu/ngày
+ - /me/appointments?status=, /{id}, /{id}/cancel (NOT_CANCELLABLE nếu đã check-in), /{id}/result, /history
+ DoD: 50 luồng đặt cùng khung 6 chỗ → đúng 6 thành công, 44 nhận SLOT_FULL; bấm đặt 2 lần cùng
+      Idempotency-Key chỉ tạo 1 phiếu; khách huỷ được phiếu chưa check-in.
+
+G3. Nội bộ: lịch, đặt hộ, check-in, hàng đợi
+ - /staff/appointments {date,items,summary} + checkin trong item; /dates {month,dates};
+   /lookup {appointment}; /{id} {appointment,record}
+ - /staff/availability (tối đa 7 ngày); POST /staff/appointments (source=COUNTER, checkInNow)
+ - reschedule (phiếu mới + rescheduledFromId, nhả ghế cũ), cancel (bắt buộc reason)
+ - check-in (WRONG_DAY, CLOSED), undo-check-in, enter (ROOM_FULL), undo-enter
+ - GET /staff/queue trả QueueState ĐÚNG shape: seats 5 phần tử có `seatNo`, slotMap, autoInvite,
+   waitingCount, completedCount, priorityGroup PRIORITY|NORMAL
+ - /queue/invite, /queue/{id}/undo-enter, PUT /queue/auto-invite
+ - Viết lại hàng đợi trên bảng `checkins` (seat_no bền vững), KHÔNG suy ra từ trạng thái phiếu
+ DoD: /noi-bo/hang-doi hiện 5 ghế có số; mời người kế tiếp vào đúng ghế trống;
+      /noi-bo/man-hinh-cho hiện "Ghế số 1", không còn undefined.
+
+G4. Hồ sơ bệnh nhân & phiếu kết quả
+ - /staff/patients (q, locked, page, limit, lastVisitDate), /duplicates, POST (confirmDuplicate),
+   /{id} {patient, appointments, records}, PATCH (expectedUpdatedAt → STALE)
+ - POST /staff/appointments/{id}/record (RECORD_EXISTS, NOT_IN_PROGRESS, phiếu → COMPLETED)
+ - GET/PUT /staff/records/{id}: quá 24h → 403; ghi medical_record_edits (from→to từng trường)
+ - /me/.../result và /me/history KHÔNG trả editHistory, recordedByName
+ DoD: tạo hồ sơ trùng SĐT bị 409 rồi xác nhận vẫn tạo được; sửa phiếu trong 24h thấy lịch sử;
+      người dùng xem kết quả không thấy dữ liệu nội bộ.
+
+G5. Quản trị: tài khoản, bài viết, media, dashboard
+ - /admin/accounts: list (q, role, status, page, limit, roleCounts), create (nhân viên bắt buộc
+   email + tempPassword ≥ 8 ký tự, mustChangePassword=true), /{id}, PATCH, /role, /lock (không tự khoá mình),
+   /unlock, /reset-password
+ - /admin/patients/{id}/lock|unlock
+ - /admin/uploads + /uploads/{id}: lưu file an toàn, chống path traversal, ≤3MB, whitelist mime
+ - /admin/posts CRUD + pin/unpin + statusCounts; content HTML ≤100.000 ký tự; lọc XSS trước khi lưu
+ - /posts công khai (featured tách riêng, không lặp trong items) + /posts/{idOrSlug}
+ - /admin/dashboard ĐẦY ĐỦ: date, appointments{total,active,byStatus}, patients{total},
+   posts{published,draft,hidden}, accounts{USER,RECEPTIONIST,ADMIN}, drafts[5],
+   queue{inRoomCount,waitingCount,completedCount,capacity,seats,slotMap,waiting}
+ DoD: Tổng quan Admin mở không lỗi; tạo nháp → đăng → ghim → hiện trên trang Tin tức; upload ảnh 2MB OK.
+
+G6. Job nền & tính nhất quán
+ - 17:00 Asia/Ho_Chi_Minh: BOOKED → CANCELLED đúng lý do (dùng Clock để test)
+ - Dọn OTP hết hạn, refresh token hết hạn
+ - Có ghế trống + auto_invite=1 → tự mời người kế tiếp
+ - Worker gửi SMS/email từ outbox sau commit
+ DoD: test gọi job với Clock cố định 17:00 và kiểm chứng dữ liệu sau khi chạy.
+
+G7. Kiểm thử & hợp đồng
+ - Testcontainers MySQL (KHÔNG dùng H2: khác ENUM/CHECK/collation sẽ che lỗi thật)
+ - Test tích hợp MockMvc cho từng nhóm endpoint
+ - Test đồng thời 50 luồng đặt lịch; test OTP sai 5 lần; test phân quyền USER/RECEPTIONIST/ADMIN
+ - ArchUnit: controller không truy cập repository trực tiếp; service không phụ thuộc web layer
+ - Snapshot docs/openapi-v1.yaml; lệch phải có chủ đích
+ - Script docs/smoke-test.http chạy tuần tự toàn bộ luồng chính
+ DoD: `mvn test` xanh; smoke test hết lỗi; OpenAPI khớp.
+
+G8. Dọn nợ & tài liệu
+ - Xoá gói `controller/compat`; gộp endpoint trùng; xoá /api/** cũ (đã chuyển sang /api/v1)
+ - Đánh dấu @Deprecated các endpoint /api/v1 cũ không còn dùng, xoá nếu test vẫn xanh
+ - Cập nhật README (cổng 4000, tài khoản mẫu), DOCKER_GUIDE, backend/README, docs/API_CHANGELOG.md
+ - Sửa tài liệu đang sai: "8/21 bảng" → 22+ bảng; vai trò ADMIN/DOCTOR/STAFF/PATIENT → USER/RECEPTIONIST/ADMIN;
+   Tailwind → CSS thuần; /admin/login → /noi-bo/dang-nhap
+ - KHÔNG commit, KHÔNG push.
+
+====================================================================
+PHẦN 8 — CÁCH LÀM VIỆC & BÁO CÁO
+====================================================================
+- Trước khi sửa: nêu 1–3 dòng "sửa gì, vì sao". Rồi làm.
+- Làm theo lát cắt dọc: trọn một endpoint (controller + service + DTO + test) rồi mới sang endpoint khác.
+- Hết mỗi giai đoạn in bảng: | STT | Endpoint | Trạng thái | File chính | Test | + việc còn lại.
+- Mâu thuẫn giữa tài liệu cũ và thực tế: ưu tiên nghiệp vụ + dữ liệu thật, ghi quyết định vào CHANGELOG.
+- Gặp yêu cầu bất khả thi trong schema hiện tại: nêu 2 phương án + khuyến nghị, chọn phương án ít rủi ro,
+  làm, ghi chú. Không lặng lẽ bỏ qua.
+- Nếu một quyết định của bạn khác Phần 2/3 của prompt này, phải nêu lý do kỹ thuật trước khi làm.
+
+====================================================================
+PHẦN 9 — ĐIỀU CẤM
+====================================================================
+1. KHÔNG commit, KHÔNG push, KHÔNG tạo nhánh. Chỉ sửa file trên máy.
+2. KHÔNG thiết kế lại giao diện, màu sắc, cỡ chữ, bố cục. Chỉ sửa api.js và nêu rõ.
+3. KHÔNG drop bảng, KHÔNG xoá dữ liệu, KHÔNG đổi tên cột đang có. Chỉ ADD.
+4. KHÔNG `ddl-auto: update`. KHÔNG H2 cho test. KHÔNG trả 200 cho lỗi.
+5. KHÔNG Map<String,Object> cho response công khai. KHÔNG trả Entity thô.
+6. KHÔNG gửi SMS/email trong transaction. KHÔNG bắt Exception chung rồi trả 400.
+7. KHÔNG đưa .env/mật khẩu/khoá bí mật vào code, log, tài liệu. KHÔNG log CCCD, địa chỉ, chẩn đoán,
+   số điện thoại đầy đủ.
+8. KHÔNG đổi tên các mã lỗi FE đang dùng: SESSION_CHANGED, STALE, SLOT_FULL, CODE_*.
+9. KHÔNG thêm thư viện nặng khi chưa cần; nếu thêm phải nêu lý do.
+
+====================================================================
+PHẦN 10 — NGHIỆM THU CUỐI (chạy hết không lỗi, không màn hình trắng)
+====================================================================
+1.  Khách xem Trang chủ / Giới thiệu / Dịch vụ / Hướng dẫn / Liên hệ / Tin tức (bài thật từ DB).
+2.  Bấm "Đặt lịch" khi chưa đăng nhập → chuyển tới đăng nhập.
+3.  Đăng ký bằng SĐT + OTP (mã in log/devCode) → có hồ sơ BAN_THAN.
+4.  Đặt lịch 4 bước: hồ sơ → dịch vụ → ngày → khung giờ → xác nhận; nhận mã CT-PK-…
+5.  Xem phiếu, huỷ phiếu, xem lịch sử khám.
+6.  Nhân viên đăng nhập /noi-bo/dang-nhap → Lịch trong ngày hiện phiếu vừa đặt.
+7.  Check-in → Hàng đợi hiện 5 ghế có số → mời người kế tiếp vào ghế → màn hình TV hiện "Ghế số 1".
+8.  Ghi phiếu kết quả → phiếu COMPLETED → khách thấy kết quả ở /phieu-kham/{id}/ket-qua.
+9.  Admin: Tổng quan không lỗi; tạo/khoá/mở khoá tài khoản; đổi vai trò; reset mật khẩu tạm.
+10. Admin: tạo bài có ảnh upload → đăng → hiện trên Tin tức → ghim bài nổi bật.
+11. `docker compose up --build -d` từ máy sạch: 3 container healthy, DB tự nạp 22+ bảng và tài khoản mẫu.
+12. `mvn test` xanh (gồm test đồng thời); smoke-test.http chạy hết; README đúng cổng 4000.
+13. Gọi thử 1 endpoint cũ /api/... → trả 404 (đã dọn xong), không còn tầng URL thứ hai.
+
+Bắt đầu bằng việc đọc PHẦN 0, in bảng "endpoint FE đang gọi | endpoint v1 sẽ có" + kế hoạch G0.
+Không viết code trước khi in bảng đó.

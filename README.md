@@ -101,7 +101,8 @@ Hệ thống hỗ trợ 4 vai trò rõ ràng:
 
 3. **Mở trình duyệt truy cập:**
    - **Giao diện Website & Quản trị**: [http://localhost:3000](http://localhost:3000)
-   - **Tài liệu API Swagger**: [http://localhost:8088/swagger-ui.html](http://localhost:8088/swagger-ui.html)
+   - **Máy chủ Backend API**: [http://localhost:4000](http://localhost:4000)
+   - **Tài liệu API Swagger**: [http://localhost:4000/swagger-ui/index.html](http://localhost:4000/swagger-ui/index.html)
 
 ---
 
@@ -110,10 +111,13 @@ Hệ thống hỗ trợ 4 vai trò rõ ràng:
 > **Yêu cầu**: Đã cài đặt Java 17+, MySQL 8.0+, Node.js 18+.
 
 #### Bước 1: Khởi tạo Cơ sở Dữ liệu MySQL
-Mở MySQL Workbench hoặc Terminal và chạy lần lượt 3 file script:
+Mở MySQL Workbench hoặc Terminal và chạy lần lượt các file script trong thư mục `database/`:
 ```bash
 mysql -u root -p < database/001_schema_v2.sql
 mysql -u root -p < database/002_add_patient_fields.sql
+mysql -u root -p < database/003_contract_alignment.sql
+mysql -u root -p < database/004_seed_slots_60min.sql
+mysql -u root -p < database/005_v1_support.sql
 mysql -u root -p < database/seed_staff_and_doctor.sql
 ```
 
@@ -128,7 +132,7 @@ cp .env.example .env
 ```
 Mở file `.env` và điền mật khẩu MySQL của máy bạn (`DB_PASSWORD=...`).
 
-#### Bước 3: Khởi chạy Backend (Spring Boot)
+#### Bước 3: Khởi chạy Backend (Spring Boot - Cổng 4000)
 ```bash
 cd backend
 # Windows:
@@ -137,7 +141,7 @@ cd backend
 # Linux / macOS:
 ./mvnw spring-boot:run
 ```
-*API sẵn sàng tại:* `http://localhost:8080/api/v1`
+*API sẵn sàng tại:* `http://localhost:4000/api/v1`
 
 #### Bước 4: Khởi chạy Frontend (React + Vite)
 Mở cửa sổ Terminal mới:
@@ -152,10 +156,24 @@ npm run dev
 
 ## 6. DANH SÁCH TÀI KHOẢN MẪU CÓ SẴN (TESTING ACCOUNTS)
 
-Hệ thống đã chuẩn bị sẵn 3 tài khoản để bạn có thể đăng nhập kiểm thử ngay:
+Hệ thống đã chuẩn bị sẵn các tài khoản để bạn có thể đăng nhập kiểm thử ngay:
 
-| Vai trò | Tên đăng nhập | Mật khẩu mặc định | Đường dẫn đăng nhập |
+| Vai trò | Tên đăng nhập / Email | Mật khẩu mặc định | Đường dẫn đăng nhập |
 | :--- | :--- | :--- | :--- |
-| **Quản trị viên (ADMIN)** | `admin` | `MatKhauAdmin@2026` | `/admin/login` |
-| **Tiếp tân / Điều dưỡng (STAFF)** | `letan` | `MatKhauAdmin@2026` | `/staff/login` |
-| **Bác sĩ YHCT (DOCTOR)** | `bacsi` | `MatKhauAdmin@2026` | `/doctor/login` |
+| **Quản trị viên (ADMIN)** | `admin@chuctu.vn` (hoặc `admin`) | `ChucTu@2026` | `/admin/login` |
+| **Tiếp tân / Điều dưỡng (STAFF)** | `letan@chuctu.vn` (hoặc `letan`) | `ChucTu@2026` | `/staff/login` |
+| **Bác sĩ YHCT (DOCTOR)** | `bsnam@chuctu.vn` (hoặc `bacsi`) | `ChucTu@2026` | `/staff/login` |
+| **Bệnh nhân (PATIENT)** | Số điện thoại bất kỳ (VD: `0987654321`) | Đăng nhập OTP (Mã thử nghiệm dev: `123456`) | `/dat-lich` hoặc `/tra-cuu` |
+
+---
+
+## 7. BỘ KIỂM THỬ VÀ TÀI LIỆU API (TESTING & DOCS)
+
+- **Kiểm thử tự động (Unit & Slice Tests)**:
+  ```bash
+  cd backend
+  .\mvnw.cmd test -Dtest=V1*SliceTest,ClinicScheduledTasksTest,ArchitectureConventionTest -DforkCount=0
+  ```
+- **Kịch bản kiểm thử nhanh**: [docs/smoke-test.http](docs/smoke-test.http) (chạy trực tiếp trong VS Code / IntelliJ IDEA).
+- **Đặc tả OpenAPI v1**: [docs/openapi-v1.yaml](docs/openapi-v1.yaml).
+- **Nhật ký thay đổi kiến trúc**: [docs/API_CHANGELOG.md](docs/API_CHANGELOG.md).

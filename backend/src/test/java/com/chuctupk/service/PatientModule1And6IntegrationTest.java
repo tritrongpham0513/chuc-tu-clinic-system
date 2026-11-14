@@ -145,7 +145,10 @@ class PatientModule1And6IntegrationTest {
     @DisplayName("F.6.3: Đặt lịch khám và hủy phiếu khám thành công")
     void testBookAndCancelAppointment() {
         LocalDate bookingDate = LocalDate.now().plusDays(2);
-        Long slotId = timeSlotRepository.findAll().get(0).getId();
+        Long slotId = timeSlotRepository.findByIsActiveTrueOrderBySortOrderAsc().stream()
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("CSDL chưa có khung giờ khám đang hoạt động"))
+                .getId();
 
         BookingRequest req = new BookingRequest();
         req.setAppointmentDate(bookingDate);

@@ -14,4 +14,5 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
     Page<Article> findByIsPublishedTrueOrderByPublishedAtDesc(Pageable pageable);
     Page<Article> findByCategoryIdAndIsPublishedTrueOrderByPublishedAtDesc(Long categoryId, Pageable pageable);
     boolean existsBySlug(String slug);
+    java.util.List<Article> findByIsPinnedTrue();
 }

@@ -79,11 +79,23 @@ public class AppointmentConcurrencyTest {
         targetDate = LocalDate.now(clock).plusDays(5);
         DayOfWeek dow = DayOfWeek.from(targetDate.getDayOfWeek());
 
-        // 1. Lấy slot buổi chiều có sẵn với max_patients = 3
+        // 1. Tạo khung giờ chiều riêng cho bài kiểm thử với sức chứa 3 bệnh nhân
         testSlot = timeSlotRepository.findAll().stream()
-                .filter(s -> s.getPeriod() == Period.AFTERNOON && s.getMaxPatients() == 3 && s.getIsActive())
+                .filter(s -> s.getPeriod() == Period.AFTERNOON
+                        && s.getStartTime().equals(LocalTime.of(12, 0)))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Không tìm thấy khung giờ phù hợp trong CSDL"));
+                .orElseGet(() -> timeSlotRepository.save(TimeSlot.builder()
+                        .slotLabel("12:00 - 13:00")
+                        .startTime(LocalTime.of(12, 0))
+                        .endTime(LocalTime.of(13, 0))
+                        .period(Period.AFTERNOON)
+                        .maxPatients(3)
+                        .sortOrder(99)
+                        .isActive(true)
+                        .build()));
+        testSlot.setMaxPatients(3);
+        testSlot.setIsActive(true);
+        testSlot = timeSlotRepository.save(testSlot);
 
         // 2. Tạo bác sĩ trực ca
         testUser = userRepository.save(User.builder()
@@ -126,6 +138,9 @@ public class AppointmentConcurrencyTest {
         if (testSchedule != null) doctorScheduleRepository.delete(testSchedule);
         if (testDoctor != null) doctorRepository.delete(testDoctor);
         if (testUser != null) userRepository.delete(testUser);
+        if (testSlot != null && "12:00 - 13:00".equals(testSlot.getSlotLabel())) {
+            timeSlotRepository.delete(testSlot);
+        }
     }
 
     @Test

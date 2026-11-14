@@ -76,14 +76,20 @@ class TimeSlotServiceTest {
         testDate = LocalDate.now(clock).plusDays(4);
         DayOfWeek dow = DayOfWeek.from(testDate.getDayOfWeek());
 
-        // Lấy hoặc tạo slot sáng
+        // Dùng khung giờ buổi sáng đang hoạt động trong CSDL và đặt sức chứa = 3 cho bài kiểm thử.
+        // (Mutation nằm trong transaction nên sẽ được rollback sau mỗi test.)
         morningSlot = timeSlotRepository.findAll().stream()
-                .filter(s -> s.getPeriod() == Period.MORNING && s.getIsActive() && s.getMaxPatients() == 3)
+                .filter(s -> s.getPeriod() == Period.MORNING)
                 .findFirst()
+                .map(s -> {
+                    s.setIsActive(true);
+                    s.setMaxPatients(3);
+                    return timeSlotRepository.save(s);
+                })
                 .orElseGet(() -> timeSlotRepository.save(TimeSlot.builder()
-                        .slotLabel("08:00 - 08:30")
+                        .slotLabel("08:00 - 09:00")
                         .startTime(LocalTime.of(8, 0))
-                        .endTime(LocalTime.of(8, 30))
+                        .endTime(LocalTime.of(9, 0))
                         .period(Period.MORNING)
                         .maxPatients(3)
                         .sortOrder(1)

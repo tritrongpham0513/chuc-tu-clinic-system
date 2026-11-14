@@ -39,9 +39,9 @@ RUN chown -R appuser:appgroup /app
 
 USER appuser
 
-EXPOSE 8080
+EXPOSE 4000
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=45s --retries=5 \
-  CMD curl -f http://localhost:8080/api/v1/articles || exit 1
+  CMD curl -f http://localhost:4000/api/v1/health || exit 1
 
 ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-Duser.timezone=Asia/Ho_Chi_Minh", "-jar", "app.jar"]

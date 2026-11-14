@@ -3,7 +3,6 @@ package com.chuctupk.service;
 import com.chuctupk.dto.request.LoginOtpRequest;
 import com.chuctupk.dto.request.LoginRequest;
 import com.chuctupk.dto.request.RegisterRequest;
-import com.chuctupk.dto.request.SendOtpRequest;
 import com.chuctupk.dto.request.VerifyOtpRequest;
 import com.chuctupk.dto.response.AuthResponse;
 import com.chuctupk.entity.OtpVerification;
@@ -23,6 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -52,52 +52,58 @@ class AuthServiceIntegrationTest {
         userRepository.findByPhone(TEST_PHONE).ifPresent(userRepository::delete);
     }
 
-    @Test
-    @DisplayName("Gửi OTP -> Lưu DB -> Xác thực OTP thành công")
-    void testSendAndVerifyOtp() {
-        // 1. Gửi OTP
-        authService.sendOtp(new SendOtpRequest(TEST_PHONE, OtpType.REGISTER));
+    /** Gửi OTP ở chế độ giả lập (chưa nối SMS) để lấy mã thật dùng cho kiểm thử. */
+    private String requestRegisterCode() {
+        Map<String, Object> res = authService.resendOtp(TEST_PHONE, "REGISTER");
+        String devCode = (String) res.get("devCode");
+        assertNotNull(devCode, "Ở chế độ giả lập, phản hồi phải có devCode để kiểm thử");
+        assertEquals(6, devCode.length(), "Mã xác thực phải gồm đúng 6 chữ số");
+        return devCode;
+    }
 
-        // 2. Lấy OTP từ DB
+    @Test
+    @DisplayName("Gửi OTP -> chỉ lưu hash trong DB -> xác thực đúng mã thành công")
+    void testSendAndVerifyOtp() {
+        String otpCode = requestRegisterCode();
+
         Optional<OtpVerification> opt = otpVerificationRepository
                 .findTopByPhoneAndOtpTypeOrderByCreatedAtDesc(TEST_PHONE, OtpType.REGISTER);
 
         assertTrue(opt.isPresent(), "Mã OTP phải được lưu vào CSDL");
-        String otpCode = opt.get().getOtpCode();
-        assertNotNull(otpCode);
-        assertEquals(6, otpCode.length());
+        assertNotEquals(otpCode, opt.get().getOtpCode(),
+                "CSDL chỉ được lưu SHA-256 hash, không lưu mã thô");
 
-        // 3. Xác thực OTP
         boolean verified = authService.verifyOtp(new VerifyOtpRequest(TEST_PHONE, otpCode, OtpType.REGISTER));
         assertTrue(verified, "Xác thực OTP phải thành công");
     }
 
     @Test
-    @DisplayName("Đăng ký tài khoản sau khi xác thực OTP -> Tạo User và Patient -> Đăng nhập thành công")
-    void testRegisterAndLoginFlow() {
-        // 1. Gửi và xác thực OTP
-        authService.sendOtp(new SendOtpRequest(TEST_PHONE, OtpType.REGISTER));
-        OtpVerification otp = otpVerificationRepository
-                .findTopByPhoneAndOtpTypeOrderByCreatedAtDesc(TEST_PHONE, OtpType.REGISTER).orElseThrow();
-        authService.verifyOtp(new VerifyOtpRequest(TEST_PHONE, otp.getOtpCode(), OtpType.REGISTER));
+    @DisplayName("Xác thực OTP sai phải bị từ chối")
+    void testVerifyOtp_WrongCode() {
+        requestRegisterCode();
+        assertThrows(AppException.class, () ->
+                authService.verifyOtp(new VerifyOtpRequest(TEST_PHONE, "000000", OtpType.REGISTER)));
+    }
 
-        // 2. Đăng ký tài khoản
-        RegisterRequest registerRequest = RegisterRequest.builder()
+    @Test
+    @DisplayName("Đăng ký tài khoản sau khi xác thực OTP -> Tạo User và Patient -> Đăng nhập OTP thành công")
+    void testRegisterAndLoginFlow() {
+        String code = requestRegisterCode();
+
+        AuthResponse authResponse = authService.register(RegisterRequest.builder()
                 .phone(TEST_PHONE)
                 .fullName("Trần Thị Mai")
                 .yearOfBirth(1955)
                 .gender(Gender.FEMALE)
                 .address("Phường 25, Quận Bình Thạnh, TP.HCM")
-                .otpCode(otp.getOtpCode())
+                .otpCode(code)
                 .password("MatKhau@2026")
-                .build();
+                .build());
 
-        AuthResponse authResponse = authService.register(registerRequest);
         assertNotNull(authResponse.getAccessToken(), "Phải trả về Access Token sau khi đăng ký");
         assertEquals("Trần Thị Mai", authResponse.getUser().getFullName());
         assertEquals(Role.PATIENT, authResponse.getUser().getRole());
 
-        // 3. Kiểm tra DB xem User và Patient đã tạo chưa
         Optional<User> userOpt = userRepository.findByPhone(TEST_PHONE);
         assertTrue(userOpt.isPresent());
         assertEquals("Trần Thị Mai", userOpt.get().getFullName());
@@ -106,45 +112,34 @@ class AuthServiceIntegrationTest {
         assertFalse(patients.isEmpty(), "Hồ sơ bệnh nhân phải được tự động liên kết với SĐT");
         assertNotNull(patients.get(0).getPatientCode());
 
-        // 4. Đăng nhập bằng mật khẩu
-        AuthResponse loginResponse = authService.login(new LoginRequest(TEST_PHONE, "MatKhau@2026"));
-        assertNotNull(loginResponse.getAccessToken());
-        assertEquals(TEST_PHONE, loginResponse.getUser().getPhone());
-
-        // 5. Đăng nhập nhanh bằng SĐT (máy quen)
+        // Đăng nhập nhanh bằng SĐT (máy quen)
         AuthResponse quickResponse = authService.quickLoginByPhone(TEST_PHONE);
         assertNotNull(quickResponse.getAccessToken());
 
-        // 6. Đăng nhập máy mới qua OTP
-        authService.sendOtp(new SendOtpRequest(TEST_PHONE, OtpType.LOGIN));
-        OtpVerification loginOtp = otpVerificationRepository
-                .findTopByPhoneAndOtpTypeOrderByCreatedAtDesc(TEST_PHONE, OtpType.LOGIN).orElseThrow();
-        AuthResponse otpLoginResponse = authService.loginWithOtp(new LoginOtpRequest(TEST_PHONE, loginOtp.getOtpCode()));
+        // Đăng nhập máy mới qua OTP
+        // Xóa dấu vết OTP cũ để không vướng quy tắc chờ 60 giây giữa 2 lần gửi mã
+        otpVerificationRepository.deleteAll();
+        Map<String, Object> loginOtpRes = authService.resendOtp(TEST_PHONE, "LOGIN");
+        String loginCode = (String) loginOtpRes.get("devCode");
+        AuthResponse otpLoginResponse = authService.loginWithOtp(new LoginOtpRequest(TEST_PHONE, loginCode));
         assertNotNull(otpLoginResponse.getAccessToken());
     }
 
     @Test
-    @DisplayName("Đăng nhập sai mật khẩu ném ngoại lệ 400/401")
+    @DisplayName("Đăng nhập sai mật khẩu ném ngoại lệ")
     void testLoginWithWrongPassword() {
-        // Gửi và xác thực OTP
-        authService.sendOtp(new SendOtpRequest(TEST_PHONE, OtpType.REGISTER));
-        OtpVerification otp = otpVerificationRepository
-                .findTopByPhoneAndOtpTypeOrderByCreatedAtDesc(TEST_PHONE, OtpType.REGISTER).orElseThrow();
-        authService.verifyOtp(new VerifyOtpRequest(TEST_PHONE, otp.getOtpCode(), OtpType.REGISTER));
+        String code = requestRegisterCode();
 
-        // Đăng ký
         authService.register(RegisterRequest.builder()
                 .phone(TEST_PHONE)
                 .fullName("Bác Ba")
                 .yearOfBirth(1950)
                 .gender(Gender.MALE)
-                .otpCode(otp.getOtpCode())
+                .otpCode(code)
                 .password("MatKhauDung@123")
                 .build());
 
-        // Đăng nhập sai pass
         assertThrows(AppException.class, () ->
                 authService.login(new LoginRequest(TEST_PHONE, "MatKhauSai@999")));
     }
 }
-

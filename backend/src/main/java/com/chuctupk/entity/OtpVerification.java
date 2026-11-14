@@ -24,7 +24,7 @@ public class OtpVerification {
     @Column(name = "phone", nullable = false, length = 15)
     private String phone;
 
-    @Column(name = "otp_code", nullable = false, length = 10)
+    @Column(name = "otp_code", nullable = false, length = 64)
     private String otpCode;
 
     @Enumerated(EnumType.STRING)

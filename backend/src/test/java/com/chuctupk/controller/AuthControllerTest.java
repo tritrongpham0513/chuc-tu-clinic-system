@@ -1,6 +1,9 @@
 package com.chuctupk.controller;
 
+import com.chuctupk.dto.request.LoginOtpRequest;
 import com.chuctupk.dto.request.LoginRequest;
+import com.chuctupk.dto.request.LoginVerifyRequest;
+import com.chuctupk.dto.request.PatientRegisterRequest;
 import com.chuctupk.dto.request.RegisterRequest;
 import com.chuctupk.dto.request.SendOtpRequest;
 import com.chuctupk.dto.request.VerifyOtpRequest;
@@ -86,62 +89,39 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/auth/register - Đăng ký thành công trả về 201")
+    @DisplayName("POST /api/v1/auth/register - Bước 1: gửi mã OTP đăng ký, trả về 200 + needCode")
     void testRegister_Success() throws Exception {
-        RegisterRequest request = RegisterRequest.builder()
+        PatientRegisterRequest request = PatientRegisterRequest.builder()
                 .phone("0912345678")
                 .fullName("Nguyễn Thị Hoa")
-                .password("MatKhau@123")
-                .otpCode("123456")
-                .yearOfBirth(1960)
-                .gender(Gender.FEMALE)
-                .address("Quận Bình Thạnh, TP.HCM")
                 .build();
 
-        UserResponse userResponse = UserResponse.builder()
-                .id(1L)
-                .phone("0912345678")
-                .fullName("Nguyễn Thị Hoa")
-                .role(Role.PATIENT)
-                .build();
-
-        AuthResponse authResponse = AuthResponse.builder()
-                .accessToken("mock-jwt-token")
-                .tokenType("Bearer")
-                .user(userResponse)
-                .build();
-
-        when(authService.register(any(RegisterRequest.class))).thenReturn(authResponse);
+        java.util.Map<String, Object> data = new java.util.LinkedHashMap<>();
+        data.put("needCode", true);
+        data.put("phone", "0912345678");
+        data.put("resendAfterSeconds", 60);
+        when(authService.requestPatientRegisterOtp(any(PatientRegisterRequest.class))).thenReturn(data);
 
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.statusCode", is(201)))
-                .andExpect(jsonPath("$.data.accessToken", is("mock-jwt-token")))
-                .andExpect(jsonPath("$.data.user.fullName", is("Nguyễn Thị Hoa")));
+                .andExpect(jsonPath("$.statusCode", is(200)))
+                .andExpect(jsonPath("$.data.needCode", is(true)))
+                .andExpect(jsonPath("$.data.phone", is("0912345678")));
     }
 
     @Test
-    @DisplayName("POST /api/v1/auth/login - Đăng nhập đúng trả về 200")
+    @DisplayName("POST /api/v1/auth/login - Bước 1: yêu cầu mã OTP đăng nhập, trả về 200 + needCode")
     void testLogin_Success() throws Exception {
-        LoginRequest request = new LoginRequest("0912345678", "MatKhau@123");
+        LoginOtpRequest request = new LoginOtpRequest("0912345678", null);
 
-        UserResponse userResponse = UserResponse.builder()
-                .id(1L)
-                .phone("0912345678")
-                .fullName("Nguyễn Thị Hoa")
-                .role(Role.PATIENT)
-                .build();
-
-        AuthResponse authResponse = AuthResponse.builder()
-                .accessToken("mock-jwt-token")
-                .tokenType("Bearer")
-                .user(userResponse)
-                .build();
-
-        when(authService.login(any(LoginRequest.class))).thenReturn(authResponse);
+        java.util.Map<String, Object> data = new java.util.LinkedHashMap<>();
+        data.put("needCode", true);
+        data.put("phone", "0912345678");
+        data.put("resendAfterSeconds", 60);
+        when(authService.requestPatientLoginOtp("0912345678")).thenReturn(data);
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -149,32 +129,39 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success", is(true)))
                 .andExpect(jsonPath("$.statusCode", is(200)))
-                .andExpect(jsonPath("$.data.accessToken", is("mock-jwt-token")));
+                .andExpect(jsonPath("$.data.needCode", is(true)))
+                .andExpect(jsonPath("$.data.phone", is("0912345678")));
     }
 
     @Test
-    @DisplayName("POST /api/v1/auth/login - Sai mật khẩu trả về 401")
+    @DisplayName("POST /api/v1/auth/login/verify - Mã OTP sai trả về 400 kèm code CODE_WRONG")
     void testLogin_WrongPassword() throws Exception {
-        LoginRequest request = new LoginRequest("0912345678", "WrongPass");
+        LoginVerifyRequest request = LoginVerifyRequest.builder()
+                .phone("0912345678")
+                .code("000000")
+                .build();
 
-        when(authService.login(any(LoginRequest.class)))
-                .thenThrow(AppException.unauthorized("Mật khẩu không chính xác"));
+        when(authService.verifyPatientLogin(any(LoginVerifyRequest.class), any()))
+                .thenThrow(new AppException(com.chuctupk.exception.ErrorCode.CODE_WRONG,
+                        "Mã xác nhận không đúng. Cô chú kiểm tra lại tin nhắn nhé"));
 
-        mockMvc.perform(post("/api/v1/auth/login")
+        mockMvc.perform(post("/api/v1/auth/login/verify")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnauthorized())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success", is(false)))
-                .andExpect(jsonPath("$.statusCode", is(401)))
-                .andExpect(jsonPath("$.message", is("Mật khẩu không chính xác")));
+                .andExpect(jsonPath("$.statusCode", is(400)))
+                .andExpect(jsonPath("$.code", is("CODE_WRONG")));
     }
 
     @Test
-    @DisplayName("GET /api/v1/auth/me - Chưa đăng nhập trả về 401")
+    @DisplayName("GET /api/v1/auth/me - Chưa đăng nhập trả về 200 với user: null")
     void testGetMe_Unauthorized() throws Exception {
+        when(authService.getCurrentUserDto(null)).thenReturn(null);
+
         mockMvc.perform(get("/api/v1/auth/me"))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.success", is(false)))
-                .andExpect(jsonPath("$.statusCode", is(401)));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success", is(true)))
+                .andExpect(jsonPath("$.data.user").doesNotExist());
     }
 }

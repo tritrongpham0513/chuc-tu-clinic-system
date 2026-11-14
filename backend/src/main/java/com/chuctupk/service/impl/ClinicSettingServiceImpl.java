@@ -42,6 +42,15 @@ public class ClinicSettingServiceImpl implements ClinicSettingService {
                 .orElse(defaultValue);
     }
 
+    @Override
+    @Transactional
+    public void setSettingValue(String key, String value) {
+        ClinicSetting setting = clinicSettingRepository.findById(key)
+                .orElseGet(() -> ClinicSetting.builder().settingKey(key).build());
+        setting.setSettingValue(value);
+        clinicSettingRepository.save(setting);
+    }
+
     private int getIntSetting(String key, int defaultValue) {
         String rawValue = getSettingValue(key, String.valueOf(defaultValue));
         try {

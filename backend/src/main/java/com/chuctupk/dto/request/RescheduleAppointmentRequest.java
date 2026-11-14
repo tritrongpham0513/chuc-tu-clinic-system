@@ -1,6 +1,6 @@
 package com.chuctupk.dto.request;
 
-import jakarta.validation.constraints.NotNull;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -12,11 +12,13 @@ import java.time.LocalDate;
 @Builder
 public class RescheduleAppointmentRequest {
 
-    @NotNull(message = "Ngày khám mới không được để trống")
+    @JsonAlias({"newDate", "date"})
+    private String slotDate;
+
+    @JsonAlias({"newSlotStart", "startTime"})
+    private String slotStart;
+
     private LocalDate newDate;
-
-    @NotNull(message = "Khung giờ mới không được để trống")
     private Long newTimeSlotId;
-
     private String reason;
 }
