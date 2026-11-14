@@ -1,16 +1,17 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
-import App from './App.jsx'
-import { AuthProvider } from './context/AuthContext.jsx'
-import './styles/global.css'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+// CSS nền tảng nạp trước để CSS riêng của từng trang ghi đè được
+import './shared/styles.css';
+import { SessionProvider } from './shared/lib/session.jsx';
+import App from './App.jsx';
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
     <BrowserRouter>
-      <AuthProvider>
+      <SessionProvider>
         <App />
-      </AuthProvider>
+      </SessionProvider>
     </BrowserRouter>
-  </React.StrictMode>,
-)
+  </StrictMode>,
+);

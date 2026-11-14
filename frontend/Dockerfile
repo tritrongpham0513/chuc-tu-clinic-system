@@ -1,38 +1,23 @@
-# Multi-stage Dockerfile cho Frontend Phòng Khám Chúc Từ (React 18 + Vite + Nginx)
-
-# -------------------------------------------------------------
-# Stage 1: Build React/Vite
-# -------------------------------------------------------------
-FROM node:20-alpine AS builder
+# Giao diện Phòng khám Chúc Từ: build ứng dụng rồi phục vụ bằng nginx.
+#   docker build -t chuctu-frontend .
+#   docker run -p 8080:80 -e API_UPSTREAM=http://dia-chi-backend:4000 chuctu-frontend
+FROM node:22-alpine AS build
 WORKDIR /app
 
-# Copy dependency definitions
-COPY package*.json ./
-RUN npm ci
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts
 
-# Copy toàn bộ mã nguồn frontend
-COPY . .
-
-# Khi chạy trong Docker Compose, Nginx đứng trước proxy /api/v1 -> Backend
-ARG VITE_API_BASE_URL=/api/v1
-ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
-
+COPY index.html vite.config.js ./
+COPY public public
+COPY src src
+# Để trống: gọi API cùng địa chỉ (/api, nginx chuyển sang API_UPSTREAM)
+ARG VITE_API_URL=
+ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
-# -------------------------------------------------------------
-# Stage 2: Nginx Web Server phục vụ static files & Proxy API
-# -------------------------------------------------------------
-FROM nginx:alpine
-
-# Thay thế cấu hình Nginx mặc định bằng cấu hình SPA và Reverse Proxy API
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Copy bản build tĩnh từ stage builder vào thư mục web root
-COPY --from=builder /app/dist /usr/share/nginx/html
-
+FROM nginx:1.27-alpine
+# nginx thay ${API_UPSTREAM} trong template lúc khởi động container
+ENV API_UPSTREAM=http://server:4000
+COPY nginx.conf /etc/nginx/templates/default.conf.template
+COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80
-
-HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
-
-CMD ["nginx", "-g", "daemon off;"]

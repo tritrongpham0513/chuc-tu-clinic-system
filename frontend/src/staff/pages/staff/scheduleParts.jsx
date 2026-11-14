@@ -1,0 +1,130 @@
+import { Link, useLocation } from 'react-router-dom';
+import { Icon } from '../../../shared/ui/Icon.jsx';
+import { useDismiss, useMenuPlacement } from '../../../shared/lib/hooks.js';
+import { RECEIVING_HOURS } from '../../../shared/domain/constants.js';
+import { RECEIVING_CLOSED, isReceivingNow, nowMinutesVN } from '../../components/appointments/time.js';
+import { clock, minutesOf } from './DailySchedule.jsx';
+
+// Thành phần của từng dòng trong Lịch trong ngày
+
+export function StatusChip({ a }) {
+  switch (a.status) {
+    case 'BOOKED':
+      return (
+        <span className="t-chip t-chip-gold">
+          <Icon name="clock" size={18} strokeWidth={2.25} />
+          Chưa đến
+        </span>
+      );
+    case 'CHECKED_IN':
+      return (
+        <span className="t-chip t-chip-green">
+          <Icon name="checkCircle" size={18} strokeWidth={2.25} />
+          Đã check-in {a.checkin ? clock(a.checkin.checkInTime) : ''}
+        </span>
+      );
+    case 'IN_PROGRESS':
+      return (
+        <span className="t-chip t-chip-solid">
+          <Icon name="arrowRight" size={18} strokeWidth={2.25} />
+          Đã vào khám {a.checkin?.enteredAt ? clock(a.checkin.enteredAt) : ''}
+        </span>
+      );
+    case 'COMPLETED':
+      return (
+        <span className="t-chip t-chip-done t-chip-sm">
+          <Icon name="check" size={18} strokeWidth={2.25} />
+          Đã hoàn thành
+        </span>
+      );
+    default:
+      return (
+        <span className="t-chip t-chip-cancel t-chip-sm">
+          <Icon name="x" size={18} strokeWidth={2.25} />
+          Đã huỷ
+        </span>
+      );
+  }
+}
+
+/** Ghi chú dưới trạng thái: đến sau khung đã đặt, đã qua khung giờ. */
+export function stateNote(a, isToday) {
+  if (a.status === 'CHECKED_IN' && a.checkin && a.checkin.priorityGroup === 'NORMAL' && a.source !== 'COUNTER') {
+    const checkInMin = minutesOf(clock(a.checkin.checkInTime));
+    if (checkInMin >= minutesOf(a.slotStart) + 60) return 'Đến sau khung đã đặt';
+    if (checkInMin < minutesOf(a.slotStart)) return `Đến sớm, xếp nhóm thường`;
+  }
+  // Đã đóng cửa: không check-in được nữa, phiếu sẽ tự huỷ lúc 17:00
+  if (a.status === 'BOOKED' && isToday && nowMinutesVN() >= minutesOf(RECEIVING_HOURS.close)) return `Ngoài giờ nhận bệnh, tự huỷ lúc ${RECEIVING_HOURS.noShowCancel.replace(/^0/, '')} nếu không đến`;
+  if (a.status === 'BOOKED' && isToday && minutesOf(a.slotStart) + 60 <= nowMinutesVN()) return 'Đã qua khung giờ khám';
+  return '';
+}
+
+export function RowMenu({ a, isToday, isPast, open, onToggle, act }) {
+  const location = useLocation();
+  const ref = useDismiss(open, onToggle);
+  const { menuRef, up } = useMenuPlacement(open, ref);
+  const name = a.patient?.fullName;
+
+  const items = [];
+  if (a.status === 'BOOKED' && isToday) {
+    // Ngoài giờ nhận bệnh: vẫn hiện mục Check-in nhưng làm mờ, kèm lý do
+    items.push(isReceivingNow() ? ['checkin', 'check', 'Check-in', 'green'] : ['checkin', 'check', RECEIVING_CLOSED, 'disabled']);
+  }
+  // Mời vào khám và hoàn tác vào khám chỉ làm ở trang Hàng đợi, để mọi thay đổi ghế nằm một chỗ
+  if (a.status === 'BOOKED' && !isPast) items.push(['reschedule', 'clock', 'Đổi giờ khám']);
+  if (a.status === 'IN_PROGRESS') items.push(['record', 'file', 'Ghi nhận lượt khám']);
+  if (a.status === 'COMPLETED') items.push(['record', 'file', 'Xem lượt khám']);
+  items.push(['patient', 'user', 'Mở hồ sơ bệnh nhân']);
+  if (a.status === 'CHECKED_IN' && isToday) items.push(['undo-checkin', 'undo', 'Hoàn tác check-in']);
+  if (a.status === 'BOOKED' && !isPast) items.push(['cancel', 'x', 'Huỷ phiếu khám', 'danger']);
+
+  return (
+    <div className="t-menu-wrap" ref={ref}>
+      <button
+        type="button"
+        className="t-kebab"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`Thao tác cho ${name}`}
+        onClick={onToggle}
+      >
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <circle cx="12" cy="5" r="2" />
+          <circle cx="12" cy="12" r="2" />
+          <circle cx="12" cy="19" r="2" />
+        </svg>
+      </button>
+      {open && (
+        <div ref={menuRef} role="menu" aria-label={`Thao tác cho ${name}`} className={`t-menu ${up ? 'up' : 'down'}`}>
+          {items.map(([key, icon, label, tone]) =>
+            key === 'record' || key === 'patient' ? (
+              <Link
+                key={key}
+                role="menuitem"
+                className="t-menu-item"
+                to={key === 'record' ? `/noi-bo/phieu-kham/${a.id}/ket-qua` : `/noi-bo/benh-nhan/${a.patient?.id}`}
+                state={key === 'record' ? { back: `${location.pathname}${location.search}` } : undefined}
+              >
+                <Icon name={icon} size={22} />
+                {label}
+              </Link>
+            ) : (
+              <button
+                key={key}
+                type="button"
+                role="menuitem"
+                className={`t-menu-item ${tone || ''}`}
+                disabled={tone === 'disabled'}
+                onClick={() => act(key, a)}
+              >
+                <Icon name={icon} size={22} />
+                {label}
+              </button>
+            ),
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
