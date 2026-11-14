@@ -140,7 +140,10 @@ public class SecurityConfig {
                 "http://localhost:*",
                 "http://127.0.0.1:*",
                 "http://localhost",
-                "http://127.0.0.1"
+                "http://127.0.0.1",
+                "https://*.onrender.com",
+                "https://*.vercel.app",
+                "https://*.railway.app"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
