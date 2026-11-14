@@ -157,11 +157,13 @@ Trình duyệt mở tại: `http://localhost:5173` (Vite Proxy sẽ tự động
 Hệ thống đã nạp sẵn các tài khoản mẫu để bạn có thể đăng nhập kiểm thử ngay mà không cần tạo mới:
 
 ### 1. Phân hệ Nội bộ (Đăng nhập tại `http://localhost:3000/noi-bo/`)
-| Vai trò | Tên đăng nhập | Email | Mật khẩu mặc định | Quyền hạn chính |
+| Vai trò | Tên đăng nhập | Email | Mật khẩu khởi tạo | Quyền hạn chính |
 | :--- | :--- | :--- | :--- | :--- |
-| **Quản trị viên (ADMIN)** | `admin` | `admin@chuctu.vn` | `ChucTu@2026` | Toàn quyền: Quản lý tài khoản, duyệt bài viết, xem dashboard thống kê |
-| **Bác sĩ (DOCTOR)** | `bacsi` | `bsnam@chuctu.vn` | `ChucTu@2026` | Gọi số khám, chẩn đoán, kê đơn, ghi nhận bệnh án |
-| **Tiếp tân (STAFF / RECEPTIONIST)** | `letan` | `letan@chuctu.vn` | `ChucTu@2026` | Tiếp đón, check-in bệnh nhân, xếp vào hàng đợi, đổi lịch hẹn |
+| **Quản trị viên (ADMIN)** | `admin` | `admin@chuctu.vn` | `MatKhauAdmin@2026` | Toàn quyền: Quản lý tài khoản, duyệt bài viết, xem dashboard thống kê |
+| **Bác sĩ (DOCTOR)** | `bacsi` | `bsnam@chuctu.vn` | `MatKhauAdmin@2026` | Gọi số khám, chẩn đoán, kê đơn, ghi nhận bệnh án |
+| **Tiếp tân (STAFF / RECEPTIONIST)** | `letan` | `letan@chuctu.vn` | `MatKhauAdmin@2026` | Tiếp đón, check-in bệnh nhân, xếp vào hàng đợi, đổi lịch hẹn |
+
+> 💡 **Mẹo đăng nhập:** Bạn có thể đăng nhập bằng **Tên đăng nhập** (ví dụ: `admin`, `bacsi`, `letan`) hoặc **Email** đều được. Mật khẩu khởi tạo cho toàn bộ tài khoản mẫu là `MatKhauAdmin@2026`.
 
 ### 2. Cổng Người bệnh (Đăng nhập tại `http://localhost:3000/dang-nhap` hoặc khi Đặt lịch)
 - **Số điện thoại**: Bất kỳ số điện thoại hợp lệ tại Việt Nam (Ví dụ: `0987654321`, `0912345678`, `0901234567`).
