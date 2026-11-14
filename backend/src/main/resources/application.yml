@@ -28,7 +28,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate   # Schema do database/001_schema_v2.sql quản lý, Hibernate chỉ kiểm tra
+      ddl-auto: ${DDL_AUTO:update}   # Tự động tạo/bổ sung bảng nếu thiếu (appointment_seats, checkins...)
     show-sql: false        # Tránh log dữ liệu bệnh nhân
     properties:
       hibernate:
