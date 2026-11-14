@@ -1,179 +1,217 @@
-# HỆ THỐNG QUẢN LÝ VÀ TIẾP NHẬN BỆNH NHÂN - PHÒNG KHÁM CHÚC TỪ
+# 🏥 HỆ THỐNG QUẢN LÝ VÀ TIẾP NHẬN BỆNH NHÂN - PHÒNG KHÁM CHÚC TỪ
 
 > **Chuc Tu Traditional Medicine Clinic Management System**  
-> Nền tảng website tiếp nhận đặt lịch khám bệnh và quản trị vận hành phòng khám Y học Cổ truyền, Châm cứu, Bấm huyệt và Phục hồi chức năng.
+> Nền tảng tiếp nhận đặt lịch khám bệnh, điều phối phòng chờ và quản trị bệnh án cho Phòng Khám Y học Cổ truyền Chúc Từ (Châm cứu, Bấm huyệt, Phục hồi chức năng).
 
 ---
 
-## 1. TRIẾT LÝ THIẾT KẾ: "ELDERLY-CENTRIC" (ƯU TIÊN NGƯỜI CAO TUỔI)
-
-Khác với các hệ thống y tế công nghệ cao thông thường, Phòng Khám Chúc Từ được định hình với tôn chỉ: **Mộc mạc – Ấm áp – Dễ dùng**:
-
-- **Cỡ chữ to & Dễ đọc**: Toàn bộ nội dung văn bản thông thường (body text) đạt kích thước tối thiểu `18px - 20px`, tiêu đề từ `24px - 32px`.
-- **Bảng màu Thảo mộc & Nâu gỗ (Warm Herbal)**: 
-  - Nâu gỗ trầm (`#5C3A21` / `#78350F`): Màu bàn bắt mạch, tủ thuốc đông y.
-  - Xanh thảo mộc (`#2D5A27` / `#15803D`): Màu lá thuốc nam, biểu trưng cho sự hồi phục tự nhiên.
-  - Vàng rơm ấm (`#D97706` / `#F59E0B`): Điểm xuyết cho các nút bấm hành động quan trọng.
-  - Nền giấy xuyến chỉ (`#FDFBF7`): Độ tương phản cao (> 7:1 đạt chuẩn WCAG AAA), dịu mắt cho người lớn tuổi.
-- **Loại bỏ hiệu ứng gây rối mắt**: Tuyệt đối không dùng chữ trượt bay, pop-up bất ngờ hay hoạt ảnh 3D.
-- **Mobile-First & Sticky Bottom Bar**: 2 nút lớn cố định ở đáy màn hình điện thoại:
-  - **Nút Hotline**: Bấm gọi ngay cho bác sĩ trực (`tel:...`).
-  - **Nút Chỉ đường**: Mở trực tiếp Google Maps đến trụ sở phòng khám (Điện Biên Phủ, TP.HCM).
+## 📖 MỤC LỤC
+1. [Triết lý thiết kế (Elderly-First UX)](#1-triết-lý-thiết-kế-elderly-first-ux)
+2. [Kiến trúc & Công nghệ](#2-kiến-trúc--công-nghệ)
+3. [🚀 HƯỚNG DẪN CHẠY BẰNG DOCKER (KHUYÊN DÙNG - 1 LỆNH)](#3--hướng-dẫn-chạy-bằng-docker-khuyên-dùng---1-lệnh)
+4. [💻 Hướng dẫn chạy thủ công (Local Development)](#4--hướng-dẫn-chạy-thủ-công-local-development)
+5. [🔑 Danh sách tài khoản kiểm thử sẵn có](#5--danh-sách-tài-khoản-kiểm-thử-sẵn-có)
+6. [🔄 Luồng vận hành chính của phòng khám](#6--luồng-vận-hành-chính-của-phòng-khám)
+7. [🛠️ Khắc phục sự cố thường gặp (Troubleshooting)](#7-️-khắc-phục-sự-cố-thường-gặp-troubleshooting)
 
 ---
 
-## 2. KIẾN TRÚC CÔNG NGHỆ (TECH STACK)
+## 1. TRIẾT LÝ THIẾT KẾ: ELDERLY-FIRST UX
 
-Dự án áp dụng mô hình **Monorepo** chuẩn mực:
+Dành riêng cho đối tượng người bệnh lớn tuổi (50–80 tuổi) mắt kém, tay run:
+- **Cỡ chữ lớn & Dễ đọc**: Văn bản thông thường (body text) tối thiểu `18px - 20px`, tiêu đề `24px - 32px`.
+- **Tông màu Thảo mộc & Gỗ trầm (Warm Herbal)**: 
+  - Nâu gỗ trầm (`#5C3A21` / `#78350F`): Biểu trưng cho bàn bắt mạch, tủ thuốc đông y.
+  - Xanh thảo mộc (`#2D5A27` / `#15803D`): Biểu trưng cho cây thuốc nam và sự hồi phục.
+  - Vàng rơm ấm (`#D97706` / `#F59E0B`): Nút hành động quan trọng, cảnh báo.
+  - Nền ngà ấm (`#FDFBF7`): Tương phản WCAG AAA (> 7:1), dịu mắt, không dùng màu trắng toát bệnh viện sắc lạnh.
+- **Không hiệu ứng rối mắt**: Không dùng chữ trượt bay hay popup nhảy bất ngờ.
+- **Mobile-First Sticky Bar**: 2 nút to cố định dưới chân màn hình điện thoại:
+  - 📞 **Nút Hotline**: Bấm gọi trực tiếp bác sĩ (`tel:...`).
+  - 📍 **Nút Chỉ đường**: Mở thẳng Google Maps dẫn đường đến phòng khám (Điện Biên Phủ, TP.HCM).
+
+---
+
+## 2. KIẾN TRÚC & CÔNG NGHỆ
 
 ```text
-phong-kham-chuc-tu/
-├── frontend/           # Ứng dụng Web Client & Admin CMS (React 18 + Vite + Tailwind)
-├── backend/            # RESTful API Backend (Java 17/21 + Spring Boot 3.x/4.x)
-├── database/           # Kịch bản DDL MySQL 8.0 & Seed Data
-├── docs/               # Tài liệu dự án (PROJECT_CONTEXT.md, context.txt)
-├── AGENTS.md           # Bộ quy tắc hướng dẫn AI Agent
-└── README.md           # Tài liệu giới thiệu dự án
+chuc-tu-clinic-system/
+├── frontend/           # React 18 (Vite) + Tailwind CSS + Nginx Reverse Proxy
+├── backend/            # Java 17 + Spring Boot 4 (Clean Layered Architecture)
+├── database/           # Bộ script MySQL 8.0 migrations (001 - 006)
+├── docker/mysql/init/  # 8 file SQL tự động nạp khi container khởi tạo lần đầu
+├── docs/               # OpenAPI spec (openapi-v1.yaml), smoke-test.http, changelog
+├── docker-compose.yml  # File điều phối chạy 3 container (MySQL, Backend, Frontend)
+└── README.md           # Tài liệu hướng dẫn sử dụng (File này)
 ```
 
-| Tầng hệ thống | Công nghệ | Mô tả kỹ thuật |
+| Thành phần | Công nghệ | Cổng mặc định | Vai trò |
+| :--- | :--- | :--- | :--- |
+| **Frontend** | React 18, Vite, Nginx | `3000` | Giao diện người bệnh & Bàn làm việc nội bộ |
+| **Backend** | Spring Boot 4, Java 17 | `4000` | REST API `/api/v1/**`, Spring Security JWT, Jackson 3 |
+| **Database** | MySQL 8.0 InnoDB | `3307` (host) / `3306` (in-net) | 27 bảng dữ liệu, Charset `utf8mb4_unicode_ci` |
+
+---
+
+## 3. 🚀 HƯỚNG DẪN CHẠY BẰNG DOCKER (KHUYÊN DÙNG - 1 LỆNH)
+
+> **Yêu cầu máy tính:**  
+> - Đã cài đặt và đang mở **[Docker Desktop](https://www.docker.com/products/docker-desktop/)** (icon cá voi góc màn hình báo màu xanh *Running*).  
+> - **KHÔNG CẦN** cài đặt Java, Maven, Node.js hay MySQL trên máy thật.
+
+### Bước 1: Tải mã nguồn về máy
+Mở Terminal / PowerShell trên máy tính:
+```powershell
+git clone -b feat/clinic-management-system https://github.com/tritrongpham0513/chuc-tu-clinic-system.git
+cd chuc-tu-clinic-system
+```
+
+### Bước 2: Khởi chạy toàn bộ hệ thống
+```powershell
+docker compose up --build -d
+```
+*(Lần đầu chạy, Docker sẽ tải image và build các service trong khoảng 1–2 phút. Các lần sau khởi động chỉ mất vài giây).*
+
+### Bước 3: Kiểm tra trạng thái các dịch vụ
+```powershell
+docker compose ps
+```
+Khi thấy cả 3 container `chuctupk-mysql`, `chuctupk-backend`, `chuctupk-frontend` đều ở trạng thái `healthy` hoặc `Up`, bạn có thể mở trình duyệt:
+
+---
+
+### 🌐 Các địa chỉ truy cập hệ thống
+
+| Phân hệ | Đường dẫn (URL) | Mô tả |
 | :--- | :--- | :--- |
-| **Frontend** | React 18 (Vite) | Tốc độ tải trang siêu nhanh, SPA mượt mà, tối ưu mạng 3G/4G |
-| **Styling** | Tailwind CSS | Quản lý bảng màu thảo mộc và typography cỡ lớn tập trung |
-| **Backend** | Java 17/21 + Spring Boot 3/4 | Clean Layered Architecture, Spring Security 6, Spring Data JPA |
-| **Authentication** | Stateless JWT | Xác thực phân quyền RBAC an toàn, thời gian sống linh hoạt |
-| **Database** | MySQL 8.0 | Engine InnoDB, Charset `utf8mb4_unicode_ci` hỗ trợ tiếng Việt trọn vẹn |
+| 🧑‍⚕️ **Cổng Người bệnh** | [http://localhost:3000](http://localhost:3000) | Đặt lịch hẹn, tra cứu phiếu khám, xem cẩm nang sức khỏe |
+| 🏥 **Bàn làm việc Nội bộ** | [http://localhost:3000/noi-bo/](http://localhost:3000/noi-bo/) | Dành cho Bác sĩ, Tiếp tân, Quản trị viên |
+| 📋 **Tài liệu Swagger API** | [http://localhost:4000/swagger-ui.html](http://localhost:4000/swagger-ui.html) | Danh mục chi tiết 45+ REST endpoints |
+| 🩺 **Kiểm tra trạng thái API**| [http://localhost:4000/api/v1/health](http://localhost:4000/api/v1/health) | Trả về JSON trạng thái hệ thống |
+| 🗄️ **Cơ sở dữ liệu MySQL** | Cổng `3307` | Host: `localhost`, User: `root`, Password: `root`, DB: `phongkham_chuctu` |
 
 ---
 
-## 3. PHÂN HỆ NGƯỜI DÙNG & VAI TRÒ (RBAC)
+### 🛑 Các lệnh quản lý Docker hữu ích
 
-Hệ thống hỗ trợ 4 vai trò rõ ràng:
+```powershell
+# Xem log thời gian thực của toàn bộ hệ thống:
+docker compose logs -f
 
-1. **QUẢN TRỊ VIÊN (`ADMIN`)**:
-   - Quản lý tài khoản và phân quyền bác sĩ, nhân viên.
-   - Quản lý danh mục bài viết, khung giờ khám và cấu hình hệ thống.
-2. **BÁC SĨ (`DOCTOR`)**:
-   - Theo dõi danh sách ca khám trong ngày.
-   - Cập nhật ghi chú bệnh án, duyệt/hoàn thành ca khám.
-   - Đăng tải bài viết chia sẻ mẹo dân gian, cẩm nang sức khỏe.
-3. **LỄ TÂN / ĐIỀU DƯỠNG (`STAFF`)**:
-   - Tiếp nhận lịch hẹn mới từ người bệnh.
-   - Gọi điện xác nhận, sắp xếp ca khám và phân bổ bác sĩ.
-4. **BỆNH NHÂN & CON CHÁU (`PATIENT`)**:
-   - Đặt lịch khám nhanh không bắt buộc đăng nhập (chỉ cần điền SĐT & triệu chứng).
-   - Tra cứu mã hẹn khám bệnh.
-   - Đăng ký tài khoản để quản lý hồ sơ khám của nhiều người thân trong gia đình.
+# Xem riêng log của backend:
+docker compose logs -f backend
+
+# Dừng toàn bộ hệ thống (giữ nguyên dữ liệu khám bệnh):
+docker compose down
+
+# Xóa sạch container và database để làm lại từ đầu:
+docker compose down -v
+```
 
 ---
 
-## 4. CƠ SỞ DỮ LIỆU (8 BẢNG HOÀN CHỈNH)
+## 4. 💻 HƯỚNG DẪN CHẠY THỦ CÔNG (LOCAL DEVELOPMENT)
 
-- `users`: Tài khoản đăng nhập hệ thống nội bộ (Băm mật khẩu bằng BCrypt).
-- `doctors`: Hồ sơ chuyên môn bác sĩ, chuyên khoa, liên kết 1-1 với `users`.
-- `patients`: Hồ sơ bệnh nhân (mã BN, họ tên, năm sinh, SĐT).
-- `time_slots`: Khung giờ khám (mỗi ca 30 phút, sáng/chiều, giới hạn số người/ca).
-- `doctor_schedules`: Lịch làm việc hàng tuần của từng bác sĩ.
-- `appointments`: Lịch hẹn khám (mã booking, chống trùng lịch, quản lý trạng thái).
-- `article_categories`: Danh mục bài viết cẩm nang sức khỏe.
-- `articles`: Bài viết mẹo chữa bệnh, y học cổ truyền, tin từ thiện.
+Áp dụng khi bạn muốn lập trình và sửa code trực tiếp trên máy tính mà không qua Docker.
 
----
+### Yêu cầu môi trường:
+- Java JDK 17+
+- Node.js 18+ (khuyên dùng Node 20/22)
+- MySQL 8.0+ đang chạy ở cổng 3306
 
-## 5. HƯỚNG DẪN KHỞI CHẠY (QUICK START)
+### Bước 1: Khởi tạo Database
+1. Tạo database:
+   ```sql
+   CREATE DATABASE phongkham_chuctu CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
+2. Chạy lần lượt các script trong thư mục `database/` hoặc `docker/mysql/init/` từ `01` đến `08`.
 
-### CÁCH 1: KHỞI CHẠY SIÊU TỐC BẰNG DOCKER (KHUYÊN DÙNG - 1 LỆNH DUY NHẤT)
-
-> **Yêu cầu**: Máy tính đã cài đặt **Docker Desktop**. Bạn không cần cài thêm Java, Maven, Node.js hay MySQL.
-
-1. **Clone mã nguồn và chuyển sang nhánh tính năng:**
-   ```bash
-   git clone https://github.com/tritrongpham0513/chuc-tu-clinic-system.git
-   cd chuc-tu-clinic-system
-   git checkout feat/clinic-management-system
+### Bước 2: Chạy Backend (Port 4000)
+1. Tạo file `backend/.env` từ file mẫu:
+   ```powershell
+   # Điền mật khẩu MySQL của máy bạn vào DB_PASSWORD
+   PORT=4000
+   DB_URL=jdbc:mysql://localhost:3306/phongkham_chuctu?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true
+   DB_USERNAME=root
+   DB_PASSWORD=your_password
+   ```
+2. Khởi động Backend:
+   ```powershell
+   cd backend
+   .\mvnw.cmd spring-boot:run
    ```
 
-2. **Chạy 1 lệnh duy nhất để khởi động toàn bộ hệ thống:**
-   ```bash
-   docker compose up --build -d
-   ```
-   *(Hệ thống sẽ tự động build Backend, Frontend, dựng Database MySQL, nạp 21 bảng và 3 tài khoản mẫu)*
-
-3. **Mở trình duyệt truy cập:**
-   - **Giao diện Website & Quản trị**: [http://localhost:3000](http://localhost:3000)
-   - **Máy chủ Backend API**: [http://localhost:4000](http://localhost:4000)
-   - **Tài liệu API Swagger**: [http://localhost:4000/swagger-ui/index.html](http://localhost:4000/swagger-ui/index.html)
-
----
-
-### CÁCH 2: KHỞI CHẠY THỦ CÔNG TỪNG PHẦN (LOCAL DEVELOPMENT)
-
-> **Yêu cầu**: Đã cài đặt Java 17+, MySQL 8.0+, Node.js 18+.
-
-#### Bước 1: Khởi tạo Cơ sở Dữ liệu MySQL
-Mở MySQL Workbench hoặc Terminal và chạy lần lượt các file script trong thư mục `database/`:
-```bash
-mysql -u root -p < database/001_schema_v2.sql
-mysql -u root -p < database/002_add_patient_fields.sql
-mysql -u root -p < database/003_contract_alignment.sql
-mysql -u root -p < database/004_seed_slots_60min.sql
-mysql -u root -p < database/005_v1_support.sql
-mysql -u root -p < database/seed_staff_and_doctor.sql
-```
-
-#### Bước 2: Thiết lập file môi trường (.env)
-Sao chép file mẫu thành file `.env` tại thư mục gốc:
-```bash
-# Windows PowerShell:
-Copy-Item .env.example .env
-
-# Linux / macOS:
-cp .env.example .env
-```
-Mở file `.env` và điền mật khẩu MySQL của máy bạn (`DB_PASSWORD=...`).
-
-#### Bước 3: Khởi chạy Backend (Spring Boot - Cổng 4000)
-```bash
-cd backend
-# Windows:
-.\mvnw.cmd spring-boot:run
-
-# Linux / macOS:
-./mvnw spring-boot:run
-```
-*API sẵn sàng tại:* `http://localhost:4000/api/v1`
-
-#### Bước 4: Khởi chạy Frontend (React + Vite)
-Mở cửa sổ Terminal mới:
-```bash
+### Bước 3: Chạy Frontend (Port 5173)
+Mở cửa sổ Terminal thứ 2:
+```powershell
 cd frontend
 npm install
 npm run dev
 ```
-*Giao diện sẵn sàng tại:* `http://localhost:5173`
+Trình duyệt mở tại: `http://localhost:5173` (Vite Proxy sẽ tự động chuyển các request `/api/v1/**` sang backend cổng 4000).
 
 ---
 
-## 6. DANH SÁCH TÀI KHOẢN MẪU CÓ SẴN (TESTING ACCOUNTS)
+## 5. 🔑 DANH SÁCH TÀI KHOẢN KIỂM THỬ SẴN CÓ
 
-Hệ thống đã chuẩn bị sẵn các tài khoản để bạn có thể đăng nhập kiểm thử ngay:
+Hệ thống đã nạp sẵn các tài khoản mẫu để bạn có thể đăng nhập kiểm thử ngay mà không cần tạo mới:
 
-| Vai trò | Tên đăng nhập / Email | Mật khẩu mặc định | Đường dẫn đăng nhập |
-| :--- | :--- | :--- | :--- |
-| **Quản trị viên (ADMIN)** | `admin@chuctu.vn` (hoặc `admin`) | `ChucTu@2026` | `/admin/login` |
-| **Tiếp tân / Điều dưỡng (STAFF)** | `letan@chuctu.vn` (hoặc `letan`) | `ChucTu@2026` | `/staff/login` |
-| **Bác sĩ YHCT (DOCTOR)** | `bsnam@chuctu.vn` (hoặc `bacsi`) | `ChucTu@2026` | `/staff/login` |
-| **Bệnh nhân (PATIENT)** | Số điện thoại bất kỳ (VD: `0987654321`) | Đăng nhập OTP (Mã thử nghiệm dev: `123456`) | `/dat-lich` hoặc `/tra-cuu` |
+### 1. Phân hệ Nội bộ (Đăng nhập tại `http://localhost:3000/noi-bo/`)
+| Vai trò | Tên đăng nhập | Email | Mật khẩu mặc định | Quyền hạn chính |
+| :--- | :--- | :--- | :--- | :--- |
+| **Quản trị viên (ADMIN)** | `admin` | `admin@chuctu.vn` | `ChucTu@2026` | Toàn quyền: Quản lý tài khoản, duyệt bài viết, xem dashboard thống kê |
+| **Bác sĩ (DOCTOR)** | `bacsi` | `bsnam@chuctu.vn` | `ChucTu@2026` | Gọi số khám, chẩn đoán, kê đơn, ghi nhận bệnh án |
+| **Tiếp tân (STAFF / RECEPTIONIST)** | `letan` | `letan@chuctu.vn` | `ChucTu@2026` | Tiếp đón, check-in bệnh nhân, xếp vào hàng đợi, đổi lịch hẹn |
+
+### 2. Cổng Người bệnh (Đăng nhập tại `http://localhost:3000/dang-nhap` hoặc khi Đặt lịch)
+- **Số điện thoại**: Bất kỳ số điện thoại hợp lệ tại Việt Nam (Ví dụ: `0987654321`, `0912345678`, `0901234567`).
+- **Mã OTP xác thực (Môi trường Dev)**: Nhập mã cố định `123456` để đăng nhập ngay mà không cần gửi SMS thật.
 
 ---
 
-## 7. BỘ KIỂM THỬ VÀ TÀI LIỆU API (TESTING & DOCS)
+## 6. 🔄 LUỒNG VẬN HÀNH CHÍNH CỦA PHÒNG KHÁM
 
-- **Kiểm thử tự động (Unit & Slice Tests)**:
-  ```bash
-  cd backend
-  .\mvnw.cmd test -Dtest=V1*SliceTest,ClinicScheduledTasksTest,ArchitectureConventionTest -DforkCount=0
+```mermaid
+flowchart LR
+    A["1. Người bệnh đặt lịch<br/>(Chọn ngày, giờ, nhận mã hẹn)"] --> B["2. Đến phòng khám<br/>(Tiếp tân kiểm tra & Check-in)"]
+    B --> C["3. Vào hàng đợi<br/>(Cấp số thứ tự khám)"]
+    C --> D["4. Bác sĩ gọi số<br/>(Vào 1 trong 5 ghế châm cứu)"]
+    D --> E["5. Khám & Ghi bệnh án<br/>(Hoàn tất ca khám)"]
+    E --> F["6. Người bệnh tra cứu<br/>(Xem kết quả & toa thuốc)"]
+```
+
+1. **Khái niệm 5 ghế khám (`appointment_seats`)**:
+   - Phòng khám có 5 ghế vật lý phục vụ bệnh nhân cùng lúc (châm cứu, bấm huyệt, chiếu đèn hồng ngoại theo liệu trình ~45–60 phút).
+   - Hệ thống tự động khóa chỗ (Pessimistic Locking + Idempotency) nhằm loại bỏ 100% tình trạng đặt trùng lịch (double booking) dù có hàng chục người cùng thao tác đồng thời.
+2. **Hàng đợi khám (`checkins`)**:
+   - Khi tiếp tân bấm Check-in, bệnh nhân được xếp vào danh sách chờ theo 2 nhóm ưu tiên (`PRIORITY`: người già yếu, khuyết tật / `NORMAL`: thông thường).
+   - Màn hình Bác sĩ sẽ tự động gợi ý người bệnh tiếp theo khi có ghế trống.
+
+---
+
+## 7. 🛠️ KHẮC PHỤC SỰ CỐ THƯỜNG GẶP (TROUBLESHOOTING)
+
+### 1. Lỗi: `open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified`
+- **Nguyên nhân**: Docker Desktop trên máy bạn chưa được bật hoặc đang trong quá trình khởi động.
+- **Cách xử lý**: Mở ứng dụng Docker Desktop từ Start Menu, đợi khoảng 20-30 giây cho biểu tượng ở góc dưới chuyển sang màu xanh lá (*Engine running*), sau đó chạy lại lệnh.
+
+### 2. Lỗi cổng đang bị chiếm dụng (Port Conflict)
+- Nếu cổng `3000` (frontend), `4000` (backend) hoặc `3307` (MySQL) trùng với ứng dụng khác trên máy bạn:
+- Mở file `docker-compose.yml` và đổi cổng ở phần `ports:`:
+  ```yaml
+  ports:
+    - "3001:80"    # Đổi cổng frontend từ 3000 thành 3001
+    - "4001:4000"  # Đổi cổng backend từ 4000 thành 4001
   ```
-- **Kịch bản kiểm thử nhanh**: [docs/smoke-test.http](docs/smoke-test.http) (chạy trực tiếp trong VS Code / IntelliJ IDEA).
-- **Đặc tả OpenAPI v1**: [docs/openapi-v1.yaml](docs/openapi-v1.yaml).
-- **Nhật ký thay đổi kiến trúc**: [docs/API_CHANGELOG.md](docs/API_CHANGELOG.md).
+
+### 3. Cần làm mới lại toàn bộ dữ liệu từ đầu (Reset Database)
+Nếu muốn xóa hết dữ liệu cũ và nạp lại từ các file SQL khởi tạo:
+```powershell
+docker compose down -v
+docker compose up --build -d
+```
+
+### 4. Xem mã nguồn chi tiết
+- Backend Spring Boot: [backend/](file:///d:/clinic-management-system/backend)
+- Frontend React Vite: [frontend/](file:///d:/clinic-management-system/frontend)
+- Đặc tả API chi tiết: [docs/openapi-v1.yaml](file:///d:/clinic-management-system/docs/openapi-v1.yaml)
