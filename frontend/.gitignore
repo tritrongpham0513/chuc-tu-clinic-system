@@ -1,10 +1,6 @@
-node_modules
-dist
-.DS_Store
-
-# Environment & Secrets
+node_modules/
+dist/
 .env
-.env.*
-!.env.example
-!.env.*.example
-
+*.log
+.DS_Store
+coverage/
