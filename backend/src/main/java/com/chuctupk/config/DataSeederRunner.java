@@ -50,22 +50,22 @@ public class DataSeederRunner implements ApplicationRunner {
         if (timeSlotRepository.findByIsActiveTrueOrderBySortOrderAsc().isEmpty()) {
             log.info("Bảng time_slots chưa có dữ liệu khả dụng. Đang tự động nạp 8 khung giờ chuẩn 60 phút...");
             List<TimeSlot> slots = List.of(
-                    TimeSlot.builder().slotLabel("08:00 - 09:00").startTime(LocalTime.of(8, 0)).endTime(LocalTime.of(9, 0)).period(Period.MORNING).maxPatients(6).sortOrder(1).isActive(true).build(),
-                    TimeSlot.builder().slotLabel("09:00 - 10:00").startTime(LocalTime.of(9, 0)).endTime(LocalTime.of(10, 0)).period(Period.MORNING).maxPatients(6).sortOrder(2).isActive(true).build(),
-                    TimeSlot.builder().slotLabel("10:00 - 11:00").startTime(LocalTime.of(10, 0)).endTime(LocalTime.of(11, 0)).period(Period.MORNING).maxPatients(6).sortOrder(3).isActive(true).build(),
-                    TimeSlot.builder().slotLabel("11:00 - 12:00").startTime(LocalTime.of(11, 0)).endTime(LocalTime.of(12, 0)).period(Period.MORNING).maxPatients(6).sortOrder(4).isActive(true).build(),
-                    TimeSlot.builder().slotLabel("13:00 - 14:00").startTime(LocalTime.of(13, 0)).endTime(LocalTime.of(14, 0)).period(Period.AFTERNOON).maxPatients(6).sortOrder(5).isActive(true).build(),
-                    TimeSlot.builder().slotLabel("14:00 - 15:00").startTime(LocalTime.of(14, 0)).endTime(LocalTime.of(15, 0)).period(Period.AFTERNOON).maxPatients(6).sortOrder(6).isActive(true).build(),
-                    TimeSlot.builder().slotLabel("15:00 - 16:00").startTime(LocalTime.of(15, 0)).endTime(LocalTime.of(16, 0)).period(Period.AFTERNOON).maxPatients(6).sortOrder(7).isActive(true).build(),
-                    TimeSlot.builder().slotLabel("16:00 - 17:00").startTime(LocalTime.of(16, 0)).endTime(LocalTime.of(17, 0)).period(Period.AFTERNOON).maxPatients(6).sortOrder(8).isActive(true).build()
+                    TimeSlot.builder().slotLabel("08:00 - 09:00").startTime(LocalTime.of(8, 0)).endTime(LocalTime.of(9, 0)).period(Period.MORNING).maxPatients(5).sortOrder(1).isActive(true).build(),
+                    TimeSlot.builder().slotLabel("09:00 - 10:00").startTime(LocalTime.of(9, 0)).endTime(LocalTime.of(10, 0)).period(Period.MORNING).maxPatients(5).sortOrder(2).isActive(true).build(),
+                    TimeSlot.builder().slotLabel("10:00 - 11:00").startTime(LocalTime.of(11, 0)).endTime(LocalTime.of(11, 0)).period(Period.MORNING).maxPatients(5).sortOrder(3).isActive(true).build(),
+                    TimeSlot.builder().slotLabel("11:00 - 12:00").startTime(LocalTime.of(11, 0)).endTime(LocalTime.of(12, 0)).period(Period.MORNING).maxPatients(5).sortOrder(4).isActive(true).build(),
+                    TimeSlot.builder().slotLabel("13:00 - 14:00").startTime(LocalTime.of(13, 0)).endTime(LocalTime.of(14, 0)).period(Period.AFTERNOON).maxPatients(5).sortOrder(5).isActive(true).build(),
+                    TimeSlot.builder().slotLabel("14:00 - 15:00").startTime(LocalTime.of(14, 0)).endTime(LocalTime.of(15, 0)).period(Period.AFTERNOON).maxPatients(5).sortOrder(6).isActive(true).build(),
+                    TimeSlot.builder().slotLabel("15:00 - 16:00").startTime(LocalTime.of(15, 0)).endTime(LocalTime.of(16, 0)).period(Period.AFTERNOON).maxPatients(5).sortOrder(7).isActive(true).build(),
+                    TimeSlot.builder().slotLabel("16:00 - 17:00").startTime(LocalTime.of(16, 0)).endTime(LocalTime.of(17, 0)).period(Period.AFTERNOON).maxPatients(5).sortOrder(8).isActive(true).build()
             );
             timeSlotRepository.saveAll(slots);
-            log.info("Đã khởi tạo thành công 8 khung giờ khám 60 phút.");
+            log.info("Đã khởi tạo thành công 8 khung giờ khám 60 phút (5 chỗ/slot).");
         }
     }
 
     private void seedClinicSettings() {
-        saveSettingIfMissing("slot_capacity", "6", "Số bệnh nhân tối đa trong 1 khung giờ");
+        saveSettingIfMissing("slot_capacity", "5", "Số bệnh nhân tối đa trong 1 khung giờ");
         saveSettingIfMissing("seats", "5", "Số ghế khám thực tế trong phòng");
         saveSettingIfMissing("slot_minutes", "60", "Thời lượng mỗi khung giờ khám (phút)");
         saveSettingIfMissing("user_max_days", "30", "Số ngày người bệnh được phép đặt trước tối đa");

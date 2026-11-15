@@ -105,6 +105,7 @@ class ClinicScheduledTasksTest {
         @Override public long countBookedSlotsForDoctor(LocalDate date, Long doctorId, Long timeSlotId, AppointmentStatus excludeStatus) { return 0; }
         @Override public long countBookedSlotsTotal(LocalDate date, Long timeSlotId, AppointmentStatus excludeStatus) { return 0; }
         @Override public boolean existsByPatientId(Long patientId) { return false; }
+        @Override public boolean hasActiveAppointmentOnDate(Long patientId, LocalDate date) { return false; }
         @Override public List<Appointment> findByPatientId(Long patientId) { return Collections.emptyList(); }
         @Override public boolean existsByPatientIdAndAppointmentDateAndStatusNot(Long patientId, LocalDate appointmentDate, AppointmentStatus excludeStatus) { return false; }
         @Override public List<Appointment> findByPatient_UserIdOrderByAppointmentDateDesc(Long userId) { return Collections.emptyList(); }

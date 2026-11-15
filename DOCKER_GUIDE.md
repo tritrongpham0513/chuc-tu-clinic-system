@@ -24,9 +24,10 @@ Container sẽ tự động tải các image cần thiết, biên dịch Backend
 
 | Dịch vụ | URL truy cập | Mô tả |
 | :--- | :--- | :--- |
-| **Giao diện Người dùng & Admin** | [http://localhost:3000](http://localhost:3000) | Trang chủ đặt lịch, Cổng Admin, Bàn Bác sĩ, Bàn Lễ tân |
-| **Backend REST API** | [http://localhost:8088](http://localhost:8088) | Cổng API Spring Boot (tránh trùng cổng 8080 máy thật) |
-| **Tài liệu Swagger / OpenAPI** | [http://localhost:8088/swagger-ui.html](http://localhost:8088/swagger-ui.html) | Kiểm thử trực tiếp 20+ endpoint API |
+| **Giao diện Người dùng & Admin** | [http://localhost:3000](http://localhost:3000) | Trang chủ đặt lịch, Cổng Bệnh nhân, Hàng đợi TV |
+| **Bàn làm việc Nội bộ (Lễ tân/Bác sĩ/Admin)** | [http://localhost:3000/noi-bo/](http://localhost:3000/noi-bo/) | Cổng nhân viên y tế nội bộ |
+| **Backend REST API** | [http://localhost:4000](http://localhost:4000) | Cổng API Spring Boot 4 |
+| **Tài liệu Swagger / OpenAPI** | [http://localhost:4000/swagger-ui.html](http://localhost:4000/swagger-ui.html) | Kiểm thử trực tiếp 20+ endpoint API |
 | **MySQL Database** | `localhost:3307` | User: `root` \| Password: `root` \| DB: `phongkham_chuctu` (tránh trùng cổng 3306 máy thật) |
 
 ---
@@ -37,9 +38,12 @@ Database container đã được cài đặt sẵn 3 tài khoản mẫu để b�
 
 | Vai trò | Tên đăng nhập | Mật khẩu mặc định | Trang đăng nhập |
 | :--- | :--- | :--- | :--- |
-| **Quản trị viên (ADMIN)** | `admin` | `MatKhauAdmin@2026` | [http://localhost:3000/admin/login](http://localhost:3000/admin/login) |
-| **Tiếp tân (STAFF)** | `letan` | `MatKhauAdmin@2026` | [http://localhost:3000/staff/login](http://localhost:3000/staff/login) |
-| **Bác sĩ YHCT (DOCTOR)** | `bacsi` | `MatKhauAdmin@2026` | [http://localhost:3000/doctor/login](http://localhost:3000/doctor/login) |
+| **Quản trị viên (ADMIN)** | `admin` | `MatKhauAdmin@2026` | [http://localhost:3000/noi-bo/](http://localhost:3000/noi-bo/) |
+| **Tiếp tân (STAFF)** | `letan` | `MatKhauAdmin@2026` | [http://localhost:3000/noi-bo/](http://localhost:3000/noi-bo/) |
+| **Bác sĩ YHCT (DOCTOR)** | `bacsi` | `MatKhauAdmin@2026` | [http://localhost:3000/noi-bo/](http://localhost:3000/noi-bo/) |
+
+> 📖 **Xem kịch bản Demo chi tiết toàn bộ chức năng hệ thống tại**: [docs/HUONG_DAN_DOCKER_VA_DEMO_HE_THONG.md](docs/HUONG_DAN_DOCKER_VA_DEMO_HE_THONG.md)
+
 
 ---
 
