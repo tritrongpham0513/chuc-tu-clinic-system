@@ -17,6 +17,20 @@ import { CalendarDialog } from './CalendarDialog.jsx';
 // Theo các màn "Đặt lịch 1–3" của prototype (DatLich-GuiYeuCau, DatLich-NguoiKham-Minh/ThanNhan-ChuaCo/DaCo, DatLich-XacNhan).
 // Bước 4 (phiếu khám) là trang /phieu-kham/:id?moi=1.
 
+const SLOT_REASON_LABELS = {
+  PAST: 'Đã qua',
+  TOO_LATE: 'Sát giờ khám',
+  TOO_FAR: 'Chưa mở đặt',
+  OUTSIDE_RECEPTION: 'Ngoài giờ khám',
+  SLOT_FULL: 'Đã hết chỗ',
+  FULL: 'Đã hết chỗ',
+};
+
+function formatSlotReason(reason) {
+  if (!reason) return 'Không chọn được';
+  return SLOT_REASON_LABELS[reason] || 'Không chọn được';
+}
+
 function SlotGroup({ label, slots, value, onPick }) {
   if (!slots.length) return null;
   return (
@@ -33,7 +47,7 @@ function SlotGroup({ label, slots, value, onPick }) {
             onClick={() => s.available && onPick(s.start)}
           >
             {shortTime(s.start)}
-            {!s.available && <small>{s.reason || 'Không chọn được'}</small>}
+            {!s.available && <small>{formatSlotReason(s.reason)}</small>}
           </button>
         ))}
       </div>

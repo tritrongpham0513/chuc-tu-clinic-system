@@ -10,7 +10,7 @@ export const CLINIC = {
   // Zalo của phòng khám dùng cùng số điện thoại chính
   zaloUrl: 'https://zalo.me/0397116666',
   phone2: '0835 555 115',
-  hours: '8:00 – 16:30',
+  hours: '8:00 – 17:00',
   mapUrl: 'https://www.google.com/maps/search/?api=1&query=57%2F8-10+%C4%90i%E1%BB%87n+Bi%C3%AAn+Ph%E1%BB%A7%2C+B%C3%ACnh+Th%E1%BA%A1nh%2C+TP.HCM',
 };
 

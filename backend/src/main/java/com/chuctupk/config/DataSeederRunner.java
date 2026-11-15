@@ -74,7 +74,7 @@ public class DataSeederRunner implements ApplicationRunner {
         saveSettingIfMissing("max_profiles", "10", "Số hồ sơ người thân tối đa được tạo trên 1 tài khoản");
         saveSettingIfMissing("auto_invite", "0", "Tự động mời người kế tiếp vào ghế khi có ghế trống (1: bật, 0: tắt)");
         saveSettingIfMissing("reception_open", "08:00", "Giờ mở cửa tiếp nhận");
-        saveSettingIfMissing("reception_close", "16:30", "Giờ đóng cửa tiếp nhận");
+        saveSettingIfMissing("reception_close", "17:00", "Giờ đóng cửa tiếp nhận");
         saveSettingIfMissing("no_show_cancel_at", "17:00", "Giờ hệ thống tự động hủy các lịch chưa đến trong ngày");
     }
 
