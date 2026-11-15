@@ -57,6 +57,10 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     boolean existsByPatientId(Long patientId);
     List<Appointment> findByPatientId(Long patientId);
     boolean existsByPatientIdAndAppointmentDateAndStatusNot(Long patientId, LocalDate appointmentDate, AppointmentStatus excludeStatus);
+
+    @Query("SELECT COUNT(a) > 0 FROM Appointment a WHERE a.patient.id = :patientId " +
+           "AND a.appointmentDate = :date AND a.status IN (com.chuctupk.entity.enums.AppointmentStatus.PENDING, com.chuctupk.entity.enums.AppointmentStatus.CONFIRMED, com.chuctupk.entity.enums.AppointmentStatus.IN_PROGRESS)")
+    boolean hasActiveAppointmentOnDate(@Param("patientId") Long patientId, @Param("date") LocalDate date);
     List<Appointment> findByPatient_UserIdOrderByAppointmentDateDesc(Long userId);
     List<Appointment> findByPatient_UserIdAndStatusNotOrderByAppointmentDateDesc(Long userId, AppointmentStatus status);
 

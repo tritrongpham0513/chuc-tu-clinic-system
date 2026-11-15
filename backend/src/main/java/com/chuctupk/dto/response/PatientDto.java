@@ -102,9 +102,23 @@ public record PatientDto(
 
     public static String maskFullName(String fullName) {
         if (fullName == null || fullName.isBlank()) return "";
-        String[] parts = fullName.trim().split("\\s+");
+        String trimmed = fullName.trim();
+        if (trimmed.matches("(?i)^bệnh nhân(\\s+\\d+)?$")) {
+            return "Bệnh nhân";
+        }
+        String[] parts = trimmed.split("\\s+");
         if (parts.length == 1) return parts[0];
-        if (parts.length == 2) return parts[0] + " " + parts[1];
+        if (parts.length == 2) {
+            if (parts[1].matches("\\d+")) {
+                return parts[0];
+            }
+            return parts[0] + " " + parts[1];
+        }
+        if (parts[parts.length - 1].matches("\\d+")) {
+            if (parts.length == 3 && (parts[0] + " " + parts[1]).equalsIgnoreCase("bệnh nhân")) {
+                return "Bệnh nhân";
+            }
+        }
         StringBuilder sb = new StringBuilder(parts[0]);
         for (int i = 1; i < parts.length - 1; i++) {
             if (!parts[i].isEmpty()) {

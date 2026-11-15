@@ -92,6 +92,10 @@ public class Appointment {
     @JoinColumn(name = "rescheduled_from_id")
     private Appointment rescheduledFrom;
 
+    @Column(name = "reschedule_count", nullable = false)
+    @Builder.Default
+    private Integer rescheduleCount = 0;
+
     @Column(length = 500)
     private String note;
 

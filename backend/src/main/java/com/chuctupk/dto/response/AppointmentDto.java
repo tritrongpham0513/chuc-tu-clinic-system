@@ -71,7 +71,7 @@ public record AppointmentDto(
 
         String serviceType = a.getServiceType() != null && !a.getServiceType().isBlank()
                 ? a.getServiceType()
-                : (a.getService() != null && a.getService().getSlug() != null ? a.getService().getSlug() : "CHAM_CUU");
+                : (a.getService() != null && a.getService().getSlug() != null ? a.getService().getSlug() : "KHAM_BENH");
 
         String code = a.getBookingCode() != null ? a.getBookingCode() : "";
 

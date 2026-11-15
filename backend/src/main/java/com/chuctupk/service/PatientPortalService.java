@@ -29,6 +29,7 @@ public interface PatientPortalService {
     Map<String, Object> getMyAppointments(User currentUser, String statusFilter);
     Map<String, Object> getAppointmentDetail(User currentUser, Long id);
     Map<String, Object> cancelAppointment(User currentUser, Long id, String reason);
+    Map<String, Object> rescheduleAppointment(User currentUser, Long id, com.chuctupk.dto.request.RescheduleAppointmentRequest request);
     Map<String, Object> getAppointmentResult(User currentUser, Long id);
     Map<String, Object> getMyHistory(User currentUser);
 }

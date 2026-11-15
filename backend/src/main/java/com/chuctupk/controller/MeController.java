@@ -142,6 +142,16 @@ public class MeController {
         return ResponseEntity.ok(ApiResponse.ok(data, "Hủy phiếu khám thành công"));
     }
 
+    @PostMapping("/appointments/{id}/reschedule")
+    @Operation(summary = "Bệnh nhân đổi lịch khám sang ngày/khung giờ mới (tối đa 1 lần, trước booking_min_hours)")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> rescheduleAppointment(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Long id,
+            @RequestBody com.chuctupk.dto.request.RescheduleAppointmentRequest request) {
+        Map<String, Object> data = patientPortalService.rescheduleAppointment(currentUser, id, request);
+        return ResponseEntity.ok(ApiResponse.ok(data, "Đổi lịch khám thành công"));
+    }
+
     @GetMapping("/appointments/{id}/result")
     @Operation(summary = "Xem kết quả khám bệnh của phiếu khám")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAppointmentResult(

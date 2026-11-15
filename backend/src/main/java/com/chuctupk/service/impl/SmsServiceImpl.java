@@ -76,6 +76,31 @@ public class SmsServiceImpl implements SmsService {
         }
     }
 
+    @Override
+    public OtpSendResult sendMessage(String phone, String message) {
+        String cleanPhone = cleanPhone(phone);
+        String maskedPhone = PhoneValidator.mask(cleanPhone);
+
+        if (!smsEnabled || apiKey == null || apiKey.isBlank()) {
+            log.info("[SMS NOTIF] Cổng SMS đang tắt (chế độ giả lập) cho SĐT {}: {}", maskedPhone, message);
+            return OtpSendResult.SKIPPED;
+        }
+
+        try {
+            boolean sent = sendRealSms(cleanPhone, message, null);
+            if (sent) {
+                log.info("[SMS NOTIF] Đã gửi thông báo thành công tới SĐT: {}", maskedPhone);
+                return OtpSendResult.SENT;
+            } else {
+                log.warn("[SMS NOTIF] Gửi thông báo không thành công tới SĐT: {}", maskedPhone);
+                return OtpSendResult.FAILED;
+            }
+        } catch (Exception e) {
+            log.error("[SMS NOTIF] Lỗi khi kết nối cổng SMS Gateway: {}", e.getMessage());
+            return OtpSendResult.FAILED;
+        }
+    }
+
     private boolean sendRealSms(String phone, String content, String otpCode) throws Exception {
         log.info("Đang gửi SMS thật qua nhà cung cấp [{}] đến số {}...", provider, PhoneValidator.mask(phone));
 

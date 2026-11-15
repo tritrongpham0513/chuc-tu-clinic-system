@@ -124,14 +124,27 @@ public final class ContractMapper {
 
     // ================== 6. LOẠI DỊCH VỤ (SERVICE TYPE) ==================
 
+    private static final java.util.Set<String> ALLOWED_SERVICE_TYPES = java.util.Set.of(
+            "KHAM_BENH",
+            "CHAM_CUU",
+            "XOA_BOP_BAM_HUYET",
+            "BOC_THUOC",
+            "VAT_LY_TRI_LIEU",
+            "CHUA_RO"
+    );
+
     public static String toFeServiceType(String dbServiceType) {
-        if (dbServiceType == null || dbServiceType.isBlank()) return "CHAM_CUU";
+        if (dbServiceType == null || dbServiceType.isBlank()) return "KHAM_BENH";
         return dbServiceType.trim().toUpperCase();
     }
 
     public static String toDbServiceType(String feServiceType) {
-        if (feServiceType == null || feServiceType.isBlank()) return "CHAM_CUU";
-        return feServiceType.trim().toUpperCase();
+        if (feServiceType == null || feServiceType.isBlank()) return "KHAM_BENH";
+        String normalized = feServiceType.trim().toUpperCase();
+        if (!ALLOWED_SERVICE_TYPES.contains(normalized)) {
+            throw com.chuctupk.exception.AppException.badRequest("Nội dung khám không hợp lệ");
+        }
+        return normalized;
     }
 
     /**

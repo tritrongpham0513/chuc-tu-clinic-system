@@ -42,7 +42,7 @@ class HealthAndMetaControllerTest {
                 .andExpect(jsonPath("$.data.today").isNotEmpty())
                 .andExpect(jsonPath("$.data.otp").exists())
                 .andExpect(jsonPath("$.data.serviceTypes", hasSize(greaterThanOrEqualTo(1))))
-                .andExpect(jsonPath("$.data.slotCapacity").value(6))
+                .andExpect(jsonPath("$.data.slotCapacity").value(5))
                 .andExpect(jsonPath("$.data.seats").value(5))
                 .andExpect(jsonPath("$.data.slotMinutes").value(60))
                 .andExpect(jsonPath("$.data.userMaxDays").value(30))

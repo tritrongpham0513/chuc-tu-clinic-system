@@ -120,6 +120,13 @@ class V1MeControllerSliceTest {
         }
 
         @Override
+        public Map<String, Object> rescheduleAppointment(User currentUser, Long id, com.chuctupk.dto.request.RescheduleAppointmentRequest request) {
+            PatientDto p = new PatientDto("1", "CT-BN-26-0001", "Nguyễn Văn A", "0912345678", "1960-01-01", 1960, "NAM", "BAN_THAN", "TP.HCM", "", true, false, true, "2026-11-14T08:00:00", "2026-11-14T08:00:00", "2026-11-14T08:00:00");
+            AppointmentDto a = new AppointmentDto(String.valueOf(id), "CT-PK-26-2011-001", "CT-PK-26-2011-001", p, null, "KHAM_BENH", "2026-11-22", "09:00", "10:00", "09:00", "BOOKED", "ONLINE", null, "Nguyễn Văn A", "0912345678", "2026-11-14T08:00:00", "2026-11-14T08:00:00", null, null, null);
+            return Map.of("appointment", a, "success", true);
+        }
+
+        @Override
         public Map<String, Object> getAppointmentResult(User currentUser, Long id) {
             return getAppointmentDetail(currentUser, id);
         }
@@ -233,6 +240,24 @@ class V1MeControllerSliceTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success", is(true)))
                 .andExpect(jsonPath("$.data.success", is(true)));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/me/appointments/{id}/reschedule - Đổi lịch khám thành công")
+    void testRescheduleAppointment() throws Exception {
+        com.chuctupk.dto.request.RescheduleAppointmentRequest req = com.chuctupk.dto.request.RescheduleAppointmentRequest.builder()
+                .slotDate("2026-11-22")
+                .slotStart("09:00")
+                .reason("Bận việc dời sang ngày khác")
+                .build();
+
+        mockMvc.perform(post("/api/v1/me/appointments/10/reschedule")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success", is(true)))
+                .andExpect(jsonPath("$.message", is("Đổi lịch khám thành công")))
+                .andExpect(jsonPath("$.data.appointment.slotDate", is("2026-11-22")));
     }
 }
 

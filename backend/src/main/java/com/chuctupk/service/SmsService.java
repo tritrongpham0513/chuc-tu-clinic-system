@@ -18,6 +18,13 @@ public interface SmsService {
     OtpSendResult sendOtp(String phone, String otpCode);
 
     /**
+     * Gửi tin nhắn thông báo (không phải mã OTP).
+     */
+    default OtpSendResult sendMessage(String phone, String message) {
+        return OtpSendResult.SKIPPED;
+    }
+
+    /**
      * Cổng SMS có thật sự đang hoạt động (đã bật + có API Key) hay không.
      */
     default boolean isEnabled() {
