@@ -33,6 +33,15 @@ class CapacityConsistencyIT {
     @Autowired
     private PatientPortalService patientPortalService;
 
+    @Autowired
+    private com.chuctupk.service.TimeSlotService timeSlotService;
+
+    @Autowired
+    private com.chuctupk.repository.DoctorRepository doctorRepository;
+
+    @Autowired
+    private com.chuctupk.repository.DoctorScheduleRepository doctorScheduleRepository;
+
     @Test
     @DisplayName("C1: Đổi slot_capacity trong cấu hình thành 4 -> getAvailability tính remaining theo 4")
     void testSlotCapacityDynamic() {
@@ -66,5 +75,57 @@ class CapacityConsistencyIT {
         mockMvc.perform(get("/api/v1/staff/queue"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.seats.length()").value(seats));
+    }
+
+    @Test
+    @DisplayName("B2: So sánh /time-slots và /me/availability cùng ngày -> số lượng slot khả dụng và remaining đồng nhất")
+    void testCompareTimeSlotsAndAvailabilityConsistency() {
+        LocalDate targetDate = LocalDate.now().plusDays(2);
+        com.chuctupk.entity.enums.DayOfWeek dow = com.chuctupk.entity.enums.DayOfWeek.from(targetDate.getDayOfWeek());
+
+        // Đảm bảo có bác sĩ trực cả ngày để time-slots hiển thị các khung giờ khả dụng
+        com.chuctupk.entity.Doctor doc = doctorRepository.findAll().stream()
+                .filter(d -> Boolean.TRUE.equals(d.getIsActive()))
+                .findFirst()
+                .orElse(null);
+        if (doc != null) {
+            boolean hasSchedule = doctorScheduleRepository.findAll().stream()
+                    .anyMatch(s -> s.getDoctor().getId().equals(doc.getId())
+                            && s.getDayOfWeek() == dow
+                            && (s.getPeriod() == com.chuctupk.entity.enums.Period.FULL_DAY || s.getPeriod() == com.chuctupk.entity.enums.Period.MORNING));
+            if (!hasSchedule) {
+                doctorScheduleRepository.save(com.chuctupk.entity.DoctorSchedule.builder()
+                        .doctor(doc)
+                        .dayOfWeek(dow)
+                        .period(com.chuctupk.entity.enums.Period.FULL_DAY)
+                        .isActive(true)
+                        .build());
+            }
+        }
+
+        List<com.chuctupk.dto.response.TimeSlotResponse> timeSlots = timeSlotService.getAvailableTimeSlots(targetDate, null);
+        Map<String, Object> avail = patientPortalService.getAvailability(targetDate);
+        @SuppressWarnings("unchecked")
+        List<com.chuctupk.dto.response.SlotAvailabilityDto> availSlots =
+                (List<com.chuctupk.dto.response.SlotAvailabilityDto>) avail.get("slots");
+
+        assertThat(availSlots).isNotEmpty();
+
+        // Lọc các slot khả dụng (available = true) từ /me/availability
+        List<com.chuctupk.dto.response.SlotAvailabilityDto> activeAvailSlots = availSlots.stream()
+                .filter(com.chuctupk.dto.response.SlotAvailabilityDto::available)
+                .toList();
+
+        assertThat(timeSlots).hasSameSizeAs(activeAvailSlots);
+
+        Map<String, com.chuctupk.dto.response.SlotAvailabilityDto> availMap = activeAvailSlots.stream()
+                .collect(java.util.stream.Collectors.toMap(com.chuctupk.dto.response.SlotAvailabilityDto::id, s -> s));
+
+        for (com.chuctupk.dto.response.TimeSlotResponse ts : timeSlots) {
+            com.chuctupk.dto.response.SlotAvailabilityDto matching = availMap.get(String.valueOf(ts.getId()));
+            assertThat(matching).isNotNull();
+            assertThat(ts.getRemaining()).isEqualTo(matching.remaining());
+            assertThat(matching.capacity()).isEqualTo(clinicSettingService.getSlotCapacity());
+        }
     }
 }

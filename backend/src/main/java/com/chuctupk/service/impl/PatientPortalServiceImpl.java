@@ -46,6 +46,9 @@ public class PatientPortalServiceImpl implements PatientPortalService {
     private final SequenceGeneratorService sequenceGeneratorService;
     private final Clock clock;
     private final com.chuctupk.service.ClinicSettingService clinicSettingService;
+    private final com.chuctupk.service.SlotPolicy slotPolicy;
+    private final com.chuctupk.service.DoctorAssignmentService doctorAssignmentService;
+    private final com.chuctupk.service.NotificationService notificationService;
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     // =========================================================================
@@ -282,21 +285,18 @@ public class PatientPortalServiceImpl implements PatientPortalService {
         List<TimeSlot> slots = timeSlotRepository.findByIsActiveTrueOrderBySortOrderAsc();
 
         List<SlotAvailabilityDto> slotDtos = new ArrayList<>();
-        LocalDate today = LocalDate.now(clock);
-        LocalTime nowTime = LocalTime.now(clock);
+        LocalDateTime now = LocalDateTime.now(clock);
 
         for (TimeSlot slot : slots) {
             long booked = appointmentSeatRepository.countByAppointmentDateAndTimeSlotId(date, slot.getId());
             int capacity = clinicSettingService.getSlotCapacity();
             int remaining = Math.max(0, capacity - (int) booked);
 
-            boolean isPast = date.isBefore(today) || (date.equals(today) && slot.getEndTime().isBefore(nowTime));
-            boolean isFull = remaining <= 0;
-            boolean available = !isPast && !isFull;
-
-            String reason = null;
-            if (isPast) reason = "PAST";
-            else if (isFull) reason = "SLOT_FULL";
+            com.chuctupk.service.SlotPolicy.SlotStatus status = slotPolicy.evaluate(
+                    date, slot, now, com.chuctupk.service.SlotPolicy.BookingChannel.PATIENT_PORTAL, remaining
+            );
+            boolean available = (status == com.chuctupk.service.SlotPolicy.SlotStatus.OK);
+            String reason = !available ? status.toReason() : null;
 
             String start = slot.getStartTime().toString().substring(0, 5);
             String end = slot.getEndTime().toString().substring(0, 5);
@@ -348,27 +348,15 @@ public class PatientPortalServiceImpl implements PatientPortalService {
                     "Hồ sơ người bệnh này đang bị khóa hoặc ngưng hoạt động");
         }
 
-        // 3. Kiểm tra ngày hẹn (chuẩn múi giờ Việt Nam)
-        LocalDate today = LocalDate.now(clock);
-        LocalTime nowTime = LocalTime.now(clock);
+        // 3. Ngày hẹn và chống 1 bệnh nhân đặt nhiều phiếu trong cùng 1 ngày (chỉ chặn khi có phiếu đang chờ / đang khám)
         LocalDate slotDate = LocalDate.parse(request.getSlotDate());
-        if (slotDate.isBefore(today)) {
-            throw new AppException(ErrorCode.BAD_REQUEST, "Không thể đặt lịch cho ngày trong quá khứ");
-        }
-        int maxDays = clinicSettingService.getUserMaxDays();
-        if (slotDate.isAfter(today.plusDays(maxDays))) {
-            throw new AppException(ErrorCode.BAD_REQUEST, "Chỉ được phép đặt lịch trước tối đa " + maxDays + " ngày");
-        }
-
-        // 4. Chống 1 bệnh nhân đặt nhiều phiếu trong cùng 1 ngày
-        boolean hasExisting = appointmentRepository.existsByPatientIdAndAppointmentDateAndStatusNot(
-                patient.getId(), slotDate, AppointmentStatus.CANCELLED);
+        boolean hasExisting = appointmentRepository.hasActiveAppointmentOnDate(patient.getId(), slotDate);
         if (hasExisting) {
             throw new AppException(ErrorCode.CONFLICT,
-                    "Người bệnh " + patient.getFullName() + " đã có phiếu hẹn trong ngày " + slotDate + ". Mỗi người bệnh chỉ đặt tối đa 1 phiếu mỗi ngày");
+                    "Người bệnh " + patient.getFullName() + " đã có phiếu hẹn đang hiệu lực trong ngày " + slotDate + ". Mỗi người bệnh chỉ đặt tối đa 1 phiếu mỗi ngày");
         }
 
-        // 5. Tìm khung giờ
+        // 4. Tìm khung giờ
         List<TimeSlot> slots = timeSlotRepository.findByIsActiveTrueOrderBySortOrderAsc();
         String reqStart = request.getSlotStart() != null ? request.getSlotStart().trim() : "";
         TimeSlot chosenSlot = slots.stream()
@@ -376,17 +364,23 @@ public class PatientPortalServiceImpl implements PatientPortalService {
                 .findFirst()
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Không tìm thấy khung giờ khám " + reqStart));
 
-        // Kiểm tra giờ tiếp nhận
-        LocalTime receptionOpen = clinicSettingService.getReceptionOpen();
-        LocalTime receptionClose = clinicSettingService.getReceptionClose();
-        if (chosenSlot.getStartTime().isBefore(receptionOpen) || chosenSlot.getStartTime().isAfter(receptionClose)) {
-            throw new AppException(ErrorCode.UNPROCESSABLE,
-                    "Phòng khám chỉ tiếp nhận trong khoảng từ " + receptionOpen + " đến " + receptionClose);
-        }
-
-        // 5.1. Chặn đặt khung giờ đã trôi qua trong ngày hôm nay
-        if (slotDate.isEqual(today) && chosenSlot.getEndTime() != null && chosenSlot.getEndTime().isBefore(nowTime)) {
-            throw new AppException(ErrorCode.BAD_REQUEST, "Khung giờ này đã trôi qua. Cô chú vui lòng chọn khung giờ khác nhé");
+        // 5. Đánh giá tính khả dụng bằng SlotPolicy (Single Source of Truth)
+        LocalDateTime now = LocalDateTime.now(clock);
+        com.chuctupk.service.SlotPolicy.SlotStatus slotStatus = slotPolicy.evaluate(
+                slotDate, chosenSlot, now, com.chuctupk.service.SlotPolicy.BookingChannel.PATIENT_PORTAL
+        );
+        if (slotStatus != com.chuctupk.service.SlotPolicy.SlotStatus.OK) {
+            switch (slotStatus) {
+                case TOO_LATE -> throw new AppException(ErrorCode.UNPROCESSABLE, "Khung giờ này đã bắt đầu, cô chú vui lòng chọn khung khác");
+                case OUTSIDE_RECEPTION -> throw new AppException(ErrorCode.UNPROCESSABLE,
+                        "Phòng khám chỉ tiếp nhận trong khoảng từ " + clinicSettingService.getReceptionOpen() + " đến " + clinicSettingService.getReceptionClose());
+                case TOO_FAR -> throw new AppException(ErrorCode.BAD_REQUEST,
+                        "Chỉ được phép đặt lịch trước tối đa " + clinicSettingService.getUserMaxDays() + " ngày");
+                case PAST -> throw new AppException(ErrorCode.BAD_REQUEST, "Không thể đặt lịch cho ngày trong quá khứ");
+                case FULL -> throw new AppException(ErrorCode.SLOT_FULL,
+                        "Khung giờ này đã đủ bệnh nhân. Cô chú chọn khung khác giúp phòng khám nhé");
+                default -> throw new AppException(ErrorCode.BAD_REQUEST, "Khung giờ không hợp lệ");
+            }
         }
 
         // 6. Cấp ghế đồng thời an toàn (appointment_seats <= slot_capacity)
@@ -429,9 +423,12 @@ public class PatientPortalServiceImpl implements PatientPortalService {
                         rebookedFrom = appointmentRepository.findById(request.getRebookFromId()).orElse(null);
                     }
 
+                    Doctor doctor = doctorAssignmentService.pickDoctor(slotDate, chosenSlot);
+
                     Appointment appt = Appointment.builder()
                             .bookingCode(bookingCode)
                             .patient(patient)
+                            .doctor(doctor)
                             .serviceType(ContractMapper.toDbServiceType(request.getServiceType()))
                             .appointmentDate(slotDate)
                             .timeSlot(chosenSlot)
@@ -466,6 +463,8 @@ public class PatientPortalServiceImpl implements PatientPortalService {
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("appointment", AppointmentDto.from(savedAppointment));
+
+        notificationService.notifyBookingSuccess(savedAppointment);
 
         // 7. Ghi nhận Idempotency-Key
         if (idempotencyKey != null && !idempotencyKey.isBlank()) {
@@ -562,10 +561,140 @@ public class PatientPortalServiceImpl implements PatientPortalService {
         // Nhả ghế khám để người khác có thể đặt
         appointmentSeatRepository.deleteByAppointmentId(saved.getId());
 
+        notificationService.notifyCancellation(saved, a.getCancelReason());
+
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("appointment", AppointmentDto.from(saved));
         res.put("success", true);
         res.put("message", "Hủy phiếu khám thành công");
+        res.put("rebookUrl", "/dat-lich?rebookFrom=" + saved.getId());
+        return res;
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> rescheduleAppointment(User currentUser, Long id, com.chuctupk.dto.request.RescheduleAppointmentRequest request) {
+        if (currentUser == null) {
+            throw AppException.unauthorized("Vui lòng đăng nhập");
+        }
+
+        Appointment appt = appointmentRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Không tìm thấy phiếu khám"));
+
+        if (appt.getPatient() == null || appt.getPatient().getUser() == null
+                || !appt.getPatient().getUser().getId().equals(currentUser.getId())) {
+            throw new AppException(ErrorCode.FORBIDDEN, "Bạn không có quyền thao tác trên phiếu khám này");
+        }
+
+        if (appt.getStatus() != AppointmentStatus.PENDING) {
+            throw AppException.badRequest("Chỉ có thể đổi lịch cho phiếu khám đang chờ tiếp nhận");
+        }
+
+        if (appt.getRescheduleCount() != null && appt.getRescheduleCount() >= 1) {
+            throw AppException.badRequest("Mỗi phiếu khám chỉ được phép đổi lịch tối đa 1 lần. Cô chú vui lòng liên hệ hotline phòng khám để được hỗ trợ");
+        }
+
+        LocalDateTime now = LocalDateTime.now(clock);
+        LocalTime oldStart = appt.getTimeSlot() != null && appt.getTimeSlot().getStartTime() != null
+                ? appt.getTimeSlot().getStartTime()
+                : LocalTime.of(8, 0);
+        LocalDateTime oldApptDateTime = LocalDateTime.of(appt.getAppointmentDate(), oldStart);
+        int minHours = clinicSettingService.getBookingMinHours();
+        if (now.isAfter(oldApptDateTime.minusHours(minHours))) {
+            throw AppException.badRequest("Chỉ được phép đổi lịch trước giờ khám cũ tối thiểu " + minHours + " tiếng");
+        }
+
+        // Xác định ngày và khung giờ mới
+        LocalDate targetDate = request.getNewDate();
+        if (targetDate == null && request.getSlotDate() != null && !request.getSlotDate().isBlank()) {
+            targetDate = LocalDate.parse(request.getSlotDate().trim());
+        }
+        if (targetDate == null) {
+            throw AppException.badRequest("Ngày khám mới không hợp lệ");
+        }
+
+        TimeSlot chosenSlot;
+        if (request.getNewTimeSlotId() != null) {
+            chosenSlot = timeSlotRepository.findById(request.getNewTimeSlotId())
+                    .orElseThrow(() -> AppException.notFound("Không tìm thấy khung giờ khám"));
+        } else if (request.getSlotStart() != null && !request.getSlotStart().isBlank()) {
+            String reqStart = request.getSlotStart().trim();
+            chosenSlot = timeSlotRepository.findByIsActiveTrueOrderBySortOrderAsc().stream()
+                    .filter(s -> s.getStartTime().toString().startsWith(reqStart))
+                    .findFirst()
+                    .orElseThrow(() -> AppException.notFound("Không tìm thấy khung giờ khám " + reqStart));
+        } else {
+            throw AppException.badRequest("Vui lòng chọn khung giờ mới");
+        }
+
+        // Đánh giá SlotPolicy trên khung giờ mới
+        long totalBookedNew = appointmentSeatRepository.countByAppointmentDateAndTimeSlotId(targetDate, chosenSlot.getId());
+        int capacity = clinicSettingService.getSlotCapacity();
+        int remaining = Math.max(0, capacity - (int) totalBookedNew);
+
+        com.chuctupk.service.SlotPolicy.SlotStatus slotStatus = slotPolicy.evaluate(
+                targetDate, chosenSlot, now, com.chuctupk.service.SlotPolicy.BookingChannel.PATIENT_PORTAL, remaining
+        );
+        if (slotStatus != com.chuctupk.service.SlotPolicy.SlotStatus.OK) {
+            switch (slotStatus) {
+                case TOO_LATE -> throw new AppException(ErrorCode.UNPROCESSABLE, "Khung giờ mới này đã bắt đầu, cô chú vui lòng chọn khung khác");
+                case OUTSIDE_RECEPTION -> throw new AppException(ErrorCode.UNPROCESSABLE,
+                        "Phòng khám chỉ tiếp nhận trong khoảng từ " + clinicSettingService.getReceptionOpen() + " đến " + clinicSettingService.getReceptionClose());
+                case TOO_FAR -> throw new AppException(ErrorCode.BAD_REQUEST,
+                        "Chỉ được phép đặt lịch trước tối đa " + clinicSettingService.getUserMaxDays() + " ngày");
+                case PAST -> throw new AppException(ErrorCode.BAD_REQUEST, "Không thể đặt lịch cho ngày trong quá khứ");
+                case FULL -> throw new AppException(ErrorCode.SLOT_FULL,
+                        "Khung giờ mới này đã đủ bệnh nhân. Cô chú chọn khung khác giúp phòng khám nhé");
+                default -> throw new AppException(ErrorCode.BAD_REQUEST, "Khung giờ mới không hợp lệ");
+            }
+        }
+
+        // Giải phóng ghế cũ
+        appointmentSeatRepository.deleteByAppointmentId(appt.getId());
+
+        // Cấp ghế mới an toàn
+        List<AppointmentSeat> currentSeats = appointmentSeatRepository
+                .findByAppointmentDateAndTimeSlotIdOrderBySeatNoAsc(targetDate, chosenSlot.getId());
+        Set<Integer> takenSeats = currentSeats.stream().map(AppointmentSeat::getSeatNo).collect(Collectors.toSet());
+        if (takenSeats.size() >= capacity) {
+            throw AppException.slotFull("Khung giờ mới này đã đủ bệnh nhân. Cô chú chọn khung khác giúp phòng khám nhé");
+        }
+        int candidateSeat = -1;
+        for (int s = 1; s <= capacity; s++) {
+            if (!takenSeats.contains(s)) {
+                candidateSeat = s;
+                break;
+            }
+        }
+        if (candidateSeat == -1) {
+            throw AppException.slotFull("Khung giờ mới này đã đủ bệnh nhân. Cô chú chọn khung khác giúp phòng khám nhé");
+        }
+
+        // Phân công bác sĩ trực mới
+        Doctor newDoctor = doctorAssignmentService.pickDoctor(targetDate, chosenSlot);
+
+        appt.setAppointmentDate(targetDate);
+        appt.setTimeSlot(chosenSlot);
+        appt.setExpectedTime(chosenSlot.getStartTime());
+        appt.setDoctor(newDoctor);
+        appt.setRescheduleCount(appt.getRescheduleCount() != null ? appt.getRescheduleCount() + 1 : 1);
+        if (request.getReason() != null && !request.getReason().isBlank()) {
+            appt.setNote("Đổi lịch: " + request.getReason().trim());
+        }
+        Appointment savedAppt = appointmentRepository.save(appt);
+
+        AppointmentSeat newSeat = AppointmentSeat.builder()
+                .appointmentDate(targetDate)
+                .timeSlot(chosenSlot)
+                .seatNo(candidateSeat)
+                .appointment(savedAppt)
+                .build();
+        appointmentSeatRepository.save(newSeat);
+
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("appointment", AppointmentDto.from(savedAppt));
+        res.put("success", true);
+        res.put("message", "Đổi lịch khám thành công");
         return res;
     }
 

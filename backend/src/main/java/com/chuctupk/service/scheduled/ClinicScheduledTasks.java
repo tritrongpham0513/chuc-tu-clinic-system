@@ -31,6 +31,7 @@ public class ClinicScheduledTasks {
     private final RefreshTokenRepository refreshTokenRepository;
     private final OtpVerificationRepository otpVerificationRepository;
     private final ClinicSettingService clinicSettingService;
+    private final com.chuctupk.service.NotificationService notificationService;
     private final Clock clock;
 
     public static final String AUTO_CANCEL_REASON = "Không đến khám";
@@ -77,7 +78,7 @@ public class ClinicScheduledTasks {
                     appointmentSeatRepository.deleteByAppointmentId(appointment.getId());
                 }
 
-                // TODO (B6): Gửi tin nhắn thông báo NO_SHOW cho bệnh nhân khi tích hợp NotificationService
+                notificationService.notifyCancellation(appointment, AUTO_CANCEL_REASON);
             }
         }
 
@@ -90,6 +91,15 @@ public class ClinicScheduledTasks {
                 toNoShow.size(), today);
 
         return toNoShow.size();
+    }
+
+    /**
+     * Tự động gửi SMS nhắc lịch khám trước giờ hẹn 2 tiếng.
+     * Chạy định kỳ mỗi 15 phút trong khung giờ tiếp nhận (07:00 - 17:00).
+     */
+    @Scheduled(cron = "0 */15 7-17 * * *", zone = "Asia/Ho_Chi_Minh")
+    public void sendUpcomingReminders() {
+        notificationService.sendUpcomingReminders();
     }
 
     /**

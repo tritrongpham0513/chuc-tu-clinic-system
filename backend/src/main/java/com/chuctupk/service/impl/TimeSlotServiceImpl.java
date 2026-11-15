@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +29,9 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     private final DoctorDayOffRepository doctorDayOffRepository;
     private final ClinicHolidayRepository clinicHolidayRepository;
     private final AppointmentRepository appointmentRepository;
+    private final AppointmentSeatRepository appointmentSeatRepository;
     private final ClinicSettingService clinicSettingService;
+    private final com.chuctupk.service.SlotPolicy slotPolicy;
     private final Clock clock;
 
     @Override
@@ -39,15 +42,18 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         }
 
         LocalDate today = LocalDate.now(clock);
-        LocalTime now = LocalTime.now(clock);
+        LocalDateTime now = LocalDateTime.now(clock);
 
         if (date.isBefore(today)) {
             throw AppException.unprocessable("Không thể xem khung giờ trong quá khứ");
         }
 
-        int advanceDays = clinicSettingService.getBookingAdvanceDays();
-        if (date.isAfter(today.plusDays(advanceDays))) {
-            throw AppException.unprocessable("Chỉ có thể đặt lịch trước tối đa " + advanceDays + " ngày");
+        int maxDays = clinicSettingService.getUserMaxDays();
+        if (maxDays <= 0) {
+            maxDays = clinicSettingService.getBookingAdvanceDays();
+        }
+        if (date.isAfter(today.plusDays(maxDays))) {
+            throw AppException.unprocessable("Chỉ có thể đặt lịch trước tối đa " + maxDays + " ngày");
         }
 
         if (clinicHolidayRepository.existsByHolidayDateAndIsClosedTrue(date)) {
@@ -55,18 +61,24 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         }
 
         DayOfWeek dow = DayOfWeek.from(date.getDayOfWeek());
-        int minHours = clinicSettingService.getBookingMinHours();
 
         List<TimeSlot> allSlots = timeSlotRepository.findByIsActiveTrueOrderBySortOrderAsc();
         List<TimeSlotResponse> availableSlots = new ArrayList<>();
 
         for (TimeSlot slot : allSlots) {
-            // Nếu là ngày hôm nay, loại các slot bắt đầu trước (now + booking_min_hours)
-            if (date.isEqual(today)) {
-                LocalTime cutoffTime = now.plusHours(minHours);
-                if (slot.getStartTime().isBefore(cutoffTime)) {
-                    continue;
-                }
+            long totalBooked = Math.max(
+                    appointmentSeatRepository.countByAppointmentDateAndTimeSlotId(date, slot.getId()),
+                    appointmentRepository.countBookedSlotsTotal(date, slot.getId(), AppointmentStatus.CANCELLED)
+            );
+            int capacity = clinicSettingService.getSlotCapacity();
+            int remaining = Math.max(0, capacity - (int) totalBooked);
+
+            // Đánh giá bằng SlotPolicy (Single Source of Truth)
+            com.chuctupk.service.SlotPolicy.SlotStatus status = slotPolicy.evaluate(
+                    date, slot, now, com.chuctupk.service.SlotPolicy.BookingChannel.PATIENT_PORTAL, remaining
+            );
+            if (status != com.chuctupk.service.SlotPolicy.SlotStatus.OK) {
+                continue;
             }
 
             // Lấy danh sách bác sĩ trực ca (có lịch làm việc và không nghỉ)
@@ -82,15 +94,6 @@ public class TimeSlotServiceImpl implements TimeSlotService {
                 continue;
             }
 
-            int activeDoctorCount = activeDoctorIds.size();
-            long totalBooked = appointmentRepository.countBookedSlotsTotal(date, slot.getId(), AppointmentStatus.CANCELLED);
-            int totalCapacity = slot.getMaxPatients() * activeDoctorCount;
-            int totalRemaining = totalCapacity - (int) totalBooked;
-
-            if (totalRemaining <= 0) {
-                continue; // Khung giờ đã đầy tổng thể
-            }
-
             int finalRemaining;
             if (doctorId != null) {
                 // Bệnh nhân chọn đích danh bác sĩ: Bác sĩ phải đang trực ca này
@@ -99,16 +102,16 @@ public class TimeSlotServiceImpl implements TimeSlotService {
                 }
 
                 long doctorBooked = appointmentRepository.countBookedSlotsForDoctor(date, doctorId, slot.getId(), AppointmentStatus.CANCELLED);
-                int doctorRemaining = slot.getMaxPatients() - (int) doctorBooked;
+                int doctorCapacity = slot.getMaxPatients() != null && slot.getMaxPatients() > 0 ? slot.getMaxPatients() : capacity;
+                int doctorRemaining = doctorCapacity - (int) doctorBooked;
 
                 if (doctorRemaining <= 0) {
                     continue; // Ca của bác sĩ này đã đầy
                 }
 
-                // Sức chứa còn lại là giá trị nhỏ hơn giữa chỗ của bác sĩ và chỗ còn lại của slot
-                finalRemaining = Math.min(doctorRemaining, totalRemaining);
+                finalRemaining = Math.min(doctorRemaining, remaining);
             } else {
-                finalRemaining = totalRemaining;
+                finalRemaining = remaining;
             }
 
             if (finalRemaining > 0) {

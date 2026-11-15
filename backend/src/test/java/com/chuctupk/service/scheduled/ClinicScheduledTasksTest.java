@@ -248,8 +248,9 @@ class ClinicScheduledTasksTest {
         ClinicSettingService clinicSettingService = Mockito.mock(ClinicSettingService.class);
         when(clinicSettingService.getNoShowCancelAt()).thenReturn(LocalTime.of(17, 0));
 
+        com.chuctupk.service.NotificationService notificationService = Mockito.mock(com.chuctupk.service.NotificationService.class);
         ClinicScheduledTasks tasks = new ClinicScheduledTasks(
-                appointmentRepository, seatRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, fixedClock
+                appointmentRepository, seatRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, notificationService, fixedClock
         );
 
         // Slot 15:00 - 16:00 (đã kết thúc trước 17:05)
@@ -295,8 +296,9 @@ class ClinicScheduledTasksTest {
         ClinicSettingService clinicSettingService = Mockito.mock(ClinicSettingService.class);
         when(clinicSettingService.getNoShowCancelAt()).thenReturn(LocalTime.of(17, 0));
 
+        com.chuctupk.service.NotificationService notificationService = Mockito.mock(com.chuctupk.service.NotificationService.class);
         ClinicScheduledTasks tasks = new ClinicScheduledTasks(
-                appointmentRepository, seatRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, fixedClock
+                appointmentRepository, seatRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, notificationService, fixedClock
         );
 
         // Slot 17:30 - 18:30 (chưa kết thúc lúc 17:05)
@@ -338,8 +340,9 @@ class ClinicScheduledTasksTest {
         ClinicSettingService clinicSettingService = Mockito.mock(ClinicSettingService.class);
         when(clinicSettingService.getNoShowCancelAt()).thenReturn(LocalTime.of(17, 0));
 
+        com.chuctupk.service.NotificationService notificationService = Mockito.mock(com.chuctupk.service.NotificationService.class);
         ClinicScheduledTasks tasks = new ClinicScheduledTasks(
-                appointmentRepository, seatRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, fixedClock
+                appointmentRepository, seatRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, notificationService, fixedClock
         );
 
         Appointment confirmedAppt = Appointment.builder()
@@ -373,8 +376,9 @@ class ClinicScheduledTasksTest {
         ClinicSettingService clinicSettingService = Mockito.mock(ClinicSettingService.class);
         when(clinicSettingService.getNoShowCancelAt()).thenReturn(LocalTime.of(17, 0));
 
+        com.chuctupk.service.NotificationService notificationService = Mockito.mock(com.chuctupk.service.NotificationService.class);
         ClinicScheduledTasks tasks = new ClinicScheduledTasks(
-                appointmentRepository, seatRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, fixedClock
+                appointmentRepository, seatRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, notificationService, fixedClock
         );
 
         Appointment inProgressAppt = Appointment.builder()
@@ -408,8 +412,9 @@ class ClinicScheduledTasksTest {
         ClinicSettingService clinicSettingService = Mockito.mock(ClinicSettingService.class);
         when(clinicSettingService.getNoShowCancelAt()).thenReturn(LocalTime.of(17, 0));
 
+        com.chuctupk.service.NotificationService notificationService = Mockito.mock(com.chuctupk.service.NotificationService.class);
         ClinicScheduledTasks tasks = new ClinicScheduledTasks(
-                appointmentRepository, seatRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, fixedClock
+                appointmentRepository, seatRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, notificationService, fixedClock
         );
 
         TimeSlot pastSlot = TimeSlot.builder()
@@ -448,8 +453,9 @@ class ClinicScheduledTasksTest {
         StubOtpVerificationRepository otpVerificationRepository = new StubOtpVerificationRepository();
         ClinicSettingService clinicSettingService = Mockito.mock(ClinicSettingService.class);
 
+        com.chuctupk.service.NotificationService notificationService = Mockito.mock(com.chuctupk.service.NotificationService.class);
         ClinicScheduledTasks tasks = new ClinicScheduledTasks(
-                appointmentRepository, seatRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, systemClock
+                appointmentRepository, seatRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, notificationService, systemClock
         );
 
         tasks.cleanupExpiredTokensAndOtps();

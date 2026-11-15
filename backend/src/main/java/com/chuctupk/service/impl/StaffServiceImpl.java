@@ -48,16 +48,12 @@ public class StaffServiceImpl implements StaffService {
     private final MedicalRecordRepository medicalRecordRepository;
     private final AppointmentSeatRepository appointmentSeatRepository;
     private final ClinicSettingService clinicSettingService;
+    private final com.chuctupk.service.SlotPolicy slotPolicy;
+    private final com.chuctupk.service.DoctorAssignmentService doctorAssignmentService;
+    private final com.chuctupk.repository.DoctorRepository doctorRepository;
+    private final com.chuctupk.service.NotificationService notificationService;
     private final SequenceGeneratorService sequenceGeneratorService;
     private final Clock clock;
-
-    private static final String[] DEFAULT_DOCTOR_NAMES = {
-            "BS. Nguyễn Văn Minh",
-            "Lương y Chúc Từ",
-            "Lương y Trần Văn C",
-            "Lương y Lê Thị D",
-            "Lương y Hoàng E"
-    };
 
     @Override
     @Transactional(readOnly = true)
@@ -215,13 +211,25 @@ public class StaffServiceImpl implements StaffService {
                 .findFirst()
                 .orElseThrow(() -> AppException.notFound("Không tìm thấy khung giờ khám " + reqStart));
 
-        if (slotDate.isEqual(today) && !Boolean.TRUE.equals(request.checkInNow())
-                && chosenSlot.getEndTime() != null && chosenSlot.getEndTime().isBefore(LocalTime.now(clock))) {
-            throw AppException.badRequest("Khung giờ này đã trôi qua. Vui lòng chọn khung giờ hiện tại hoặc kế tiếp");
+        LocalDateTime now = LocalDateTime.now(clock);
+        if (!Boolean.TRUE.equals(request.checkInNow())) {
+            com.chuctupk.service.SlotPolicy.SlotStatus slotStatus = slotPolicy.evaluate(
+                    slotDate, chosenSlot, now, com.chuctupk.service.SlotPolicy.BookingChannel.COUNTER
+            );
+            if (slotStatus != com.chuctupk.service.SlotPolicy.SlotStatus.OK) {
+                switch (slotStatus) {
+                    case PAST, TOO_LATE -> throw AppException.badRequest("Khung giờ này đã trôi qua. Vui lòng chọn khung giờ hiện tại hoặc kế tiếp");
+                    case OUTSIDE_RECEPTION -> throw AppException.unprocessable(
+                            "Phòng khám chỉ tiếp nhận trong khoảng từ " + clinicSettingService.getReceptionOpen() + " đến " + clinicSettingService.getReceptionClose());
+                    case TOO_FAR -> throw AppException.badRequest("Tiếp tân chỉ được phép đặt lịch trước tối đa " + clinicSettingService.getCounterMaxDays() + " ngày");
+                    case FULL -> throw AppException.of(ErrorCode.SLOT_FULL, "Khung giờ này đã đủ bệnh nhân. Cô chú chọn khung khác giúp phòng khám nhé");
+                    default -> throw AppException.badRequest("Khung giờ không hợp lệ");
+                }
+            }
         }
 
-        // Allocate seat (1..6)
-        int capacity = chosenSlot.getMaxPatients() != null && chosenSlot.getMaxPatients() > 0 ? chosenSlot.getMaxPatients() : 6;
+        // Allocate seat
+        int capacity = clinicSettingService.getSlotCapacity();
         int maxRetries = 6;
         AppointmentSeat allocatedSeat = null;
         Appointment savedAppointment = null;
@@ -255,10 +263,12 @@ public class StaffServiceImpl implements StaffService {
                 if (savedAppointment == null) {
                     String bookingCode = sequenceGeneratorService.nextAppointmentCode(slotDate);
                     boolean checkInNow = Boolean.TRUE.equals(request.checkInNow());
+                    Doctor doctor = doctorAssignmentService.pickDoctor(slotDate, chosenSlot);
 
                     Appointment appt = Appointment.builder()
                             .bookingCode(bookingCode)
                             .patient(patient)
+                            .doctor(doctor)
                             .serviceType(ContractMapper.toDbServiceType(request.serviceType()))
                             .appointmentDate(slotDate)
                             .timeSlot(chosenSlot)
@@ -305,6 +315,7 @@ public class StaffServiceImpl implements StaffService {
         }
 
         AppointmentDto dto = AppointmentDto.from(savedAppointment, checkin);
+        notificationService.notifyBookingSuccess(savedAppointment);
         return Map.of("appointment", dto, "ticket", dto);
     }
 
@@ -365,9 +376,12 @@ public class StaffServiceImpl implements StaffService {
             try {
                 if (savedNewAppt == null) {
                     String bookingCode = sequenceGeneratorService.nextAppointmentCode(newDate);
+                    Doctor doctor = doctorAssignmentService.pickDoctor(newDate, newSlot);
+
                     Appointment nextAppt = Appointment.builder()
                             .bookingCode(bookingCode)
                             .patient(oldAppt.getPatient())
+                            .doctor(doctor)
                             .service(oldAppt.getService())
                             .serviceType(oldAppt.getServiceType())
                             .appointmentDate(newDate)
@@ -426,6 +440,8 @@ public class StaffServiceImpl implements StaffService {
         appt.setCancelledAt(LocalDateTime.now(clock));
         Appointment saved = appointmentRepository.save(appt);
 
+        notificationService.notifyCancellation(saved, request.reason());
+
         return new StaffAppointmentLookupResponse(AppointmentDto.from(saved, (Checkin) null));
     }
 
@@ -441,8 +457,12 @@ public class StaffServiceImpl implements StaffService {
         }
 
         LocalTime nowTime = LocalTime.now(clock);
-        if (nowTime.isBefore(LocalTime.of(8, 0)) || nowTime.isAfter(LocalTime.of(16, 30))) {
-            throw AppException.of(ErrorCode.CLOSED, "Phòng khám chỉ tiếp nhận bệnh nhân từ 08:00 đến 16:30");
+        LocalTime openTime = clinicSettingService.getReceptionOpen();
+        LocalTime closeTime = clinicSettingService.getReceptionClose();
+        if (nowTime.isBefore(openTime) || nowTime.isAfter(closeTime)) {
+            String openStr = ContractMapper.formatTime(openTime);
+            String closeStr = ContractMapper.formatTime(closeTime);
+            throw AppException.of(ErrorCode.CLOSED, "Phòng khám chỉ tiếp nhận bệnh nhân từ " + openStr + " đến " + closeStr);
         }
 
         if (appt.getStatus() == AppointmentStatus.CANCELLED || appt.getStatus() == AppointmentStatus.COMPLETED) {
@@ -452,13 +472,10 @@ public class StaffServiceImpl implements StaffService {
             throw AppException.badRequest("Phiếu khám đã được check-in trước đó");
         }
 
-        // Quy tắc nhóm ưu tiên: Phiếu đặt trước (WEB) đến trong [slotStart - 15m, slotStart + 60m]
+        // Quy tắc nhóm ưu tiên: Phiếu đặt trước (WEB) đến trong [slotStart - priority_early_minutes, slotStart + 60m]
         PriorityGroup priorityGroup = PriorityGroup.NORMAL;
         if (appt.getSource() == AppointmentSource.WEB && appt.getTimeSlot() != null) {
-            int earlyMinutes = 15;
-            try {
-                earlyMinutes = Integer.parseInt(clinicSettingService.getSettingValue("priority_early_minutes", "15"));
-            } catch (Exception ignored) {}
+            int earlyMinutes = clinicSettingService.getPriorityEarlyMinutes();
 
             LocalTime slotStart = appt.getTimeSlot().getStartTime();
             LocalTime earlyLimit = slotStart.minusMinutes(earlyMinutes);
@@ -523,14 +540,15 @@ public class StaffServiceImpl implements StaffService {
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime endOfDay = today.atTime(LocalTime.MAX);
 
+        int totalSeats = clinicSettingService.getSeats();
         List<Checkin> inRoom = checkinRepository.findInRoomToday(startOfDay, endOfDay);
-        if (inRoom.size() >= 5) {
-            throw AppException.of(ErrorCode.ROOM_FULL, "Cả 5 ghế khám đều đang có bệnh nhân");
+        if (inRoom.size() >= totalSeats) {
+            throw AppException.of(ErrorCode.ROOM_FULL, "Tất cả các ghế khám hiện đều đang có bệnh nhân");
         }
 
         Set<Integer> occupied = inRoom.stream().map(Checkin::getSeatNo).filter(Objects::nonNull).collect(toSet());
         int freeSeat = 1;
-        for (int i = 1; i <= 5; i++) {
+        for (int i = 1; i <= totalSeats; i++) {
             if (!occupied.contains(i)) {
                 freeSeat = i;
                 break;
@@ -571,17 +589,41 @@ public class StaffServiceImpl implements StaffService {
     @Override
     @Transactional(readOnly = true)
     public QueueStateDto getQueueState() {
+        return getQueueState(null, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public QueueStateDto getQueueState(User currentUser, Long doctorId) {
         LocalDate today = LocalDate.now(clock);
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime endOfDay = today.atTime(LocalTime.MAX);
 
         boolean isStaff = isStaffOrDoctorCaller();
 
+        Long targetDoctorId = doctorId;
+        if (currentUser != null && currentUser.getRole() == com.chuctupk.entity.enums.Role.DOCTOR) {
+            Doctor currentDoc = doctorRepository.findByUserId(currentUser.getId()).orElse(null);
+            if (currentDoc != null) {
+                targetDoctorId = currentDoc.getId();
+            }
+        }
+
         List<Checkin> inRoom = checkinRepository.findInRoomToday(startOfDay, endOfDay);
         List<Checkin> waiting = checkinRepository.findWaitingTodayOrdered(startOfDay, endOfDay);
 
+        if (targetDoctorId != null) {
+            final Long docFilter = targetDoctorId;
+            waiting = waiting.stream()
+                    .filter(c -> c.getAppointment() != null && c.getAppointment().getDoctor() != null
+                            && docFilter.equals(c.getAppointment().getDoctor().getId()))
+                    .toList();
+        }
+
+        final Long docFilter = targetDoctorId;
         long completedCount = appointmentRepository.findByAppointmentDateOrderByTimeSlotStartTimeAsc(today).stream()
                 .filter(a -> a.getStatus() == AppointmentStatus.COMPLETED)
+                .filter(a -> docFilter == null || (a.getDoctor() != null && docFilter.equals(a.getDoctor().getId())))
                 .count();
 
         boolean autoInvite = "1".equals(clinicSettingService.getSettingValue("auto_invite", "0"));
@@ -599,22 +641,23 @@ public class StaffServiceImpl implements StaffService {
         List<QueueSeatDto> seatDtos = new ArrayList<>();
         for (int s = 1; s <= totalSeats; s++) {
             Checkin c = seatMap.get(s);
-            String docName = (s - 1 < DEFAULT_DOCTOR_NAMES.length) ? DEFAULT_DOCTOR_NAMES[s - 1] : "Bác sĩ phụ trách";
             if (c != null && c.getAppointment() != null) {
                 Appointment a = c.getAppointment();
                 String slotStart = a.getTimeSlot() != null && a.getTimeSlot().getStartTime() != null
                         ? a.getTimeSlot().getStartTime().toString().substring(0, 5) : "08:00";
 
                 PatientDto pDto = isStaff ? PatientDto.from(a.getPatient()) : PatientDto.masked(a.getPatient());
+                String docName = a.getDoctor() != null ? a.getDoctor().getFullName() : "Chưa phân bác sĩ";
+                String ticketCode = isStaff ? a.getBookingCode() : null;
 
                 seatDtos.add(new QueueSeatDto(
                         s,
                         false,
                         String.valueOf(c.getId()),
                         String.valueOf(a.getId()),
-                        a.getBookingCode(),
+                        ticketCode,
                         pDto,
-                        a.getDoctor() != null ? a.getDoctor().getFullName() : docName,
+                        docName,
                         ContractMapper.formatIso(c.getEnteredAt()),
                         c.getPriorityGroup().name(),
                         ContractMapper.toFeSource(a.getSource()),
@@ -629,7 +672,7 @@ public class StaffServiceImpl implements StaffService {
                         null,
                         null,
                         null,
-                        docName,
+                        null,
                         null,
                         null,
                         null,
@@ -654,12 +697,13 @@ public class StaffServiceImpl implements StaffService {
                     : 0;
 
             PatientDto pDto = isStaff ? PatientDto.from(a.getPatient()) : PatientDto.masked(a.getPatient());
+            String ticketCode = isStaff ? a.getBookingCode() : null;
 
             waitingDtos.add(new QueueWaitingDto(
                     String.valueOf(c.getId()),
                     String.valueOf(a.getId()),
                     c.getQueueNo(),
-                    a.getBookingCode(),
+                    ticketCode,
                     pDto,
                     c.getPriorityGroup().name(),
                     ContractMapper.toFeSource(a.getSource()),
@@ -689,14 +733,15 @@ public class StaffServiceImpl implements StaffService {
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime endOfDay = today.atTime(LocalTime.MAX);
 
+        int totalSeats = clinicSettingService.getSeats();
         List<Checkin> inRoom = checkinRepository.findInRoomToday(startOfDay, endOfDay);
-        if (inRoom.size() >= 5) {
-            throw AppException.of(ErrorCode.ROOM_FULL, "Cả 5 ghế khám đều đang có bệnh nhân");
+        if (inRoom.size() >= totalSeats) {
+            throw AppException.of(ErrorCode.ROOM_FULL, "Tất cả các ghế khám hiện đều đang có bệnh nhân");
         }
 
         Set<Integer> occupied = inRoom.stream().map(Checkin::getSeatNo).filter(Objects::nonNull).collect(toSet());
         int freeSeat = 1;
-        for (int i = 1; i <= 5; i++) {
+        for (int i = 1; i <= totalSeats; i++) {
             if (!occupied.contains(i)) {
                 freeSeat = i;
                 break;
@@ -767,6 +812,18 @@ public class StaffServiceImpl implements StaffService {
             }
         }
         return getQueueState();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getDashboardBadges() {
+        LocalDate today = LocalDate.now(clock);
+        long newBookings = appointmentRepository.countByAppointmentDate(today);
+        long cancelledToday = appointmentRepository.findByAppointmentDateAndStatus(today, AppointmentStatus.CANCELLED).size();
+        return Map.of(
+                "newBookings", newBookings,
+                "cancelledToday", cancelledToday
+        );
     }
 }
 

@@ -49,6 +49,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final ClinicServiceRepository clinicServiceRepository;
     private final ClinicSettingRepository clinicSettingRepository;
     private final ClinicSettingService clinicSettingService;
+    private final com.chuctupk.service.SlotPolicy slotPolicy;
     private final Clock clock;
 
     @Override
@@ -82,19 +83,21 @@ public class AppointmentServiceImpl implements AppointmentService {
             throw AppException.unprocessable("Khung giờ này hiện không hoạt động");
         }
 
-        // Kiểm tra giờ tiếp nhận
-        LocalTime receptionOpen = clinicSettingService.getReceptionOpen();
-        LocalTime receptionClose = clinicSettingService.getReceptionClose();
-        if (slot.getStartTime().isBefore(receptionOpen) || slot.getStartTime().isAfter(receptionClose)) {
-            throw AppException.unprocessable("Phòng khám chỉ tiếp nhận trong khoảng từ " + receptionOpen + " đến " + receptionClose);
-        }
-
-        // 5. Kiểm tra thời gian tối thiểu trước giờ khám nếu đặt cho ngày hôm nay
-        int minHours = clinicSettingService.getBookingMinHours();
-        if (appointmentDate.isEqual(today)) {
-            LocalTime cutoffTime = now.plusHours(minHours);
-            if (slot.getStartTime().isBefore(cutoffTime)) {
-                throw AppException.unprocessable("Đã quá thời gian nhận lịch cho khung giờ này (cần đặt trước ít nhất " + minHours + " giờ)");
+        // Đánh giá khung giờ bằng SlotPolicy (Single Source of Truth)
+        LocalDateTime nowDateTime = LocalDateTime.now(clock);
+        com.chuctupk.service.SlotPolicy.SlotStatus slotStatus = slotPolicy.evaluate(
+                appointmentDate, slot, nowDateTime, com.chuctupk.service.SlotPolicy.BookingChannel.PATIENT_PORTAL
+        );
+        if (slotStatus != com.chuctupk.service.SlotPolicy.SlotStatus.OK) {
+            switch (slotStatus) {
+                case TOO_LATE -> throw AppException.unprocessable("Khung giờ này đã bắt đầu, cô chú vui lòng chọn khung khác");
+                case OUTSIDE_RECEPTION -> throw AppException.unprocessable(
+                        "Phòng khám chỉ tiếp nhận trong khoảng từ " + clinicSettingService.getReceptionOpen() + " đến " + clinicSettingService.getReceptionClose());
+                case TOO_FAR -> throw AppException.unprocessable(
+                        "Chỉ được phép đặt lịch trước tối đa " + clinicSettingService.getUserMaxDays() + " ngày");
+                case PAST -> throw AppException.unprocessable("Không thể đặt lịch cho ngày trong quá khứ");
+                case FULL -> throw AppException.unprocessable("Khung giờ này đã đủ bệnh nhân");
+                default -> throw AppException.unprocessable("Khung giờ không hợp lệ");
             }
         }
 

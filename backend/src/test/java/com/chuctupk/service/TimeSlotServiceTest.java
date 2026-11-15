@@ -192,14 +192,14 @@ class TimeSlotServiceTest {
         // 1 lịch KHÔNG chọn bác sĩ (doctor = null) -> tính vào tổng ca (a)
         bookAppointment(p3, null, morningSlot, testDate);
 
-        // Tổng đã đặt: 3 (sức chứa tổng: 6). BS A đã có 2 lịch (sức chứa BS A: 3).
-        // Tra cứu không chọn BS: remaining = 6 - 3 = 3
+        // Tổng đã đặt: 3 (sức chứa tổng theo slot_capacity: 5). BS A đã có 2 lịch (sức chứa BS A: 3).
+        // Tra cứu không chọn BS: remaining = 5 - 3 = 2
         List<TimeSlotResponse> generalSlots = timeSlotService.getAvailableTimeSlots(testDate, null);
         TimeSlotResponse generalSlot = generalSlots.stream()
                 .filter(s -> s.getId().equals(morningSlot.getId()))
                 .findFirst()
                 .orElseThrow();
-        assertEquals(3, generalSlot.getRemaining(), "Tổng sức chứa còn lại phải là 3 chỗ");
+        assertEquals(2, generalSlot.getRemaining(), "Tổng sức chứa còn lại phải là 2 chỗ");
 
         // Tra cứu chọn BS A: BS A còn 3 - 2 = 1 chỗ
         List<TimeSlotResponse> doctorASlots = timeSlotService.getAvailableTimeSlots(testDate, doctorA.getId());
@@ -218,13 +218,13 @@ class TimeSlotServiceTest {
         assertFalse(doctorASlotsAfter.stream().anyMatch(s -> s.getId().equals(morningSlot.getId())),
                 "BS A đã nhận đủ 3 chỗ nên slot phải bị loại khi tra cứu riêng BS A");
 
-        // Nhưng tra cứu tổng thể: vẫn còn chỗ (cho BS B) -> remaining = 6 - 4 = 2 chỗ
+        // Nhưng tra cứu tổng thể: vẫn còn chỗ (cho BS B) -> remaining = 5 - 4 = 1 chỗ
         List<TimeSlotResponse> generalSlotsAfter = timeSlotService.getAvailableTimeSlots(testDate, null);
         TimeSlotResponse generalSlotAfter = generalSlotsAfter.stream()
                 .filter(s -> s.getId().equals(morningSlot.getId()))
                 .findFirst()
                 .orElseThrow();
-        assertEquals(2, generalSlotAfter.getRemaining(), "Khung giờ chung vẫn còn 2 chỗ cho bác sĩ B");
+        assertEquals(1, generalSlotAfter.getRemaining(), "Khung giờ chung vẫn còn 1 chỗ cho bác sĩ B");
     }
 
     @Test
