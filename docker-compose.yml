@@ -54,6 +54,7 @@ services:
         condition: service_healthy
     environment:
       PORT: 4000
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       JWT_SECRET: ${JWT_SECRET}
       DDL_AUTO: ${DDL_AUTO:-validate}
       UPLOAD_DIR: /app/uploads

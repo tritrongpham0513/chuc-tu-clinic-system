@@ -68,8 +68,12 @@ public class AppointmentController {
         long now = System.currentTimeMillis();
         long windowStart = now - 60_000L; // 1 phút
 
-        if (lookupRateLimit.size() > 5000) {
-            lookupRateLimit.clear();
+        // Dọn dẹp các entry hết hạn nếu bảng theo dõi lớn (thay vì clear toàn bộ làm hổng rate-limit)
+        if (lookupRateLimit.size() > 2000) {
+            lookupRateLimit.entrySet().removeIf(entry -> {
+                Deque<Long> queue = entry.getValue();
+                return queue == null || queue.isEmpty() || queue.peekLast() < windowStart;
+            });
         }
 
         Deque<Long> timestamps = lookupRateLimit.computeIfAbsent(key, k -> new ConcurrentLinkedDeque<>());

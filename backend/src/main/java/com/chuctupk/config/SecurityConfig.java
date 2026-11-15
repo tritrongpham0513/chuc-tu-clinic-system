@@ -51,6 +51,9 @@ public class SecurityConfig {
     @org.springframework.beans.factory.annotation.Value("${spring.profiles.active:default}")
     private String activeProfile;
 
+    @org.springframework.beans.factory.annotation.Value("${springdoc.api-docs.enabled:true}")
+    private boolean apiDocsEnabled;
+
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, JsonMapper jsonMapper) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.jsonMapper = jsonMapper;
@@ -75,7 +78,7 @@ public class SecurityConfig {
                                 "/api/v1/services/**",
                                 "/api/v1/doctors/**",
                                 "/api/v1/time-slots/**",
-                                "/api/v1/booking/slots",
+                                "/api/v1/booking/**",
                                 "/api/v1/me/availability",
                                 "/api/v1/queue/**",
                                 "/api/v1/staff/queue",
@@ -87,10 +90,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/appointments/*").permitAll()
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/appointments/*").permitAll()
 
-                        // 4. Công khai: tài liệu Swagger / OpenAPI (chỉ dev/test, prod yêu cầu ADMIN)
+                        // 4. Tài liệu Swagger / OpenAPI: Chỉ ADMIN khi ở prod hoặc khi api-docs bị tắt
                         .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml", "/swagger-ui/**", "/swagger-ui.html", "/swagger-ui/index.html")
                         .access((authentication, context) -> {
-                            if ("prod".equalsIgnoreCase(activeProfile)) {
+                            if ("prod".equalsIgnoreCase(activeProfile) || !apiDocsEnabled) {
                                 return new org.springframework.security.authorization.AuthorizationDecision(
                                         authentication.get() != null && authentication.get().getAuthorities().stream()
                                                 .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()) || "ADMIN".equals(a.getAuthority()))

@@ -39,6 +39,8 @@ RUN chown -R appuser:appgroup /app
 
 USER appuser
 
+ENV SPRING_PROFILES_ACTIVE=prod
+
 EXPOSE 4000
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=45s --retries=5 \
