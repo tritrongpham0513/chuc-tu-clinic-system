@@ -82,6 +82,13 @@ public class AppointmentServiceImpl implements AppointmentService {
             throw AppException.unprocessable("Khung giờ này hiện không hoạt động");
         }
 
+        // Kiểm tra giờ tiếp nhận
+        LocalTime receptionOpen = clinicSettingService.getReceptionOpen();
+        LocalTime receptionClose = clinicSettingService.getReceptionClose();
+        if (slot.getStartTime().isBefore(receptionOpen) || slot.getStartTime().isAfter(receptionClose)) {
+            throw AppException.unprocessable("Phòng khám chỉ tiếp nhận trong khoảng từ " + receptionOpen + " đến " + receptionClose);
+        }
+
         // 5. Kiểm tra thời gian tối thiểu trước giờ khám nếu đặt cho ngày hôm nay
         int minHours = clinicSettingService.getBookingMinHours();
         if (appointmentDate.isEqual(today)) {
@@ -126,8 +133,8 @@ public class AppointmentServiceImpl implements AppointmentService {
             }
         }
 
-        // Kiểm tra điều kiện (a): <=tổng lịch chưa hủy của slot trong ngày  max_patients x số bác sĩ trực ca
-        int totalCapacity = slot.getMaxPatients() * activeDoctorIds.size();
+        // Kiểm tra điều kiện (a): tổng lịch chưa hủy của slot trong ngày <= slot_capacity
+        int totalCapacity = clinicSettingService.getSlotCapacity();
         long totalBooked = appointmentRepository.countBookedSlotsTotal(
                 appointmentDate, slot.getId(), AppointmentStatus.CANCELLED);
         if (totalBooked >= totalCapacity) {

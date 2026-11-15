@@ -58,3 +58,9 @@ backend/*.log
 # --- Logs ---
 logs/
 *.log
+
+# --- Uploads & Media ---
+uploads/
+backend/uploads/
+__pycache__/
+*.pyc

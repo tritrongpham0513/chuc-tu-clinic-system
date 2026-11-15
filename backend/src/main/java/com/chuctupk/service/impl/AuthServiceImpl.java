@@ -91,6 +91,55 @@ public class AuthServiceImpl implements AuthService {
     @org.springframework.beans.factory.annotation.Value("${app.mail.enabled:false}")
     private boolean mailEnabled;
 
+    @org.springframework.beans.factory.annotation.Value("${app.otp.expose-dev-code:true}")
+    private boolean exposeDevCode;
+
+    @org.springframework.beans.factory.annotation.Value("${app.cookie.secure:false}")
+    private boolean cookieSecureConfig;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private HttpServletRequest httpServletRequest;
+
+    private boolean isSecureRequest() {
+        if (cookieSecureConfig) return true;
+        try {
+            return httpServletRequest != null && (httpServletRequest.isSecure() || "https".equalsIgnoreCase(httpServletRequest.getHeader("X-Forwarded-Proto")));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private void checkAccountLock(User user) {
+        if (user.getLockedUntil() != null) {
+            if (user.getLockedUntil().isAfter(LocalDateTime.now())) {
+                long remainingMinutes = java.time.Duration.between(LocalDateTime.now(), user.getLockedUntil()).toMinutes() + 1;
+                throw new AppException(HttpStatus.LOCKED.value(),
+                        "Tài khoản đang bị tạm khóa do nhập sai mật khẩu quá 5 lần. Vui lòng thử lại sau " + remainingMinutes + " phút",
+                        ErrorCode.ACCOUNT_LOCKED.getCode());
+            } else {
+                user.setLockedUntil(null);
+                user.setFailedLoginCount(0);
+                userRepository.save(user);
+            }
+        }
+    }
+
+    private void handleFailedLogin(User user) {
+        int count = (user.getFailedLoginCount() != null ? user.getFailedLoginCount() : 0) + 1;
+        user.setFailedLoginCount(count);
+        if (count >= 5) {
+            user.setLockedUntil(LocalDateTime.now().plusMinutes(15));
+        }
+        userRepository.save(user);
+    }
+
+    private void handleSuccessfulLogin(User user) {
+        user.setFailedLoginCount(0);
+        user.setLockedUntil(null);
+        user.setLastLoginAt(LocalDateTime.now());
+        userRepository.save(user);
+    }
+
     // =========================================================================
     // V1 API IMPLEMENTATIONS
     // =========================================================================
@@ -114,16 +163,21 @@ public class AuthServiceImpl implements AuthService {
                 .build();
         otpVerificationRepository.save(otp);
 
-        boolean sent = false;
-        if (smsService != null) {
-            sent = smsService.sendOtp(cleanPhone, rawCode);
+        SmsService.OtpSendResult sendResult = smsService != null
+                ? smsService.sendOtp(cleanPhone, rawCode)
+                : SmsService.OtpSendResult.SKIPPED;
+
+        if (sendResult == SmsService.OtpSendResult.FAILED) {
+            throw new AppException(HttpStatus.BAD_GATEWAY.value(),
+                    "Không gửi được mã xác thực, cô chú vui lòng thử lại sau ít phút",
+                    "SMS_GATEWAY_ERROR");
         }
 
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("needCode", true);
         res.put("phone", cleanPhone);
         res.put("resendAfterSeconds", 60);
-        putDevCodeIfSimulated(res, rawCode, sent);
+        putDevCodeIfSimulated(res, rawCode, sendResult == SmsService.OtpSendResult.SENT);
         res.put("message", "Mã xác nhận 6 chữ số đã được gửi tới số điện thoại " + PhoneValidator.mask(cleanPhone));
         return res;
     }
@@ -195,16 +249,21 @@ public class AuthServiceImpl implements AuthService {
                 .build();
         otpVerificationRepository.save(otp);
 
-        boolean sent = false;
-        if (smsService != null) {
-            sent = smsService.sendOtp(cleanPhone, rawCode);
+        SmsService.OtpSendResult sendResult = smsService != null
+                ? smsService.sendOtp(cleanPhone, rawCode)
+                : SmsService.OtpSendResult.SKIPPED;
+
+        if (sendResult == SmsService.OtpSendResult.FAILED) {
+            throw new AppException(HttpStatus.BAD_GATEWAY.value(),
+                    "Không gửi được mã xác thực, cô chú vui lòng thử lại sau ít phút",
+                    "SMS_GATEWAY_ERROR");
         }
 
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("needCode", true);
         res.put("phone", cleanPhone);
         res.put("resendAfterSeconds", 60);
-        putDevCodeIfSimulated(res, rawCode, sent);
+        putDevCodeIfSimulated(res, rawCode, sendResult == SmsService.OtpSendResult.SENT);
         res.put("message", "Mã xác nhận 6 chữ số đã được gửi tới số điện thoại " + PhoneValidator.mask(cleanPhone));
         return res;
     }
@@ -276,15 +335,20 @@ public class AuthServiceImpl implements AuthService {
                 .build();
         otpVerificationRepository.save(otp);
 
-        boolean sent = false;
-        if (smsService != null) {
-            sent = smsService.sendOtp(cleanPhone, rawCode);
+        SmsService.OtpSendResult sendResult = smsService != null
+                ? smsService.sendOtp(cleanPhone, rawCode)
+                : SmsService.OtpSendResult.SKIPPED;
+
+        if (sendResult == SmsService.OtpSendResult.FAILED) {
+            throw new AppException(HttpStatus.BAD_GATEWAY.value(),
+                    "Không gửi được mã xác thực, cô chú vui lòng thử lại sau ít phút",
+                    "SMS_GATEWAY_ERROR");
         }
 
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
         res.put("resendAfterSeconds", 60);
-        putDevCodeIfSimulated(res, rawCode, sent);
+        putDevCodeIfSimulated(res, rawCode, sendResult == SmsService.OtpSendResult.SENT);
         res.put("message", "Đã gửi lại mã xác nhận tới số điện thoại " + PhoneValidator.mask(cleanPhone));
         return res;
     }
@@ -308,7 +372,10 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new AppException(ErrorCode.UNAUTHORIZED,
                         "Tài khoản hoặc mật khẩu không chính xác"));
 
+        checkAccountLock(user);
+
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            handleFailedLogin(user);
             throw new AppException(ErrorCode.UNAUTHORIZED, "Tài khoản hoặc mật khẩu không chính xác");
         }
 
@@ -320,8 +387,7 @@ public class AuthServiceImpl implements AuthService {
             throw new AppException(ErrorCode.FORBIDDEN, "Tài khoản này không có quyền truy cập khu vực nội bộ");
         }
 
-        user.setLastLoginAt(LocalDateTime.now());
-        userRepository.save(user);
+        handleSuccessfulLogin(user);
 
         String jwt = jwtTokenProvider.generateToken(user);
         issueRefreshTokenAndCookie(user, false, response, jwt);
@@ -501,9 +567,10 @@ public class AuthServiceImpl implements AuthService {
         }
         SecurityContextHolder.clearContext();
         if (response != null) {
-            CookieHelper.clearSessionCookie(response, false);
-            CookieHelper.clearRefreshCookie(response, false);
-            CookieHelper.clearDeviceCookie(response, false);
+            boolean secure = isSecureRequest();
+            CookieHelper.clearSessionCookie(response, secure);
+            CookieHelper.clearRefreshCookie(response, secure);
+            CookieHelper.clearDeviceCookie(response, secure);
         }
     }
 
@@ -566,7 +633,7 @@ public class AuthServiceImpl implements AuthService {
         res.put("needCode", true);
         res.put("email", email);
         res.put("resendAfterSeconds", 60);
-        if (!mailEnabled) {
+        if (!mailEnabled && exposeDevCode) {
             res.put("devCode", rawCode);
         }
         res.put("message", "Mã xác minh 6 số đã được gửi tới email " + email);
@@ -636,7 +703,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void putDevCodeIfSimulated(Map<String, Object> res, String rawCode, boolean realSent) {
-        if (!realSent) {
+        if (!realSent && exposeDevCode) {
             res.put("devCode", rawCode);
         }
     }
@@ -743,13 +810,14 @@ public class AuthServiceImpl implements AuthService {
         refreshTokenRepository.save(rt);
 
         if (response != null) {
-            CookieHelper.addSessionCookie(response, jwt, 24 * 3600, false);
+            boolean secure = isSecureRequest();
+            CookieHelper.addSessionCookie(response, jwt, 24 * 3600, secure);
 
             // Cookie Refresh Token thật: HttpOnly, chỉ gửi tới /api/v1/auth để làm mới phiên
-            CookieHelper.addRefreshCookie(response, rawRefreshToken, refreshDays * 24 * 3600, false);
+            CookieHelper.addRefreshCookie(response, rawRefreshToken, refreshDays * 24 * 3600, secure);
 
             if (remember) {
-                CookieHelper.addDeviceCookie(response, "dev_" + user.getId() + "_" + System.currentTimeMillis(), false);
+                CookieHelper.addDeviceCookie(response, "dev_" + user.getId() + "_" + System.currentTimeMillis(), secure);
             }
         }
     }
@@ -858,9 +926,14 @@ public class AuthServiceImpl implements AuthService {
                 .or(() -> userRepository.findByPhone(cleanPhone))
                 .orElseThrow(() -> AppException.badRequest("Tài khoản hoặc mật khẩu không chính xác"));
 
+        checkAccountLock(user);
+
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            handleFailedLogin(user);
             throw AppException.badRequest("Tài khoản hoặc mật khẩu không chính xác");
         }
+
+        handleSuccessfulLogin(user);
 
         String token = jwtTokenProvider.generateToken(user);
         return AuthResponse.builder()
@@ -897,28 +970,6 @@ public class AuthServiceImpl implements AuthService {
                         .phone(u.phone())
                         .email(u.email())
                         .role(ContractMapper.toDbRole(u.role()))
-                        .build())
-                .build();
-    }
-
-    @Override
-    @Transactional
-    public AuthResponse quickLoginByPhone(String phone) {
-        String cleanPhone = PhoneValidator.validate(phone);
-        User user = userRepository.findByPhone(cleanPhone)
-                .orElseThrow(() -> AppException.notFound("Số điện thoại chưa từng được đăng ký"));
-
-        String token = jwtTokenProvider.generateToken(user);
-        return AuthResponse.builder()
-                .accessToken(token)
-                .tokenType("Bearer")
-                .user(UserResponse.builder()
-                        .id(user.getId())
-                        .username(user.getUsername())
-                        .fullName(user.getFullName())
-                        .phone(user.getPhone())
-                        .email(user.getEmail())
-                        .role(user.getRole())
                         .build())
                 .build();
     }

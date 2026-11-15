@@ -57,15 +57,6 @@ public final class CookieHelper {
                                 .sameSite("Lax")
                                 .build();
                 response.addHeader("Set-Cookie", sessionCookie.toString());
-
-                ResponseCookie legacyCookie = ResponseCookie.from(LEGACY_TOKEN_COOKIE_NAME, token)
-                                .httpOnly(true)
-                                .secure(isSecure)
-                                .path("/")
-                                .maxAge(maxAgeSeconds)
-                                .sameSite("Lax")
-                                .build();
-                response.addHeader("Set-Cookie", legacyCookie.toString());
         }
 
         public static void clearSessionCookie(HttpServletResponse response, boolean isSecure) {
@@ -77,15 +68,6 @@ public final class CookieHelper {
                                 .sameSite("Lax")
                                 .build();
                 response.addHeader("Set-Cookie", sessionCookie.toString());
-
-                ResponseCookie legacyCookie = ResponseCookie.from(LEGACY_TOKEN_COOKIE_NAME, "")
-                                .httpOnly(true)
-                                .secure(isSecure)
-                                .path("/")
-                                .maxAge(0)
-                                .sameSite("Lax")
-                                .build();
-                response.addHeader("Set-Cookie", legacyCookie.toString());
         }
 
         public static void addDeviceCookie(HttpServletResponse response, String deviceId, boolean isSecure) {

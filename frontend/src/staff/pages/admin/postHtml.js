@@ -36,7 +36,7 @@ export async function uploadImage(file, maxSide = 1600) {
     blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85));
   }
   if (blob.size > 3 * 1024 * 1024) throw new Error('Ảnh quá lớn, vui lòng chọn ảnh dưới 3 MB.');
-  const res = await fetch(`${API_BASE}/api/admin/uploads`, {
+  const res = await fetch(`${API_BASE}/api/v1/uploads`, {
     method: 'POST',
     credentials: 'include',
     headers: { ...appHeaders(), 'Content-Type': blob.type },

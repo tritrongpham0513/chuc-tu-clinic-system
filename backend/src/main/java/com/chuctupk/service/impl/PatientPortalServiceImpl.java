@@ -45,6 +45,7 @@ public class PatientPortalServiceImpl implements PatientPortalService {
     private final TimeSlotRepository timeSlotRepository;
     private final SequenceGeneratorService sequenceGeneratorService;
     private final Clock clock;
+    private final com.chuctupk.service.ClinicSettingService clinicSettingService;
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     // =========================================================================
@@ -286,7 +287,7 @@ public class PatientPortalServiceImpl implements PatientPortalService {
 
         for (TimeSlot slot : slots) {
             long booked = appointmentSeatRepository.countByAppointmentDateAndTimeSlotId(date, slot.getId());
-            int capacity = slot.getMaxPatients() != null && slot.getMaxPatients() > 0 ? slot.getMaxPatients() : 6;
+            int capacity = clinicSettingService.getSlotCapacity();
             int remaining = Math.max(0, capacity - (int) booked);
 
             boolean isPast = date.isBefore(today) || (date.equals(today) && slot.getEndTime().isBefore(nowTime));
@@ -354,8 +355,9 @@ public class PatientPortalServiceImpl implements PatientPortalService {
         if (slotDate.isBefore(today)) {
             throw new AppException(ErrorCode.BAD_REQUEST, "Không thể đặt lịch cho ngày trong quá khứ");
         }
-        if (slotDate.isAfter(today.plusDays(30))) {
-            throw new AppException(ErrorCode.BAD_REQUEST, "Chỉ được phép đặt lịch trước tối đa 30 ngày");
+        int maxDays = clinicSettingService.getUserMaxDays();
+        if (slotDate.isAfter(today.plusDays(maxDays))) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Chỉ được phép đặt lịch trước tối đa " + maxDays + " ngày");
         }
 
         // 4. Chống 1 bệnh nhân đặt nhiều phiếu trong cùng 1 ngày
@@ -374,12 +376,20 @@ public class PatientPortalServiceImpl implements PatientPortalService {
                 .findFirst()
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Không tìm thấy khung giờ khám " + reqStart));
 
+        // Kiểm tra giờ tiếp nhận
+        LocalTime receptionOpen = clinicSettingService.getReceptionOpen();
+        LocalTime receptionClose = clinicSettingService.getReceptionClose();
+        if (chosenSlot.getStartTime().isBefore(receptionOpen) || chosenSlot.getStartTime().isAfter(receptionClose)) {
+            throw new AppException(ErrorCode.UNPROCESSABLE,
+                    "Phòng khám chỉ tiếp nhận trong khoảng từ " + receptionOpen + " đến " + receptionClose);
+        }
+
         // 5.1. Chặn đặt khung giờ đã trôi qua trong ngày hôm nay
         if (slotDate.isEqual(today) && chosenSlot.getEndTime() != null && chosenSlot.getEndTime().isBefore(nowTime)) {
             throw new AppException(ErrorCode.BAD_REQUEST, "Khung giờ này đã trôi qua. Cô chú vui lòng chọn khung giờ khác nhé");
         }
 
-        // 6. Cấp ghế đồng thời an toàn (appointment_seats <= 6)
+        // 6. Cấp ghế đồng thời an toàn (appointment_seats <= slot_capacity)
         int maxRetries = 6;
         AppointmentSeat allocatedSeat = null;
         Appointment savedAppointment = null;
@@ -392,7 +402,7 @@ public class PatientPortalServiceImpl implements PatientPortalService {
                     .map(AppointmentSeat::getSeatNo)
                     .collect(Collectors.toSet());
 
-            int capacity = chosenSlot.getMaxPatients() != null && chosenSlot.getMaxPatients() > 0 ? chosenSlot.getMaxPatients() : 6;
+            int capacity = clinicSettingService.getSlotCapacity();
             if (takenSeats.size() >= capacity) {
                 throw new AppException(ErrorCode.SLOT_FULL,
                         "Khung giờ này đã đủ bệnh nhân. Cô chú chọn khung khác giúp phòng khám nhé");

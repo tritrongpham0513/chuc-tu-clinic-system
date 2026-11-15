@@ -45,6 +45,12 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JsonMapper jsonMapper;
 
+    @org.springframework.beans.factory.annotation.Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173}")
+    private String allowedOriginsStr;
+
+    @org.springframework.beans.factory.annotation.Value("${spring.profiles.active:default}")
+    private String activeProfile;
+
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, JsonMapper jsonMapper) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.jsonMapper = jsonMapper;
@@ -69,19 +75,25 @@ public class SecurityConfig {
                                 "/api/v1/services/**",
                                 "/api/v1/doctors/**",
                                 "/api/v1/time-slots/**",
-                                "/api/v1/booking/slots",
                                 "/api/v1/me/availability",
-                                "/api/v1/queue/**",
-                                "/api/v1/staff/queue",
-                                "/api/v1/articles",
-                                "/api/v1/articles/**"
+                                "/api/v1/staff/queue"
                         ).permitAll()
 
-                        // 3. Công khai: đặt lịch, tra cứu và hủy lịch trực tuyến của người bệnh
-                        .requestMatchers("/api/v1/appointments/**").permitAll()
+                        // 3. Công khai: tra cứu và hủy lịch hẹn trực tuyến của người bệnh (yêu cầu header X-Phone)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/appointments/*").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/appointments/*").permitAll()
 
-                        // 4. Công khai: tài liệu Swagger / OpenAPI
-                        .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml", "/swagger-ui/**", "/swagger-ui.html", "/swagger-ui/index.html").permitAll()
+                        // 4. Công khai: tài liệu Swagger / OpenAPI (chỉ dev/test, prod yêu cầu ADMIN)
+                        .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml", "/swagger-ui/**", "/swagger-ui.html", "/swagger-ui/index.html")
+                        .access((authentication, context) -> {
+                            if ("prod".equalsIgnoreCase(activeProfile)) {
+                                return new org.springframework.security.authorization.AuthorizationDecision(
+                                        authentication.get() != null && authentication.get().getAuthorities().stream()
+                                                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()) || "ADMIN".equals(a.getAuthority()))
+                                );
+                            }
+                            return new org.springframework.security.authorization.AuthorizationDecision(true);
+                        })
 
                         // 5. Quản trị: chỉ ADMIN
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
@@ -136,15 +148,18 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of(
-                "http://localhost:*",
-                "http://127.0.0.1:*",
-                "http://localhost",
-                "http://127.0.0.1",
-                "https://*.onrender.com",
-                "https://*.vercel.app",
-                "https://*.railway.app"
-        ));
+        List<String> origins = Arrays.stream(allowedOriginsStr.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+
+        for (String origin : origins) {
+            if (origin.contains("*")) {
+                throw new IllegalStateException("CORS allowed-origins không được chứa ký tự wildcard '*' khi allowCredentials=true: " + origin);
+            }
+        }
+
+        configuration.setAllowedOrigins(origins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Location", "Authorization"));

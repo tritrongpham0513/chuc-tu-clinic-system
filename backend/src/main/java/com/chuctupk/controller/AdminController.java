@@ -218,34 +218,4 @@ public class AdminController {
         adminService.deletePost(id);
         return ResponseEntity.ok(ApiResponse.success(null, "Đã xóa bài viết thành công"));
     }
-
-    // =========================================================================
-    // 5. UPLOAD MEDIA (≤ 3MB, WHITELIST MIME)
-    // =========================================================================
-
-    @PostMapping(value = "/uploads", consumes = {MediaType.APPLICATION_OCTET_STREAM_VALUE, "image/*", MediaType.MULTIPART_FORM_DATA_VALUE})
-    @Operation(summary = "Tải ảnh bài viết lên máy chủ (≤ 3MB, JPG/PNG/WEBP/GIF)")
-    public ResponseEntity<Map<String, Object>> uploadImage(
-            HttpServletRequest request,
-            @RequestParam(value = "file", required = false) MultipartFile multipartFile,
-            @RequestBody(required = false) byte[] rawBytes) throws IOException {
-
-        byte[] data;
-        String contentType;
-
-        if (multipartFile != null && !multipartFile.isEmpty()) {
-            data = multipartFile.getBytes();
-            contentType = multipartFile.getContentType();
-        } else if (rawBytes != null && rawBytes.length > 0) {
-            data = rawBytes;
-            contentType = request.getContentType();
-        } else {
-            // Đọc trực tiếp từ input stream nếu Spring MVC không map được rawBytes
-            data = request.getInputStream().readAllBytes();
-            contentType = request.getContentType();
-        }
-
-        Map<String, Object> result = adminService.saveUpload(contentType, data);
-        return ResponseEntity.status(HttpStatus.CREATED).body(result);
-    }
 }

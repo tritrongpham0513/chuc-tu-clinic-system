@@ -75,5 +75,44 @@ public record PatientDto(
                 lastVisitDate != null ? lastVisitDate.toString() : null
         );
     }
+
+    public static PatientDto masked(Patient p) {
+        if (p == null) return null;
+        String maskedName = maskFullName(p.getFullName());
+        return new PatientDto(
+                "",
+                "",
+                maskedName,
+                null,
+                null,
+                null,
+                p.getGender() != null ? ContractMapper.toFeGender(p.getGender()) : null,
+                null,
+                null,
+                null,
+                false,
+                false,
+                true,
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
+    public static String maskFullName(String fullName) {
+        if (fullName == null || fullName.isBlank()) return "";
+        String[] parts = fullName.trim().split("\\s+");
+        if (parts.length == 1) return parts[0];
+        if (parts.length == 2) return parts[0] + " " + parts[1];
+        StringBuilder sb = new StringBuilder(parts[0]);
+        for (int i = 1; i < parts.length - 1; i++) {
+            if (!parts[i].isEmpty()) {
+                sb.append(" ").append(Character.toUpperCase(parts[i].charAt(0))).append(".");
+            }
+        }
+        sb.append(" ").append(parts[parts.length - 1]);
+        return sb.toString();
+    }
 }
 

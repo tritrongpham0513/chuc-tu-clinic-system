@@ -38,3 +38,6 @@ build/
 !.env.example
 !.env.*.example
 
+# Uploads
+uploads/
+

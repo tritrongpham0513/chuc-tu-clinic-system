@@ -58,7 +58,7 @@ public enum ErrorCode {
         CLOSED(HttpStatus.BAD_REQUEST, "CLOSED", "Phòng khám đã hết giờ tiếp nhận bệnh nhân trong ngày"),
         DUPLICATE_PHONE(HttpStatus.CONFLICT, "DUPLICATE_PHONE", "Số điện thoại này đã có hồ sơ trong hệ thống"),
         USER_EXISTS(HttpStatus.CONFLICT, "USER_EXISTS", "Tài khoản với thông tin này đã tồn tại"),
-        ACCOUNT_LOCKED(HttpStatus.FORBIDDEN, "ACCOUNT_LOCKED",
+        ACCOUNT_LOCKED(HttpStatus.LOCKED, "ACCOUNT_LOCKED",
                         "Tài khoản đang bị tạm khóa. Vui lòng liên hệ quản trị viên"),
         CANNOT_LOCK_SELF(HttpStatus.BAD_REQUEST, "CANNOT_LOCK_SELF",
                         "Quản trị viên không thể tự khóa tài khoản của chính mình");

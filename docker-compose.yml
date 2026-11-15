@@ -54,6 +54,10 @@ services:
         condition: service_healthy
     environment:
       PORT: 4000
+      JWT_SECRET: ${JWT_SECRET}
+      DDL_AUTO: ${DDL_AUTO:-validate}
+      UPLOAD_DIR: /app/uploads
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173}
       DB_URL: jdbc:mysql://mysql:3306/${DB_NAME:-phongkham_chuctu}?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
       DB_USERNAME: root
       DB_PASSWORD: ${DB_ROOT_PASSWORD:-root}
@@ -70,6 +74,8 @@ services:
       TZ: Asia/Ho_Chi_Minh
     ports:
       - "${BACKEND_PORT:-4000}:4000"
+    volumes:
+      - chuctupk_uploads:/app/uploads
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:4000/api/v1/health || exit 1"]
       interval: 10s
@@ -108,6 +114,8 @@ services:
 volumes:
   chuctupk_mysql_data:
     name: chuctupk_mysql_data
+  chuctupk_uploads:
+    name: chuctupk_uploads
 
 networks:
   chuctupk-network:

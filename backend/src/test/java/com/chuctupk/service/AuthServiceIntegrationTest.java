@@ -112,10 +112,6 @@ class AuthServiceIntegrationTest {
         assertFalse(patients.isEmpty(), "Hồ sơ bệnh nhân phải được tự động liên kết với SĐT");
         assertNotNull(patients.get(0).getPatientCode());
 
-        // Đăng nhập nhanh bằng SĐT (máy quen)
-        AuthResponse quickResponse = authService.quickLoginByPhone(TEST_PHONE);
-        assertNotNull(quickResponse.getAccessToken());
-
         // Đăng nhập máy mới qua OTP
         // Xóa dấu vết OTP cũ để không vướng quy tắc chờ 60 giây giữa 2 lần gửi mã
         otpVerificationRepository.deleteAll();

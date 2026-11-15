@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -35,6 +36,7 @@ import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -106,6 +108,7 @@ class AppointmentControllerTest {
     }
 
     @Test
+    @WithMockUser
     @DisplayName("POST /api/v1/appointments -> 201 Created kèm header Location")
     void testCreateAppointment_CreatedWithLocationHeader() throws Exception {
         AppointmentCreateRequest req = AppointmentCreateRequest.builder()
@@ -128,6 +131,7 @@ class AppointmentControllerTest {
         when(appointmentService.createAppointment(any())).thenReturn(res);
 
         mockMvc.perform(post("/api/v1/appointments")
+                        .with(user("patient").roles("PATIENT"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated())
@@ -137,6 +141,7 @@ class AppointmentControllerTest {
     }
 
     @Test
+    @WithMockUser
     @DisplayName("POST /api/v1/appointments -> 400 Bad Request khi sai số điện thoại")
     void testCreateAppointment_InvalidPhone() throws Exception {
         AppointmentCreateRequest req = AppointmentCreateRequest.builder()
@@ -149,11 +154,30 @@ class AppointmentControllerTest {
                 .build();
 
         mockMvc.perform(post("/api/v1/appointments")
+                        .with(user("patient").roles("PATIENT"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.fields.phone", notNullValue()));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/appointments -> 401 Unauthorized khi không có token")
+    void testCreateAppointment_UnauthorizedWithoutToken() throws Exception {
+        AppointmentCreateRequest req = AppointmentCreateRequest.builder()
+                .fullName("Lê Văn T")
+                .phone("0987654321")
+                .yearOfBirth(1965)
+                .gender(Gender.MALE)
+                .appointmentDate(LocalDate.now().plusDays(2))
+                .timeSlotId(1L)
+                .build();
+
+        mockMvc.perform(post("/api/v1/appointments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

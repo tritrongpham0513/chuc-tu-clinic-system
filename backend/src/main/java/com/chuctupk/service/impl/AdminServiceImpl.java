@@ -50,10 +50,17 @@ public class AdminServiceImpl implements AdminService {
     @Lazy
     private final StaffService staffService;
 
-    private static final Path UPLOADS_DIR = Paths.get("uploads").toAbsolutePath().normalize();
+    @org.springframework.beans.factory.annotation.Value("${app.upload.dir:${UPLOAD_DIR:uploads}}")
+    private String uploadDirProperty;
+
     private static final Set<String> ALLOWED_MIME = Set.of("image/jpeg", "image/png", "image/webp", "image/gif");
     private static final Pattern NON_LATIN = Pattern.compile("[^\\w-]");
     private static final Pattern WHITESPACE = Pattern.compile("[\\s]");
+
+    private Path getUploadsDir() {
+        return Paths.get(uploadDirProperty != null && !uploadDirProperty.isBlank() ? uploadDirProperty : "uploads")
+                .toAbsolutePath().normalize();
+    }
 
     // =========================================================================
     // 1. DASHBOARD TỔNG QUAN
@@ -592,8 +599,40 @@ public class AdminServiceImpl implements AdminService {
     }
 
     // =========================================================================
-    // 4. LƯU TRỮ VÀ TẢI ẢNH MEDIA (≤ 3MB, WHITELIST MIME)
+    // 4. LƯU TRỮ VÀ TẢI ẢNH MEDIA (≤ 3MB, WHITELIST MIME, MAGIC BYTES CHECK)
     // =========================================================================
+
+    /**
+     * Nhận diện định dạng ảnh dựa trên magic bytes ở đầu file.
+     * JPEG: FF D8 FF
+     * PNG:  89 50 4E 47
+     * GIF:  47 49 46 38 ("GIF8")
+     * WEBP: 52 49 46 46 ... 57 45 42 50 ("RIFF" ... "WEBP")
+     */
+    private static String detectImageFormat(byte[] data) {
+        if (data == null || data.length < 4) {
+            return null;
+        }
+        // JPEG: FF D8 FF
+        if ((data[0] & 0xFF) == 0xFF && (data[1] & 0xFF) == 0xD8 && (data[2] & 0xFF) == 0xFF) {
+            return "image/jpeg";
+        }
+        // PNG: 89 50 4E 47
+        if ((data[0] & 0xFF) == 0x89 && data[1] == 0x50 && data[2] == 0x4E && data[3] == 0x47) {
+            return "image/png";
+        }
+        // GIF: 47 49 46 38 ('G' 'I' 'F' '8')
+        if (data[0] == 'G' && data[1] == 'I' && data[2] == 'F' && data[3] == '8') {
+            return "image/gif";
+        }
+        // WEBP: RIFF (bytes 0-3) + file size (bytes 4-7) + WEBP (bytes 8-11)
+        if (data.length >= 12
+                && data[0] == 0x52 && data[1] == 0x49 && data[2] == 0x46 && data[3] == 0x46
+                && data[8] == 0x57 && data[9] == 0x45 && data[10] == 0x42 && data[11] == 0x50) {
+            return "image/webp";
+        }
+        return null;
+    }
 
     @Override
     public Map<String, Object> saveUpload(String contentType, byte[] data) {
@@ -605,12 +644,12 @@ public class AdminServiceImpl implements AdminService {
             throw AppException.badRequest("Ảnh quá lớn. Vui lòng chọn ảnh dưới 3 MB");
         }
 
-        String mime = contentType != null ? contentType.toLowerCase().split(";")[0].trim() : "image/jpeg";
-        if (!ALLOWED_MIME.contains(mime)) {
-            throw AppException.badRequest("Định dạng ảnh không được hỗ trợ. Chỉ chấp nhận JPG, PNG, WEBP hoặc GIF");
+        String detectedMime = detectImageFormat(data);
+        if (detectedMime == null) {
+            throw AppException.badRequest("Định dạng ảnh không hợp lệ");
         }
 
-        String ext = switch (mime) {
+        String ext = switch (detectedMime) {
             case "image/png" -> "png";
             case "image/webp" -> "webp";
             case "image/gif" -> "gif";
@@ -618,13 +657,14 @@ public class AdminServiceImpl implements AdminService {
         };
 
         String filename = UUID.randomUUID().toString() + "." + ext;
+        Path uploadsDir = getUploadsDir();
 
         try {
-            if (!Files.exists(UPLOADS_DIR)) {
-                Files.createDirectories(UPLOADS_DIR);
+            if (!Files.exists(uploadsDir)) {
+                Files.createDirectories(uploadsDir);
             }
-            Path targetFile = UPLOADS_DIR.resolve(filename).normalize();
-            if (!targetFile.startsWith(UPLOADS_DIR)) {
+            Path targetFile = uploadsDir.resolve(filename).normalize();
+            if (!targetFile.startsWith(uploadsDir)) {
                 throw AppException.badRequest("Đường dẫn tệp không hợp lệ");
             }
             Files.write(targetFile, data, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
@@ -638,8 +678,9 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public byte[] getUpload(String id) {
-        Path target = UPLOADS_DIR.resolve(id).normalize();
-        if (!target.startsWith(UPLOADS_DIR) || !Files.exists(target)) {
+        Path uploadsDir = getUploadsDir();
+        Path target = uploadsDir.resolve(id).normalize();
+        if (!target.startsWith(uploadsDir) || !Files.exists(target)) {
             throw AppException.notFound("Không tìm thấy tệp ảnh");
         }
 

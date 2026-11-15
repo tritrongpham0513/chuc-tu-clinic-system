@@ -115,7 +115,6 @@ class V1AuthControllerSliceTest {
         @Override public AuthResponse register(RegisterRequest request) { return null; }
         @Override public AuthResponse login(LoginRequest request) { return null; }
         @Override public AuthResponse loginWithOtp(LoginOtpRequest request) { return null; }
-        @Override public AuthResponse quickLoginByPhone(String phone) { return null; }
         @Override public UserResponse getCurrentUser(User currentUser) { return null; }
         @Override public UserResponse updateMyProfile(User currentUser, UpdateUserProfileRequest request) { return null; }
         @Override public void changePassword(User currentUser, ChangePasswordRequest request) {}

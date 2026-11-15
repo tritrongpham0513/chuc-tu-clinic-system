@@ -22,10 +22,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PatientProfileServiceImpl implements PatientProfileService {
 
-    private static final int MAX_PROFILES = 10;
     private final PatientRepository patientRepository;
     private final UserRepository userRepository;
     private final AppointmentRepository appointmentRepository;
+    private final com.chuctupk.service.ClinicSettingService clinicSettingService;
 
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -54,8 +54,9 @@ public class PatientProfileServiceImpl implements PatientProfileService {
         User user = getCurrentUser();
 
         long count = patientRepository.countByUserIdAndIsActiveTrue(user.getId());
-        if (count >= MAX_PROFILES) {
-            throw AppException.unprocessable("Tài khoản đã có tối đa " + MAX_PROFILES + " hồ sơ");
+        int maxProfiles = clinicSettingService.getMaxProfiles();
+        if (count >= maxProfiles) {
+            throw AppException.unprocessable("Tài khoản đã có tối đa " + maxProfiles + " hồ sơ");
         }
 
         // Normalize phone

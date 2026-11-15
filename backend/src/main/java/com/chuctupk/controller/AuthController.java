@@ -193,13 +193,6 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.ok(verified, "Xác thực mã OTP thành công"));
     }
 
-    @PostMapping("/quick-login")
-    @Operation(summary = "Đăng nhập nhanh trên thiết bị đã ghi nhớ bằng số điện thoại")
-    public ResponseEntity<ApiResponse<AuthResponse>> quickLoginLegacy(@Valid @RequestBody SendOtpRequest request) {
-        AuthResponse response = authService.quickLoginByPhone(request.getPhone());
-        return ResponseEntity.ok(ApiResponse.ok(response, "Đăng nhập thành công"));
-    }
-
     @PutMapping("/me")
     @Operation(summary = "Cập nhật thông tin tài khoản người dùng")
     public ResponseEntity<ApiResponse<UserResponse>> updateProfile(

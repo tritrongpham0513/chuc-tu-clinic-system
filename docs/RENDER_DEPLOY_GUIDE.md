@@ -70,7 +70,7 @@ Bạn có thể chọn **TiDB Cloud** (khuyên dùng nhất vì miễn phí tr�
    | `ADMIN_USERNAME`| `admin` | Tên đăng nhập Admin |
    | `ADMIN_PASSWORD`| `<Mat_khau_admin_tu_chon>` | Mật khẩu Admin khởi tạo |
    | `ADMIN_PHONE`   | `0912345678` | Số điện thoại Admin |
-   | `JWT_SECRET`    | `ChuctuClinicSecretKeyForJwtToken2026MustBeAtLeast256BitsLong` | Khóa bí mật ký token |
+   | `JWT_SECRET`    | `404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970` | Khóa bí mật ký JWT bắt buộc (chuỗi Base64 tối thiểu 32 bytes / 256-bit) |
    | `SMS_ENABLED`   | `false` | Tắt SMS thật trong môi trường demo |
 7. Nhấn **Create Web Service**.
 8. Đợi khoảng 2–3 phút để Render build Dockerfile. Khi Render báo `Live`, sao chép địa chỉ URL của backend (ví dụ: `https://chuctu-backend.onrender.com`).

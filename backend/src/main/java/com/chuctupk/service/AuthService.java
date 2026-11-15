@@ -38,7 +38,6 @@ public interface AuthService {
     AuthResponse register(RegisterRequest request);
     AuthResponse login(LoginRequest request);
     AuthResponse loginWithOtp(LoginOtpRequest request);
-    AuthResponse quickLoginByPhone(String phone);
     UserResponse getCurrentUser(User currentUser);
     UserResponse updateMyProfile(User currentUser, UpdateUserProfileRequest request);
     void changePassword(User currentUser, ChangePasswordRequest request);
