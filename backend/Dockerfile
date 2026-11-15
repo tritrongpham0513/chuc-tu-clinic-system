@@ -17,7 +17,7 @@ COPY src ./src
 RUN if [ ! -f src/main/resources/application.yml ]; then cp src/main/resources/application.example.yml src/main/resources/application.yml; fi
 
 # Đóng gói file JAR
-RUN mvn clean package -DskipTests -B
+RUN mvn clean package -DskipTests -Dmaven.test.skip=true -B
 
 # -------------------------------------------------------------
 # Stage 2: Môi trường chạy tối giản JRE 17

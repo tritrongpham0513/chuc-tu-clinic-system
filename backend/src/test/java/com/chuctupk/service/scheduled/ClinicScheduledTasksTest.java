@@ -7,8 +7,10 @@ import com.chuctupk.entity.enums.AppointmentStatus;
 import com.chuctupk.repository.AppointmentRepository;
 import com.chuctupk.repository.OtpVerificationRepository;
 import com.chuctupk.repository.RefreshTokenRepository;
+import com.chuctupk.service.ClinicSettingService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +22,7 @@ import java.util.*;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 class ClinicScheduledTasksTest {
 
@@ -29,7 +32,9 @@ class ClinicScheduledTasksTest {
 
         @Override
         public List<Appointment> findByAppointmentDateAndStatus(LocalDate appointmentDate, AppointmentStatus status) {
-            return foundAppointments;
+            return foundAppointments.stream()
+                    .filter(a -> a.getStatus() == status && appointmentDate.equals(a.getAppointmentDate()))
+                    .toList();
         }
 
         @Override
@@ -192,9 +197,11 @@ class ClinicScheduledTasksTest {
         StubAppointmentRepository appointmentRepository = new StubAppointmentRepository();
         StubRefreshTokenRepository refreshTokenRepository = new StubRefreshTokenRepository();
         StubOtpVerificationRepository otpVerificationRepository = new StubOtpVerificationRepository();
+        ClinicSettingService clinicSettingService = Mockito.mock(ClinicSettingService.class);
+        when(clinicSettingService.getNoShowCancelAt()).thenReturn(LocalTime.of(17, 0));
 
         ClinicScheduledTasks tasks = new ClinicScheduledTasks(
-                appointmentRepository, refreshTokenRepository, otpVerificationRepository, fixedClock
+                appointmentRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, fixedClock
         );
 
         Appointment appt1 = Appointment.builder()
@@ -218,11 +225,11 @@ class ClinicScheduledTasksTest {
         assertThat(cancelledCount).isEqualTo(2);
         assertThat(appointmentRepository.savedAppointments).hasSize(2);
         assertThat(appointmentRepository.savedAppointments.get(0).getStatus()).isEqualTo(AppointmentStatus.CANCELLED);
-        assertThat(appointmentRepository.savedAppointments.get(0).getCancelReason()).isEqualTo(ClinicScheduledTasks.AUTO_CANCEL_REASON);
+        assertThat(appointmentRepository.savedAppointments.get(0).getCancelReason()).contains("Không đến khám");
         assertThat(appointmentRepository.savedAppointments.get(0).getCancelledAt()).isNotNull();
 
         assertThat(appointmentRepository.savedAppointments.get(1).getStatus()).isEqualTo(AppointmentStatus.CANCELLED);
-        assertThat(appointmentRepository.savedAppointments.get(1).getCancelReason()).isEqualTo(ClinicScheduledTasks.AUTO_CANCEL_REASON);
+        assertThat(appointmentRepository.savedAppointments.get(1).getCancelReason()).contains("Không đến khám");
     }
 
     @Test
@@ -236,9 +243,11 @@ class ClinicScheduledTasksTest {
         StubAppointmentRepository appointmentRepository = new StubAppointmentRepository();
         StubRefreshTokenRepository refreshTokenRepository = new StubRefreshTokenRepository();
         StubOtpVerificationRepository otpVerificationRepository = new StubOtpVerificationRepository();
+        ClinicSettingService clinicSettingService = Mockito.mock(ClinicSettingService.class);
+        when(clinicSettingService.getNoShowCancelAt()).thenReturn(LocalTime.of(17, 0));
 
         ClinicScheduledTasks tasks = new ClinicScheduledTasks(
-                appointmentRepository, refreshTokenRepository, otpVerificationRepository, fixedClock
+                appointmentRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, fixedClock
         );
 
         int count = tasks.autoCancelNoShows();
@@ -254,9 +263,10 @@ class ClinicScheduledTasksTest {
         StubAppointmentRepository appointmentRepository = new StubAppointmentRepository();
         StubRefreshTokenRepository refreshTokenRepository = new StubRefreshTokenRepository();
         StubOtpVerificationRepository otpVerificationRepository = new StubOtpVerificationRepository();
+        ClinicSettingService clinicSettingService = Mockito.mock(ClinicSettingService.class);
 
         ClinicScheduledTasks tasks = new ClinicScheduledTasks(
-                appointmentRepository, refreshTokenRepository, otpVerificationRepository, systemClock
+                appointmentRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, systemClock
         );
 
         tasks.cleanupExpiredTokensAndOtps();

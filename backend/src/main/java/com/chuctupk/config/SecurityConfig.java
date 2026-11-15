@@ -75,8 +75,12 @@ public class SecurityConfig {
                                 "/api/v1/services/**",
                                 "/api/v1/doctors/**",
                                 "/api/v1/time-slots/**",
+                                "/api/v1/booking/slots",
                                 "/api/v1/me/availability",
-                                "/api/v1/staff/queue"
+                                "/api/v1/queue/**",
+                                "/api/v1/staff/queue",
+                                "/api/v1/articles",
+                                "/api/v1/articles/**"
                         ).permitAll()
 
                         // 3. Công khai: tra cứu và hủy lịch hẹn trực tuyến của người bệnh (yêu cầu header X-Phone)

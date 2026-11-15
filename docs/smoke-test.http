@@ -1,12 +1,13 @@
 ### =========================================================================
 ### PHÒNG KHÁM CHÚC TỪ - SMOKE TEST SUITE (API V1)
-### Cổng mặc định: http://localhost:4000
+### Cổng mặc định: http://localhost:8080 (hoặc http://localhost:4000 với Docker)
 ### Tài khoản mẫu:
-###   - Admin: admin@chuctu.vn / ChucTu@2026
-###   - Lễ tân: letan@chuctu.vn / ChucTu@2026
+###   - Admin: admin@chuctu.vn / MatKhauAdmin@2026
+###   - Lễ tân: letan@chuctu.vn / MatKhauAdmin@2026
+###   - Bác sĩ: bsnam@chuctu.vn / MatKhauAdmin@2026
 ### =========================================================================
 
-@baseUrl = http://localhost:4000
+@baseUrl = http://localhost:8080
 @adminToken = {{loginAdmin.response.body.data.token}}
 @staffToken = {{loginStaff.response.body.data.token}}
 @patientToken = {{verifyPatientOtp.response.body.data.token}}
@@ -15,10 +16,7 @@
 ### 1. HEALTH & METADATA (CÔNG KHAI)
 ### -------------------------------------------------------------------------
 
-### 1.1 Kiểm tra trạng thái máy chủ (Health Check)
-GET {{baseUrl}}/api/v1/health
-
-### 1.2 Lấy thông tin cài đặt phòng khám (Meta - 14 trường thông tin)
+### 1.1 Lấy thông tin cài đặt phòng khám (Meta - 14 trường thông tin)
 GET {{baseUrl}}/api/v1/meta
 
 
@@ -28,7 +26,7 @@ GET {{baseUrl}}/api/v1/meta
 
 ### 2.1 Yêu cầu gửi mã OTP đăng nhập bệnh nhân
 # @name requestPatientOtp
-POST {{baseUrl}}/api/v1/auth/otp/send
+POST {{baseUrl}}/api/v1/auth/login
 Content-Type: application/json
 
 {
@@ -37,7 +35,7 @@ Content-Type: application/json
 
 ### 2.2 Xác nhận OTP đăng nhập bệnh nhân (Dev code: 123456 trong môi trường dev)
 # @name verifyPatientOtp
-POST {{baseUrl}}/api/v1/auth/login
+POST {{baseUrl}}/api/v1/auth/login/verify
 Content-Type: application/json
 
 {
@@ -45,24 +43,24 @@ Content-Type: application/json
   "code": "123456"
 }
 
-### 2.3 Đăng nhập Quản trị viên (Email + Mật khẩu)
+### 2.3 Đăng nhập Quản trị viên (Username/Email + Mật khẩu)
 # @name loginAdmin
 POST {{baseUrl}}/api/v1/auth/staff/login
 Content-Type: application/json
 
 {
-  "username": "admin@chuctu.vn",
-  "password": "ChucTu@2026"
+  "identifier": "admin@chuctu.vn",
+  "password": "MatKhauAdmin@2026"
 }
 
-### 2.4 Đăng nhập Lễ tân (Email + Mật khẩu)
+### 2.4 Đăng nhập Lễ tân (Username/Email + Mật khẩu)
 # @name loginStaff
 POST {{baseUrl}}/api/v1/auth/staff/login
 Content-Type: application/json
 
 {
-  "username": "letan@chuctu.vn",
-  "password": "ChucTu@2026"
+  "identifier": "letan@chuctu.vn",
+  "password": "MatKhauAdmin@2026"
 }
 
 ### 2.5 Lấy thông tin người dùng hiện tại
@@ -74,12 +72,12 @@ Authorization: Bearer {{adminToken}}
 ### 3. CỔNG BỆNH NHÂN (ME PORTAL)
 ### -------------------------------------------------------------------------
 
-### 3.1 Xem danh sách hồ sơ người thân (tối đa 10)
-GET {{baseUrl}}/api/v1/me/profiles
+### 3.1 Xem danh sách hồ sơ người thân (tối đa theo cấu hình max_profiles)
+GET {{baseUrl}}/api/v1/me/patients
 Authorization: Bearer {{patientToken}}
 
-### 3.2 Lấy khung giờ khám còn trống ngày mai
-GET {{baseUrl}}/api/v1/me/availability?date=2026-11-15
+### 3.2 Lấy khung giờ khám còn trống
+GET {{baseUrl}}/api/v1/me/availability?date=2026-11-17
 Authorization: Bearer {{patientToken}}
 
 ### 3.3 Đặt lịch khám bệnh nhân
@@ -90,11 +88,9 @@ Content-Type: application/json
 
 {
   "patientId": 1,
-  "serviceId": 1,
-  "appointmentDate": "2026-11-15",
-  "timeSlotId": 1,
-  "symptoms": "Đau nhức khớp gối khi thời tiết trở lạnh",
-  "idempotencyKey": "idem-smoke-001"
+  "serviceType": "CHAM_CUU",
+  "slotDate": "2026-11-17",
+  "slotStart": "08:00"
 }
 
 ### 3.4 Lấy lịch sử phiếu khám của bệnh nhân
@@ -106,16 +102,16 @@ Authorization: Bearer {{patientToken}}
 ### 4. PHÂN HỆ NỘI BỘ (STAFF & LỄ TÂN)
 ### -------------------------------------------------------------------------
 
-### 4.1 Lấy lịch làm việc trong ngày hôm nay
-GET {{baseUrl}}/api/v1/staff/schedule
+### 4.1 Lấy lịch hẹn trong ngày
+GET {{baseUrl}}/api/v1/staff/appointments?date=2026-11-17
 Authorization: Bearer {{staffToken}}
 
-### 4.2 Xem trạng thái hàng đợi và 5 ghế khám
+### 4.2 Xem trạng thái hàng đợi và ghế khám (bảo mật dữ liệu cá nhân)
 GET {{baseUrl}}/api/v1/staff/queue
 Authorization: Bearer {{staffToken}}
 
-### 4.3 Tra cứu lịch hẹn bằng mã đặt lịch hoặc số điện thoại
-GET {{baseUrl}}/api/v1/staff/appointments/lookup?q=0987654321
+### 4.3 Tra cứu lịch hẹn bằng mã đặt lịch
+GET {{baseUrl}}/api/v1/staff/appointments/lookup?code=PKCT-20261117-0001
 Authorization: Bearer {{staffToken}}
 
 ### 4.4 Danh sách hồ sơ bệnh nhân nội bộ
@@ -151,7 +147,7 @@ Content-Type: application/json
   "content": "<p>Người cao tuổi cần giữ ấm bàn chân bằng nước gừng ấm mỗi tối...</p>",
   "category": "y-hoc-co-truyen",
   "status": "PUBLISHED",
-  "coverImage": "/uploads/khop.jpg",
+  "coverImage": "/api/v1/uploads/sample.jpg",
   "pinned": false
 }
 
@@ -165,4 +161,3 @@ GET {{baseUrl}}/api/v1/posts?page=1&limit=9&featured=1
 
 ### 6.2 Đọc chi tiết bài viết theo slug
 GET {{baseUrl}}/api/v1/posts/cam-nang-cham-soc-khop-cho-nguoi-cao-tuoi
-

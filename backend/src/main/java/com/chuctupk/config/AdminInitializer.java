@@ -55,7 +55,7 @@ public class AdminInitializer implements ApplicationRunner {
                 .fullName(fullName)
                 .phone(phone.trim())
                 .role(Role.ADMIN)
-                .mustChangePassword(false)
+                .mustChangePassword(true)
                 .build());
 
         // Tuyệt đối không log mật khẩu

@@ -60,6 +60,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final SequenceGeneratorService sequenceGeneratorService;
     private final com.chuctupk.service.AppointmentService appointmentService;
+    private final com.chuctupk.service.LoginAttemptService loginAttemptService;
 
     // Cache tạm cho đăng ký bệnh nhân trước khi xác thực mã OTP
     public record PendingRegistration(
@@ -119,25 +120,24 @@ public class AuthServiceImpl implements AuthService {
             } else {
                 user.setLockedUntil(null);
                 user.setFailedLoginCount(0);
-                userRepository.save(user);
+                loginAttemptService.resetFailedLogin(user.getId());
             }
         }
     }
 
     private void handleFailedLogin(User user) {
         int count = (user.getFailedLoginCount() != null ? user.getFailedLoginCount() : 0) + 1;
+        LocalDateTime lockedUntil = count >= 5 ? LocalDateTime.now().plusMinutes(15) : null;
         user.setFailedLoginCount(count);
-        if (count >= 5) {
-            user.setLockedUntil(LocalDateTime.now().plusMinutes(15));
-        }
-        userRepository.save(user);
+        user.setLockedUntil(lockedUntil);
+        loginAttemptService.recordFailedLogin(user.getId(), count, lockedUntil);
     }
 
     private void handleSuccessfulLogin(User user) {
         user.setFailedLoginCount(0);
         user.setLockedUntil(null);
         user.setLastLoginAt(LocalDateTime.now());
-        userRepository.save(user);
+        loginAttemptService.resetFailedLogin(user.getId());
     }
 
     // =========================================================================

@@ -47,9 +47,9 @@ chuc-tu-clinic-system/
 
 | Thành phần | Công nghệ | Cổng mặc định | Vai trò |
 | :--- | :--- | :--- | :--- |
-| **Frontend** | React 18, Vite, Nginx | `3000` | Giao diện người bệnh & Bàn làm việc nội bộ |
-| **Backend** | Spring Boot 4, Java 17 | `4000` | REST API `/api/v1/**`, Spring Security JWT, Jackson 3 |
-| **Database** | MySQL 8.0 InnoDB | `3307` (host) / `3306` (in-net) | 27 bảng dữ liệu, Charset `utf8mb4_unicode_ci` |
+| **Frontend** | React 18, Vite, Nginx | `5173` (dev) / `3000` (prod container) | Giao diện người bệnh & Bàn làm việc nội bộ |
+| **Backend** | Spring Boot 4, Java 17 | `8080` (dev) / `4000` (container) | REST API `/api/v1/**`, Spring Security JWT, Jackson 3 |
+| **Database** | MySQL 8.0 InnoDB | `3307` (host ngoài) / `3306` (nội bộ container) | 27 bảng dữ liệu, Charset `utf8mb4_unicode_ci` |
 
 ---
 
@@ -84,11 +84,11 @@ Khi thấy cả 3 container `chuctupk-mysql`, `chuctupk-backend`, `chuctupk-fron
 
 | Phân hệ | Đường dẫn (URL) | Mô tả |
 | :--- | :--- | :--- |
-| 🧑‍⚕️ **Cổng Người bệnh** | [http://localhost:3000](http://localhost:3000) | Đặt lịch hẹn, tra cứu phiếu khám, xem cẩm nang sức khỏe |
+| 🧑‍⚕️ **Cổng Người bệnh** | [http://localhost:3000](http://localhost:3000) (hoặc :5173 ở dev) | Đặt lịch hẹn, tra cứu phiếu khám, xem cẩm nang sức khỏe |
 | 🏥 **Bàn làm việc Nội bộ** | [http://localhost:3000/noi-bo/](http://localhost:3000/noi-bo/) | Dành cho Bác sĩ, Tiếp tân, Quản trị viên |
-| 📋 **Tài liệu Swagger API** | [http://localhost:4000/swagger-ui.html](http://localhost:4000/swagger-ui.html) | Danh mục chi tiết 45+ REST endpoints |
-| 🩺 **Kiểm tra trạng thái API**| [http://localhost:4000/api/v1/health](http://localhost:4000/api/v1/health) | Trả về JSON trạng thái hệ thống |
-| 🗄️ **Cơ sở dữ liệu MySQL** | Cổng `3307` | Host: `localhost`, User: `root`, Password: `root`, DB: `phongkham_chuctu` |
+| 📋 **Tài liệu Swagger API** | [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html) | Danh mục chi tiết các REST endpoints v1 chuẩn (chỉ bật ở dev/test) |
+| 🩺 **Kiểm tra trạng thái API**| [http://localhost:8080/api/v1/meta](http://localhost:8080/api/v1/meta) | Trả về JSON trạng thái phòng khám |
+| 🗄️ **Cơ sở dữ liệu MySQL** | Cổng `3307` (ngoài) / `3306` (trong) | Host: `localhost`, User: `root`, Password: `root`, DB: `phongkham_chuctu` |
 
 ---
 
@@ -126,14 +126,16 @@ docker compose down -v
    ```
 2. Chạy lần lượt các script trong thư mục `database/` hoặc `docker/mysql/init/` từ `01` đến `08`.
 
-### Bước 2: Chạy Backend (Port 4000)
-1. Tạo file `backend/.env` từ file mẫu:
+### Bước 2: Chạy Backend (Port 8080)
+1. Tạo file `backend/.env` từ file mẫu `.env.example`:
    ```powershell
-   # Điền mật khẩu MySQL của máy bạn vào DB_PASSWORD
-   PORT=4000
+   PORT=8080
    DB_URL=jdbc:mysql://localhost:3306/phongkham_chuctu?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true
    DB_USERNAME=root
    DB_PASSWORD=your_password
+   # Bắt buộc: Secret ký JWT (tối thiểu 32 bytes, Base64). Tạo bằng: openssl rand -base64 32
+   JWT_SECRET=your_base64_jwt_secret_here_32bytes_or_more
+   SMS_ENABLED=false
    ```
 2. Khởi động Backend:
    ```powershell
@@ -148,7 +150,7 @@ cd frontend
 npm install
 npm run dev
 ```
-Trình duyệt mở tại: `http://localhost:5173` (Vite Proxy sẽ tự động chuyển các request `/api/v1/**` sang backend cổng 4000).
+Trình duyệt mở tại: `http://localhost:5173` (Vite Proxy sẽ tự động chuyển các request `/api/v1/**` sang backend cổng 8080).
 
 ---
 

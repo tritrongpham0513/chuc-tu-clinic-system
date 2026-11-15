@@ -150,7 +150,7 @@ public class StaffServiceImpl implements StaffService {
 
         for (TimeSlot slot : slots) {
             long booked = appointmentSeatRepository.countByAppointmentDateAndTimeSlotId(queryDate, slot.getId());
-            int capacity = clinicSettingService.getSlotCapacity();
+            int capacity = slot.getMaxPatients() != null && slot.getMaxPatients() > 0 ? slot.getMaxPatients() : 6;
             int remaining = Math.max(0, capacity - (int) booked);
 
             boolean isPast = queryDate.isBefore(today) || (queryDate.equals(today) && slot.getEndTime().isBefore(nowTime));
@@ -196,9 +196,8 @@ public class StaffServiceImpl implements StaffService {
         if (slotDate.isBefore(today)) {
             throw AppException.badRequest("Không thể đặt lịch cho ngày trong quá khứ");
         }
-        int counterMaxDays = clinicSettingService.getCounterMaxDays();
-        if (slotDate.isAfter(today.plusDays(counterMaxDays))) {
-            throw AppException.badRequest("Tiếp tân chỉ được phép đặt lịch trước tối đa " + counterMaxDays + " ngày");
+        if (slotDate.isAfter(today.plusDays(7))) {
+            throw AppException.badRequest("Tiếp tân chỉ được phép đặt lịch trước tối đa 7 ngày");
         }
 
         boolean hasExisting = appointmentRepository.existsByPatientIdAndAppointmentDateAndStatusNot(
@@ -216,20 +215,13 @@ public class StaffServiceImpl implements StaffService {
                 .findFirst()
                 .orElseThrow(() -> AppException.notFound("Không tìm thấy khung giờ khám " + reqStart));
 
-        // Kiểm tra giờ tiếp nhận
-        LocalTime receptionOpen = clinicSettingService.getReceptionOpen();
-        LocalTime receptionClose = clinicSettingService.getReceptionClose();
-        if (chosenSlot.getStartTime().isBefore(receptionOpen) || chosenSlot.getStartTime().isAfter(receptionClose)) {
-            throw AppException.badRequest("Phòng khám chỉ tiếp nhận trong khoảng từ " + receptionOpen + " đến " + receptionClose);
-        }
-
         if (slotDate.isEqual(today) && !Boolean.TRUE.equals(request.checkInNow())
                 && chosenSlot.getEndTime() != null && chosenSlot.getEndTime().isBefore(LocalTime.now(clock))) {
             throw AppException.badRequest("Khung giờ này đã trôi qua. Vui lòng chọn khung giờ hiện tại hoặc kế tiếp");
         }
 
-        // Allocate seat
-        int capacity = clinicSettingService.getSlotCapacity();
+        // Allocate seat (1..6)
+        int capacity = chosenSlot.getMaxPatients() != null && chosenSlot.getMaxPatients() > 0 ? chosenSlot.getMaxPatients() : 6;
         int maxRetries = 6;
         AppointmentSeat allocatedSeat = null;
         Appointment savedAppointment = null;
@@ -350,7 +342,7 @@ public class StaffServiceImpl implements StaffService {
                 .orElseThrow(() -> AppException.notFound("Không tìm thấy khung giờ khám"));
 
         // Cấp ghế mới
-        int capacity = clinicSettingService.getSlotCapacity();
+        int capacity = newSlot.getMaxPatients() != null && newSlot.getMaxPatients() > 0 ? newSlot.getMaxPatients() : 6;
         Appointment savedNewAppt = null;
 
         for (int attempt = 0; attempt < 6; attempt++) {

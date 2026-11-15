@@ -1,14 +1,17 @@
 package com.chuctupk.controller;
 
+import com.chuctupk.config.JwtTokenProvider;
 import com.chuctupk.dto.request.AppointmentCancelRequest;
 import com.chuctupk.dto.request.AppointmentCreateRequest;
 import com.chuctupk.dto.response.AppointmentResponse;
 import com.chuctupk.dto.response.ClinicServiceResponse;
 import com.chuctupk.dto.response.DoctorResponse;
 import com.chuctupk.dto.response.TimeSlotResponse;
+import com.chuctupk.entity.User;
 import com.chuctupk.entity.enums.AppointmentStatus;
 import com.chuctupk.entity.enums.Gender;
 import com.chuctupk.entity.enums.Period;
+import com.chuctupk.entity.enums.Role;
 import com.chuctupk.exception.AppException;
 import com.chuctupk.service.AppointmentService;
 import com.chuctupk.service.ClinicServiceService;
@@ -22,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -36,7 +38,6 @@ import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -48,7 +49,14 @@ class AppointmentControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private JwtTokenProvider tokenProvider;
+
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+
+    private String getValidToken() {
+        return tokenProvider.generateToken(User.builder().id(2L).username("letan").role(Role.STAFF).build());
+    }
 
     @MockitoBean
     private ClinicServiceService clinicServiceService;
@@ -108,7 +116,6 @@ class AppointmentControllerTest {
     }
 
     @Test
-    @WithMockUser
     @DisplayName("POST /api/v1/appointments -> 201 Created kèm header Location")
     void testCreateAppointment_CreatedWithLocationHeader() throws Exception {
         AppointmentCreateRequest req = AppointmentCreateRequest.builder()
@@ -131,7 +138,7 @@ class AppointmentControllerTest {
         when(appointmentService.createAppointment(any())).thenReturn(res);
 
         mockMvc.perform(post("/api/v1/appointments")
-                        .with(user("patient").roles("PATIENT"))
+                        .header("Authorization", "Bearer " + getValidToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated())
@@ -141,7 +148,6 @@ class AppointmentControllerTest {
     }
 
     @Test
-    @WithMockUser
     @DisplayName("POST /api/v1/appointments -> 400 Bad Request khi sai số điện thoại")
     void testCreateAppointment_InvalidPhone() throws Exception {
         AppointmentCreateRequest req = AppointmentCreateRequest.builder()
@@ -154,7 +160,7 @@ class AppointmentControllerTest {
                 .build();
 
         mockMvc.perform(post("/api/v1/appointments")
-                        .with(user("patient").roles("PATIENT"))
+                        .header("Authorization", "Bearer " + getValidToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isBadRequest())
