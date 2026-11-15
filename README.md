@@ -38,8 +38,8 @@ Dành riêng cho đối tượng người bệnh lớn tuổi (50–80 tuổi) m
 chuc-tu-clinic-system/
 ├── frontend/           # React 18 (Vite) + Tailwind CSS + Nginx Reverse Proxy
 ├── backend/            # Java 17 + Spring Boot 4 (Clean Layered Architecture)
-├── database/           # Bộ script MySQL 8.0 migrations (001 - 006)
-├── docker/mysql/init/  # 8 file SQL tự động nạp khi container khởi tạo lần đầu
+├── database/           # Bộ script MySQL 8.0 migrations (001 - 008)
+├── docker/mysql/init/  # 10 file SQL tự động nạp khi container khởi tạo lần đầu
 ├── docs/               # OpenAPI spec (openapi-v1.yaml), smoke-test.http, changelog
 ├── docker-compose.yml  # File điều phối chạy 3 container (MySQL, Backend, Frontend)
 └── README.md           # Tài liệu hướng dẫn sử dụng (File này)
@@ -124,7 +124,8 @@ docker compose down -v
    ```sql
    CREATE DATABASE phongkham_chuctu CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
    ```
-2. Chạy lần lượt các script trong thư mục `database/` hoặc `docker/mysql/init/` từ `01` đến `08`.
+2. Chạy lần lượt các script trong thư mục `database/` (từ `001` đến `008`) hoặc `docker/mysql/init/` (từ `01` đến `10`).
+   > **Lưu ý quan trọng**: Hệ thống cấu hình `ddl-auto: validate` nên database bắt buộc phải được chạy đủ migrations (đặc biệt là 008 thêm cột `reschedule_count` và chuẩn hoá `slot_capacity`) trước khi backend khởi động.
 
 ### Bước 2: Chạy Backend (Port 8080)
 1. Tạo file `backend/.env` từ file mẫu `.env.example`:

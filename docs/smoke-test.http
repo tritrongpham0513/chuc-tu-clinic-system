@@ -97,6 +97,17 @@ Content-Type: application/json
 GET {{baseUrl}}/api/v1/me/appointments
 Authorization: Bearer {{patientToken}}
 
+### 3.5 Bệnh nhân đổi lịch khám (Reschedule - tối đa 1 lần, trước booking_min_hours)
+POST {{baseUrl}}/api/v1/me/appointments/1/reschedule
+Authorization: Bearer {{patientToken}}
+Content-Type: application/json
+
+{
+  "slotDate": "2026-11-18",
+  "slotStart": "09:00",
+  "reason": "Bận việc dời sang ngày hôm sau"
+}
+
 
 ### -------------------------------------------------------------------------
 ### 4. PHÂN HỆ NỘI BỘ (STAFF & LỄ TÂN)
@@ -116,6 +127,14 @@ Authorization: Bearer {{staffToken}}
 
 ### 4.4 Danh sách hồ sơ bệnh nhân nội bộ
 GET {{baseUrl}}/api/v1/staff/patients?page=1&limit=10
+Authorization: Bearer {{staffToken}}
+
+### 4.5 Xem huy hiệu thống kê Dashboard (phiếu mới, phiếu huỷ hôm nay)
+GET {{baseUrl}}/api/v1/staff/dashboard/badges
+Authorization: Bearer {{staffToken}}
+
+### 4.6 Phân công hoặc đổi bác sĩ khám (Staff Portal)
+PATCH {{baseUrl}}/api/v1/staff/appointments/1/doctor?doctorId=2
 Authorization: Bearer {{staffToken}}
 
 
@@ -150,6 +169,10 @@ Content-Type: application/json
   "coverImage": "/api/v1/uploads/sample.jpg",
   "pinned": false
 }
+
+### 5.5 Phân công hoặc đổi bác sĩ khám (Admin CMS)
+PATCH {{baseUrl}}/api/v1/admin/appointments/1/doctor?doctorId=2
+Authorization: Bearer {{adminToken}}
 
 
 ### -------------------------------------------------------------------------
