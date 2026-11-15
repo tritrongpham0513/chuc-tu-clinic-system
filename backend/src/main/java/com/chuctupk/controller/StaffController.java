@@ -29,10 +29,18 @@ import java.util.Map;
 public class StaffController {
 
     private final StaffService staffService;
+    private final com.chuctupk.service.DoctorAssignmentService doctorAssignmentService;
 
     // =========================================================================
     // 1. LỊCH KHÁM & ĐẶT HỘ TẠI QUẦY
     // =========================================================================
+
+    @GetMapping("/dashboard/badges")
+    @Operation(summary = "Lấy số lượng thông báo / huy hiệu (phiếu mới, phiếu huỷ trong ngày)")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getDashboardBadges() {
+        Map<String, Object> badges = staffService.getDashboardBadges();
+        return ResponseEntity.ok(ApiResponse.success(badges, "Lấy thông tin huy hiệu thành công"));
+    }
 
     @GetMapping("/appointments")
     @Operation(summary = "Lấy danh sách lịch khám theo ngày kèm thống kê")
@@ -103,6 +111,17 @@ public class StaffController {
         return ResponseEntity.ok(ApiResponse.success(response, "Huỷ phiếu khám thành công"));
     }
 
+    @PatchMapping("/appointments/{id}/doctor")
+    @Operation(summary = "Phân công hoặc đổi bác sĩ khám")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> assignDoctor(
+            @PathVariable Long id,
+            @RequestParam Long doctorId) {
+        doctorAssignmentService.assignDoctor(id, doctorId);
+        return ResponseEntity.ok(ApiResponse.success(
+                Map.of("appointmentId", id, "doctorId", doctorId),
+                "Phân công bác sĩ thành công"));
+    }
+
     // =========================================================================
     // 2. CHECK-IN & TIẾP NHẬN BỆNH NHÂN
     // =========================================================================
@@ -140,8 +159,10 @@ public class StaffController {
 
     @GetMapping("/queue")
     @Operation(summary = "Lấy trạng thái hàng đợi 5 ghế khám và danh sách hàng chờ")
-    public ResponseEntity<ApiResponse<QueueStateDto>> getQueueState() {
-        QueueStateDto response = staffService.getQueueState();
+    public ResponseEntity<ApiResponse<QueueStateDto>> getQueueState(
+            @AuthenticationPrincipal User currentUser,
+            @RequestParam(required = false) Long doctorId) {
+        QueueStateDto response = staffService.getQueueState(currentUser, doctorId);
         return ResponseEntity.ok(ApiResponse.success(response, "Lấy trạng thái hàng đợi thành công"));
     }
 

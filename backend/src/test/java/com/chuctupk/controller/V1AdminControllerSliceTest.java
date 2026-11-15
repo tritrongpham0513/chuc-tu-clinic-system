@@ -191,7 +191,8 @@ class V1AdminControllerSliceTest {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         AdminService adminService = new StubAdminService();
-        AdminController adminController = new AdminController(adminService);
+        com.chuctupk.service.DoctorAssignmentService doctorAssignmentService = org.mockito.Mockito.mock(com.chuctupk.service.DoctorAssignmentService.class);
+        AdminController adminController = new AdminController(adminService, doctorAssignmentService);
         PublicPostController publicPostController = new PublicPostController(adminService);
         MediaController mediaController = new MediaController(adminService);
 

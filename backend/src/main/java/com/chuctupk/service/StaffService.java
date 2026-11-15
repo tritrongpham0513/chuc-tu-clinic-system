@@ -35,6 +35,10 @@ public interface StaffService {
 
     QueueStateDto getQueueState();
 
+    QueueStateDto getQueueState(User currentUser, Long doctorId);
+
+    Map<String, Object> getDashboardBadges();
+
     QueueStateDto inviteNext();
 
     QueueStateDto undoEnter(Long id);

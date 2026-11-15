@@ -144,6 +144,11 @@ class V1StaffControllerSliceTest {
 
         @Override
         public QueueStateDto getQueueState() {
+            return getQueueState(null, null);
+        }
+
+        @Override
+        public QueueStateDto getQueueState(User currentUser, Long doctorId) {
             List<QueueSeatDto> seats = new ArrayList<>();
             seats.add(new QueueSeatDto(
                     1, false, "1", "100", "CT-PK-26-1411-001", samplePatient, "BS. Nguyễn Văn Minh",
@@ -174,6 +179,11 @@ class V1StaffControllerSliceTest {
         public QueueStateDto setAutoInvite(boolean enabled) {
             return getQueueState();
         }
+
+        @Override
+        public Map<String, Object> getDashboardBadges() {
+            return Map.of("newBookings", 1L, "cancelledToday", 0L);
+        }
     }
 
     @BeforeEach
@@ -191,7 +201,8 @@ class V1StaffControllerSliceTest {
         );
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        StaffController controller = new StaffController(new StubStaffService());
+        com.chuctupk.service.DoctorAssignmentService doctorAssignmentService = org.mockito.Mockito.mock(com.chuctupk.service.DoctorAssignmentService.class);
+        StaffController controller = new StaffController(new StubStaffService(), doctorAssignmentService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
@@ -304,6 +315,16 @@ class V1StaffControllerSliceTest {
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.capacity", is(5)));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/staff/dashboard/badges - Lấy huy hiệu thống kê")
+    void testGetDashboardBadges() throws Exception {
+        mockMvc.perform(get("/api/v1/staff/dashboard/badges"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success", is(true)))
+                .andExpect(jsonPath("$.data.newBookings", is(1)))
+                .andExpect(jsonPath("$.data.cancelledToday", is(0)));
     }
 }
 

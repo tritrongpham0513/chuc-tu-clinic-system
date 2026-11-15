@@ -29,6 +29,7 @@ import java.util.Map;
 public class AdminController {
 
     private final AdminService adminService;
+    private final com.chuctupk.service.DoctorAssignmentService doctorAssignmentService;
 
     // =========================================================================
     // 1. DASHBOARD
@@ -217,5 +218,16 @@ public class AdminController {
     public ResponseEntity<ApiResponse<Void>> deletePost(@PathVariable Long id) {
         adminService.deletePost(id);
         return ResponseEntity.ok(ApiResponse.success(null, "Đã xóa bài viết thành công"));
+    }
+
+    @PatchMapping("/appointments/{id}/doctor")
+    @Operation(summary = "Admin phân công hoặc đổi bác sĩ khám")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> assignDoctor(
+            @PathVariable Long id,
+            @RequestParam Long doctorId) {
+        doctorAssignmentService.assignDoctor(id, doctorId);
+        return ResponseEntity.ok(ApiResponse.success(
+                Map.of("appointmentId", id, "doctorId", doctorId),
+                "Phân công bác sĩ thành công"));
     }
 }
