@@ -1,8 +1,10 @@
 package com.chuctupk.service.scheduled;
 
 import com.chuctupk.entity.Appointment;
+import com.chuctupk.entity.TimeSlot;
 import com.chuctupk.entity.enums.AppointmentStatus;
 import com.chuctupk.repository.AppointmentRepository;
+import com.chuctupk.repository.AppointmentSeatRepository;
 import com.chuctupk.repository.OtpVerificationRepository;
 import com.chuctupk.repository.RefreshTokenRepository;
 import com.chuctupk.service.ClinicSettingService;
@@ -25,15 +27,17 @@ import java.util.List;
 public class ClinicScheduledTasks {
 
     private final AppointmentRepository appointmentRepository;
+    private final AppointmentSeatRepository appointmentSeatRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final OtpVerificationRepository otpVerificationRepository;
     private final ClinicSettingService clinicSettingService;
     private final Clock clock;
 
-    public static final String AUTO_CANCEL_REASON = "Không đến khám (hệ thống tự huỷ)";
+    public static final String AUTO_CANCEL_REASON = "Không đến khám";
 
     /**
-     * Tự động hủy các lịch hẹn chưa đến (PENDING, CONFIRMED) trong ngày khi đã quá giờ no_show_cancel_at.
+     * Tự động chuyển NO_SHOW cho các lịch hẹn PENDING trong ngày khi slot đã kết thúc và quá mốc no_show_cancel_at.
+     * Tuyệt đối không huỷ các phiếu CONFIRMED (đã check-in), IN_PROGRESS hay COMPLETED.
      * Chạy định kỳ mỗi 5 phút.
      */
     @Scheduled(cron = "0 */5 * * * *", zone = "Asia/Ho_Chi_Minh")
@@ -46,33 +50,46 @@ public class ClinicScheduledTasks {
         }
 
         LocalDate today = LocalDate.now(clock);
+        // Chỉ xét PENDING; tuyệt đối không đụng CONFIRMED (đã check-in), IN_PROGRESS, COMPLETED
         List<Appointment> pendingAppointments = appointmentRepository.findByAppointmentDateAndStatus(
                 today, AppointmentStatus.PENDING
         );
-        List<Appointment> confirmedAppointments = appointmentRepository.findByAppointmentDateAndStatus(
-                today, AppointmentStatus.CONFIRMED
-        );
 
-        List<Appointment> toCancel = new ArrayList<>(pendingAppointments);
-        toCancel.addAll(confirmedAppointments);
-
-        if (toCancel.isEmpty()) {
+        if (pendingAppointments.isEmpty()) {
             return 0;
         }
 
         LocalDateTime now = LocalDateTime.now(clock);
-        String reason = "Không đến khám (hệ thống tự huỷ lúc " + noShowCancelAt + ")";
-        for (Appointment appointment : toCancel) {
-            appointment.setStatus(AppointmentStatus.CANCELLED);
-            appointment.setCancelReason(reason);
-            appointment.setCancelledAt(now);
+        List<Appointment> toNoShow = new ArrayList<>();
+
+        for (Appointment appointment : pendingAppointments) {
+            TimeSlot slot = appointment.getTimeSlot();
+            // Chỉ huỷ khi slot đã kết thúc (slot.endTime < nowTime)
+            boolean slotEnded = (slot == null || slot.getEndTime() == null || slot.getEndTime().isBefore(nowTime));
+            if (slotEnded) {
+                appointment.setStatus(AppointmentStatus.NO_SHOW);
+                appointment.setCancelReason(AUTO_CANCEL_REASON);
+                appointment.setCancelledAt(now);
+                toNoShow.add(appointment);
+
+                // Nhả ghế đã giữ
+                if (appointment.getId() != null) {
+                    appointmentSeatRepository.deleteByAppointmentId(appointment.getId());
+                }
+
+                // TODO (B6): Gửi tin nhắn thông báo NO_SHOW cho bệnh nhân khi tích hợp NotificationService
+            }
         }
 
-        appointmentRepository.saveAll(toCancel);
-        log.info("[Scheduled] Đã tự động hủy {} lịch khám không đến (no-show) trong ngày {}",
-                toCancel.size(), today);
+        if (toNoShow.isEmpty()) {
+            return 0;
+        }
 
-        return toCancel.size();
+        appointmentRepository.saveAll(toNoShow);
+        log.info("[Scheduled] Đã tự động chuyển trạng thái NO_SHOW cho {} lịch khám không đến trong ngày {}",
+                toNoShow.size(), today);
+
+        return toNoShow.size();
     }
 
     /**

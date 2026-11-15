@@ -1,10 +1,13 @@
 package com.chuctupk.service.scheduled;
 
 import com.chuctupk.entity.Appointment;
+import com.chuctupk.entity.AppointmentSeat;
 import com.chuctupk.entity.OtpVerification;
 import com.chuctupk.entity.RefreshToken;
+import com.chuctupk.entity.TimeSlot;
 import com.chuctupk.entity.enums.AppointmentStatus;
 import com.chuctupk.repository.AppointmentRepository;
+import com.chuctupk.repository.AppointmentSeatRepository;
 import com.chuctupk.repository.OtpVerificationRepository;
 import com.chuctupk.repository.RefreshTokenRepository;
 import com.chuctupk.service.ClinicSettingService;
@@ -25,6 +28,49 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 class ClinicScheduledTasksTest {
+
+    static class StubAppointmentSeatRepository implements AppointmentSeatRepository {
+        List<Long> deletedAppointmentIds = new ArrayList<>();
+
+        @Override
+        public void deleteByAppointmentId(Long appointmentId) {
+            deletedAppointmentIds.add(appointmentId);
+        }
+
+        @Override public Optional<AppointmentSeat> findByAppointmentId(Long appointmentId) { return Optional.empty(); }
+        @Override public List<AppointmentSeat> findByAppointmentDateAndTimeSlotIdOrderBySeatNoAsc(LocalDate appointmentDate, Long timeSlotId) { return Collections.emptyList(); }
+        @Override public long countByAppointmentDateAndTimeSlotId(LocalDate appointmentDate, Long timeSlotId) { return 0; }
+        @Override public void flush() {}
+        @Override public <S extends AppointmentSeat> S saveAndFlush(S entity) { return null; }
+        @Override public <S extends AppointmentSeat> List<S> saveAllAndFlush(Iterable<S> entities) { return null; }
+        @Override public void deleteAllInBatch(Iterable<AppointmentSeat> entities) {}
+        @Override public void deleteAllByIdInBatch(Iterable<Long> longs) {}
+        @Override public void deleteAllInBatch() {}
+        @Override public AppointmentSeat getOne(Long aLong) { return null; }
+        @Override public AppointmentSeat getById(Long aLong) { return null; }
+        @Override public AppointmentSeat getReferenceById(Long aLong) { return null; }
+        @Override public <S extends AppointmentSeat> Optional<S> findOne(Example<S> example) { return Optional.empty(); }
+        @Override public <S extends AppointmentSeat> List<S> findAll(Example<S> example) { return Collections.emptyList(); }
+        @Override public <S extends AppointmentSeat> List<S> findAll(Example<S> example, Sort sort) { return Collections.emptyList(); }
+        @Override public <S extends AppointmentSeat> Page<S> findAll(Example<S> example, Pageable pageable) { return null; }
+        @Override public <S extends AppointmentSeat> long count(Example<S> example) { return 0; }
+        @Override public <S extends AppointmentSeat> boolean exists(Example<S> example) { return false; }
+        @Override public <S extends AppointmentSeat, R> R findBy(Example<S> example, Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction) { return null; }
+        @Override public <S extends AppointmentSeat> S save(S entity) { return null; }
+        @Override public <S extends AppointmentSeat> List<S> saveAll(Iterable<S> entities) { return Collections.emptyList(); }
+        @Override public Optional<AppointmentSeat> findById(Long aLong) { return Optional.empty(); }
+        @Override public boolean existsById(Long aLong) { return false; }
+        @Override public List<AppointmentSeat> findAll() { return Collections.emptyList(); }
+        @Override public List<AppointmentSeat> findAllById(Iterable<Long> longs) { return Collections.emptyList(); }
+        @Override public long count() { return 0; }
+        @Override public void deleteById(Long aLong) {}
+        @Override public void delete(AppointmentSeat entity) {}
+        @Override public void deleteAllById(Iterable<? extends Long> longs) {}
+        @Override public void deleteAll(Iterable<? extends AppointmentSeat> entities) {}
+        @Override public void deleteAll() {}
+        @Override public List<AppointmentSeat> findAll(Sort sort) { return Collections.emptyList(); }
+        @Override public Page<AppointmentSeat> findAll(Pageable pageable) { return null; }
+    }
 
     static class StubAppointmentRepository implements AppointmentRepository {
         List<Appointment> foundAppointments = new ArrayList<>();
@@ -187,73 +233,209 @@ class ClinicScheduledTasksTest {
     }
 
     @Test
-    @DisplayName("autoCancelNoShows: Hủy tất cả các lịch PENDING của ngày hôm nay lúc 17:00")
-    void testAutoCancelNoShows_Success() {
+    @DisplayName("A3 - Case 1: PENDING slot đã qua -> NO_SHOW + xóa ghế")
+    void testAutoCancelNoShows_PendingSlotEnded_MarkedNoShowAndSeatDeleted() {
         LocalDate fixedDate = LocalDate.of(2026, 11, 14);
-        Instant fixedInstant = LocalDateTime.of(fixedDate, LocalTime.of(17, 0, 0))
+        // Chạy lúc 17:05 (quá giờ no_show_cancel_at 17:00)
+        Instant fixedInstant = LocalDateTime.of(fixedDate, LocalTime.of(17, 5, 0))
                 .atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toInstant();
         Clock fixedClock = Clock.fixed(fixedInstant, ZoneId.of("Asia/Ho_Chi_Minh"));
 
         StubAppointmentRepository appointmentRepository = new StubAppointmentRepository();
+        StubAppointmentSeatRepository seatRepository = new StubAppointmentSeatRepository();
         StubRefreshTokenRepository refreshTokenRepository = new StubRefreshTokenRepository();
         StubOtpVerificationRepository otpVerificationRepository = new StubOtpVerificationRepository();
         ClinicSettingService clinicSettingService = Mockito.mock(ClinicSettingService.class);
         when(clinicSettingService.getNoShowCancelAt()).thenReturn(LocalTime.of(17, 0));
 
         ClinicScheduledTasks tasks = new ClinicScheduledTasks(
-                appointmentRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, fixedClock
+                appointmentRepository, seatRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, fixedClock
         );
 
-        Appointment appt1 = Appointment.builder()
+        // Slot 15:00 - 16:00 (đã kết thúc trước 17:05)
+        TimeSlot pastSlot = TimeSlot.builder()
                 .id(1L)
+                .startTime(LocalTime.of(15, 0))
+                .endTime(LocalTime.of(16, 0))
+                .build();
+
+        Appointment appt = Appointment.builder()
+                .id(101L)
                 .bookingCode("CT-261114-001")
                 .appointmentDate(fixedDate)
+                .timeSlot(pastSlot)
                 .status(AppointmentStatus.PENDING)
                 .build();
 
-        Appointment appt2 = Appointment.builder()
-                .id(2L)
-                .bookingCode("CT-261114-002")
-                .appointmentDate(fixedDate)
-                .status(AppointmentStatus.PENDING)
-                .build();
+        appointmentRepository.foundAppointments = List.of(appt);
 
-        appointmentRepository.foundAppointments = List.of(appt1, appt2);
+        int count = tasks.autoCancelNoShows();
 
-        int cancelledCount = tasks.autoCancelNoShows();
-
-        assertThat(cancelledCount).isEqualTo(2);
-        assertThat(appointmentRepository.savedAppointments).hasSize(2);
-        assertThat(appointmentRepository.savedAppointments.get(0).getStatus()).isEqualTo(AppointmentStatus.CANCELLED);
-        assertThat(appointmentRepository.savedAppointments.get(0).getCancelReason()).contains("Không đến khám");
-        assertThat(appointmentRepository.savedAppointments.get(0).getCancelledAt()).isNotNull();
-
-        assertThat(appointmentRepository.savedAppointments.get(1).getStatus()).isEqualTo(AppointmentStatus.CANCELLED);
-        assertThat(appointmentRepository.savedAppointments.get(1).getCancelReason()).contains("Không đến khám");
+        assertThat(count).isEqualTo(1);
+        assertThat(appointmentRepository.savedAppointments).hasSize(1);
+        Appointment saved = appointmentRepository.savedAppointments.get(0);
+        assertThat(saved.getStatus()).isEqualTo(AppointmentStatus.NO_SHOW);
+        assertThat(saved.getCancelReason()).isEqualTo("Không đến khám");
+        assertThat(saved.getCancelledAt()).isNotNull();
+        assertThat(seatRepository.deletedAppointmentIds).contains(101L);
     }
 
     @Test
-    @DisplayName("autoCancelNoShows: Không có lịch nào PENDING thì không làm gì")
-    void testAutoCancelNoShows_Empty() {
+    @DisplayName("A3 - Case 2: PENDING slot chưa tới (ví dụ 17:30 - 18:30 lúc 17:05) -> giữ nguyên")
+    void testAutoCancelNoShows_PendingSlotNotEnded_KeptPending() {
         LocalDate fixedDate = LocalDate.of(2026, 11, 14);
-        Instant fixedInstant = LocalDateTime.of(fixedDate, LocalTime.of(17, 0, 0))
+        Instant fixedInstant = LocalDateTime.of(fixedDate, LocalTime.of(17, 5, 0))
                 .atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toInstant();
         Clock fixedClock = Clock.fixed(fixedInstant, ZoneId.of("Asia/Ho_Chi_Minh"));
 
         StubAppointmentRepository appointmentRepository = new StubAppointmentRepository();
+        StubAppointmentSeatRepository seatRepository = new StubAppointmentSeatRepository();
         StubRefreshTokenRepository refreshTokenRepository = new StubRefreshTokenRepository();
         StubOtpVerificationRepository otpVerificationRepository = new StubOtpVerificationRepository();
         ClinicSettingService clinicSettingService = Mockito.mock(ClinicSettingService.class);
         when(clinicSettingService.getNoShowCancelAt()).thenReturn(LocalTime.of(17, 0));
 
         ClinicScheduledTasks tasks = new ClinicScheduledTasks(
-                appointmentRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, fixedClock
+                appointmentRepository, seatRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, fixedClock
         );
+
+        // Slot 17:30 - 18:30 (chưa kết thúc lúc 17:05)
+        TimeSlot futureSlot = TimeSlot.builder()
+                .id(2L)
+                .startTime(LocalTime.of(17, 30))
+                .endTime(LocalTime.of(18, 30))
+                .build();
+
+        Appointment appt = Appointment.builder()
+                .id(102L)
+                .bookingCode("CT-261114-002")
+                .appointmentDate(fixedDate)
+                .timeSlot(futureSlot)
+                .status(AppointmentStatus.PENDING)
+                .build();
+
+        appointmentRepository.foundAppointments = List.of(appt);
 
         int count = tasks.autoCancelNoShows();
 
         assertThat(count).isEqualTo(0);
-        assertThat(appointmentRepository.savedAppointments).isEmpty();
+        assertThat(appt.getStatus()).isEqualTo(AppointmentStatus.PENDING);
+        assertThat(seatRepository.deletedAppointmentIds).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A3 - Case 3: CONFIRMED (đã check-in) -> giữ nguyên tuyệt đối, không huỷ")
+    void testAutoCancelNoShows_ConfirmedCheckedIn_NeverCancelled() {
+        LocalDate fixedDate = LocalDate.of(2026, 11, 14);
+        Instant fixedInstant = LocalDateTime.of(fixedDate, LocalTime.of(17, 5, 0))
+                .atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toInstant();
+        Clock fixedClock = Clock.fixed(fixedInstant, ZoneId.of("Asia/Ho_Chi_Minh"));
+
+        StubAppointmentRepository appointmentRepository = new StubAppointmentRepository();
+        StubAppointmentSeatRepository seatRepository = new StubAppointmentSeatRepository();
+        StubRefreshTokenRepository refreshTokenRepository = new StubRefreshTokenRepository();
+        StubOtpVerificationRepository otpVerificationRepository = new StubOtpVerificationRepository();
+        ClinicSettingService clinicSettingService = Mockito.mock(ClinicSettingService.class);
+        when(clinicSettingService.getNoShowCancelAt()).thenReturn(LocalTime.of(17, 0));
+
+        ClinicScheduledTasks tasks = new ClinicScheduledTasks(
+                appointmentRepository, seatRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, fixedClock
+        );
+
+        Appointment confirmedAppt = Appointment.builder()
+                .id(103L)
+                .bookingCode("CT-261114-003")
+                .appointmentDate(fixedDate)
+                .status(AppointmentStatus.CONFIRMED)
+                .build();
+
+        appointmentRepository.foundAppointments = List.of(confirmedAppt);
+
+        int count = tasks.autoCancelNoShows();
+
+        assertThat(count).isEqualTo(0);
+        assertThat(confirmedAppt.getStatus()).isEqualTo(AppointmentStatus.CONFIRMED);
+        assertThat(seatRepository.deletedAppointmentIds).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A3 - Case 4: IN_PROGRESS -> giữ nguyên tuyệt đối")
+    void testAutoCancelNoShows_InProgress_NeverCancelled() {
+        LocalDate fixedDate = LocalDate.of(2026, 11, 14);
+        Instant fixedInstant = LocalDateTime.of(fixedDate, LocalTime.of(17, 5, 0))
+                .atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toInstant();
+        Clock fixedClock = Clock.fixed(fixedInstant, ZoneId.of("Asia/Ho_Chi_Minh"));
+
+        StubAppointmentRepository appointmentRepository = new StubAppointmentRepository();
+        StubAppointmentSeatRepository seatRepository = new StubAppointmentSeatRepository();
+        StubRefreshTokenRepository refreshTokenRepository = new StubRefreshTokenRepository();
+        StubOtpVerificationRepository otpVerificationRepository = new StubOtpVerificationRepository();
+        ClinicSettingService clinicSettingService = Mockito.mock(ClinicSettingService.class);
+        when(clinicSettingService.getNoShowCancelAt()).thenReturn(LocalTime.of(17, 0));
+
+        ClinicScheduledTasks tasks = new ClinicScheduledTasks(
+                appointmentRepository, seatRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, fixedClock
+        );
+
+        Appointment inProgressAppt = Appointment.builder()
+                .id(104L)
+                .bookingCode("CT-261114-004")
+                .appointmentDate(fixedDate)
+                .status(AppointmentStatus.IN_PROGRESS)
+                .build();
+
+        appointmentRepository.foundAppointments = List.of(inProgressAppt);
+
+        int count = tasks.autoCancelNoShows();
+
+        assertThat(count).isEqualTo(0);
+        assertThat(inProgressAppt.getStatus()).isEqualTo(AppointmentStatus.IN_PROGRESS);
+        assertThat(seatRepository.deletedAppointmentIds).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A3 - Case 5: Chạy 2 lần -> không nhân đôi (idempotent)")
+    void testAutoCancelNoShows_RunTwice_Idempotent() {
+        LocalDate fixedDate = LocalDate.of(2026, 11, 14);
+        Instant fixedInstant = LocalDateTime.of(fixedDate, LocalTime.of(17, 5, 0))
+                .atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toInstant();
+        Clock fixedClock = Clock.fixed(fixedInstant, ZoneId.of("Asia/Ho_Chi_Minh"));
+
+        StubAppointmentRepository appointmentRepository = new StubAppointmentRepository();
+        StubAppointmentSeatRepository seatRepository = new StubAppointmentSeatRepository();
+        StubRefreshTokenRepository refreshTokenRepository = new StubRefreshTokenRepository();
+        StubOtpVerificationRepository otpVerificationRepository = new StubOtpVerificationRepository();
+        ClinicSettingService clinicSettingService = Mockito.mock(ClinicSettingService.class);
+        when(clinicSettingService.getNoShowCancelAt()).thenReturn(LocalTime.of(17, 0));
+
+        ClinicScheduledTasks tasks = new ClinicScheduledTasks(
+                appointmentRepository, seatRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, fixedClock
+        );
+
+        TimeSlot pastSlot = TimeSlot.builder()
+                .id(1L)
+                .startTime(LocalTime.of(15, 0))
+                .endTime(LocalTime.of(16, 0))
+                .build();
+
+        Appointment appt = Appointment.builder()
+                .id(105L)
+                .bookingCode("CT-261114-005")
+                .appointmentDate(fixedDate)
+                .timeSlot(pastSlot)
+                .status(AppointmentStatus.PENDING)
+                .build();
+
+        // Lần 1: appt đang là PENDING
+        appointmentRepository.foundAppointments = new ArrayList<>(List.of(appt));
+        int count1 = tasks.autoCancelNoShows();
+        assertThat(count1).isEqualTo(1);
+        assertThat(appt.getStatus()).isEqualTo(AppointmentStatus.NO_SHOW);
+
+        // Lần 2: appt đã là NO_SHOW, findByAppointmentDateAndStatus(today, PENDING) sẽ không trả về nữa
+        int count2 = tasks.autoCancelNoShows();
+        assertThat(count2).isEqualTo(0);
+        assertThat(seatRepository.deletedAppointmentIds).containsExactly(105L);
     }
 
     @Test
@@ -261,12 +443,13 @@ class ClinicScheduledTasksTest {
     void testCleanupExpiredTokensAndOtps() {
         Clock systemClock = Clock.system(ZoneId.of("Asia/Ho_Chi_Minh"));
         StubAppointmentRepository appointmentRepository = new StubAppointmentRepository();
+        StubAppointmentSeatRepository seatRepository = new StubAppointmentSeatRepository();
         StubRefreshTokenRepository refreshTokenRepository = new StubRefreshTokenRepository();
         StubOtpVerificationRepository otpVerificationRepository = new StubOtpVerificationRepository();
         ClinicSettingService clinicSettingService = Mockito.mock(ClinicSettingService.class);
 
         ClinicScheduledTasks tasks = new ClinicScheduledTasks(
-                appointmentRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, systemClock
+                appointmentRepository, seatRepository, refreshTokenRepository, otpVerificationRepository, clinicSettingService, systemClock
         );
 
         tasks.cleanupExpiredTokensAndOtps();

@@ -33,6 +33,7 @@ public class DataSeederRunner implements ApplicationRunner {
     private final DoctorRepository doctorRepository;
     private final ArticleCategoryRepository articleCategoryRepository;
     private final ArticleRepository articleRepository;
+    private final PatientRepository patientRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -42,6 +43,7 @@ public class DataSeederRunner implements ApplicationRunner {
         seedClinicSettings();
         seedStaffAndDoctor();
         seedArticles();
+        fixMojibakeUserData();
     }
 
     private void seedTimeSlots() {
@@ -152,6 +154,35 @@ public class DataSeederRunner implements ApplicationRunner {
                         .viewCount(125)
                         .build());
             }
+        }
+    }
+
+    private void fixMojibakeUserData() {
+        try {
+            userRepository.findAll().forEach(u -> {
+                if (u.getFullName() != null && (u.getFullName().contains("Bá»") || u.getFullName().contains("nhÃ¢n"))) {
+                    String last4 = u.getPhone() != null && u.getPhone().length() >= 4 ? u.getPhone().substring(u.getPhone().length() - 4) : "";
+                    u.setFullName("Bệnh nhân " + last4);
+                    userRepository.save(u);
+                }
+            });
+            patientRepository.findAll().forEach(p -> {
+                boolean changed = false;
+                if (p.getFullName() != null && (p.getFullName().contains("Bá»") || p.getFullName().contains("nhÃ¢n"))) {
+                    String last4 = p.getPhone() != null && p.getPhone().length() >= 4 ? p.getPhone().substring(p.getPhone().length() - 4) : "";
+                    p.setFullName("Bệnh nhân " + last4);
+                    changed = true;
+                }
+                if (p.getAddress() != null && p.getAddress().contains("Há»“ ChÃ­ Minh")) {
+                    p.setAddress(p.getAddress().replace("TP. Há»“ ChÃ­ Minh", "TP. Hồ Chí Minh"));
+                    changed = true;
+                }
+                if (changed) {
+                    patientRepository.save(p);
+                }
+            });
+        } catch (Exception ex) {
+            log.warn("Lỗi khi tự động sửa tên bị mã hóa lỗi: {}", ex.getMessage());
         }
     }
 }
