@@ -60,7 +60,7 @@ app:
   upload:
     dir: ${UPLOAD_DIR:uploads}
   otp:
-    expose-dev-code: ${OTP_EXPOSE_DEV_CODE:false}
+    expose-dev-code: ${OTP_EXPOSE_DEV_CODE:true}
   admin:
     username: ${ADMIN_USERNAME:}
     password: ${ADMIN_PASSWORD:}
