@@ -64,3 +64,9 @@ uploads/
 backend/uploads/
 __pycache__/
 *.pyc
+
+# --- Planning & Scratch ---
+task_plan.md
+findings.md
+progress.md
+
