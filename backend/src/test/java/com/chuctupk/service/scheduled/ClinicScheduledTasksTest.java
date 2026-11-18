@@ -114,6 +114,7 @@ class ClinicScheduledTasksTest {
         @Override public List<Appointment> findByUserIdAndStatuses(Long userId, List<AppointmentStatus> statuses) { return Collections.emptyList(); }
         @Override public List<Appointment> lookupByCodeOrPhoneOrPatientCode(String code) { return Collections.emptyList(); }
         @Override public List<Object[]> findLatestCompletedVisitDates(List<Long> patientIds) { return Collections.emptyList(); }
+        @Override public long countByDoctorIdAndAppointmentDateAndStatusIn(Long doctorId, LocalDate appointmentDate, java.util.Collection<AppointmentStatus> statuses) { return 0; }
         @Override public void flush() {}
         @Override public <S extends Appointment> S saveAndFlush(S entity) { return null; }
         @Override public <S extends Appointment> List<S> saveAllAndFlush(Iterable<S> entities) { return null; }

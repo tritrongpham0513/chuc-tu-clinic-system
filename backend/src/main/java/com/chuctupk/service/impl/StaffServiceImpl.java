@@ -9,11 +9,13 @@ import com.chuctupk.entity.*;
 import com.chuctupk.entity.enums.AppointmentSource;
 import com.chuctupk.entity.enums.AppointmentStatus;
 import com.chuctupk.entity.enums.CheckinStatus;
+import com.chuctupk.entity.enums.Period;
 import com.chuctupk.entity.enums.PriorityGroup;
 import com.chuctupk.exception.AppException;
 import com.chuctupk.exception.ErrorCode;
 import com.chuctupk.repository.*;
 import com.chuctupk.service.ClinicSettingService;
+import com.chuctupk.service.DoctorScheduleAdminService;
 import com.chuctupk.service.SequenceGeneratorService;
 import com.chuctupk.service.StaffService;
 import lombok.RequiredArgsConstructor;
@@ -51,6 +53,8 @@ public class StaffServiceImpl implements StaffService {
     private final com.chuctupk.service.SlotPolicy slotPolicy;
     private final com.chuctupk.service.DoctorAssignmentService doctorAssignmentService;
     private final com.chuctupk.repository.DoctorRepository doctorRepository;
+    private final DoctorScheduleAdminService doctorScheduleAdminService;
+    private final DoctorDayOffRepository doctorDayOffRepository;
     private final com.chuctupk.service.NotificationService notificationService;
     private final SequenceGeneratorService sequenceGeneratorService;
     private final Clock clock;
@@ -58,17 +62,49 @@ public class StaffServiceImpl implements StaffService {
     @Override
     @Transactional(readOnly = true)
     public StaffAppointmentListResponse getAppointments(LocalDate date) {
+        return buildAppointmentList(date, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public StaffAppointmentListResponse getMyAppointments(LocalDate date, User currentUser) {
+        if (currentUser == null) {
+            throw AppException.unauthorized("Chưa đăng nhập");
+        }
+        Doctor doctor = doctorRepository.findByUserId(currentUser.getId())
+                .orElseThrow(() -> AppException.unprocessable(
+                        "Tài khoản này không gắn với hồ sơ bác sĩ nào."));
+        return buildAppointmentList(date, doctor.getId());
+    }
+
+    private StaffAppointmentListResponse buildAppointmentList(LocalDate date, Long onlyDoctorId) {
         LocalDate queryDate = date != null ? date : LocalDate.now(clock);
-        List<Appointment> appts = appointmentRepository.findByAppointmentDateOrderByTimeSlotStartTimeAsc(queryDate);
+        List<Appointment> appts = appointmentRepository
+                .findByAppointmentDateOrderByTimeSlotStartTimeAsc(queryDate);
+
+        if (onlyDoctorId != null) {
+            appts = appts.stream()
+                    .filter(a -> a.getDoctor() != null && onlyDoctorId.equals(a.getDoctor().getId()))
+                    .toList();
+        }
+
+        // Chỉ 2 query cho cả ngày, không N+1; bỏ qua khi ngày không có phiếu nào
+        Map<Period, Set<Long>> onDutyByPeriod = new EnumMap<>(Period.class);
+        if (!appts.isEmpty()) {
+            for (Period p : List.of(Period.MORNING, Period.AFTERNOON)) {
+                onDutyByPeriod.put(p,
+                        new HashSet<>(doctorAssignmentService.findOnDutyDoctorIds(queryDate, p)));
+            }
+        }
 
         List<Long> apptIds = appts.stream().map(Appointment::getId).toList();
-        Map<Long, Checkin> checkinMap = apptIds.isEmpty() ? Map.of() :
-                checkinRepository.findByAppointmentIdIn(apptIds).stream()
-                        .filter(c -> c.getAppointment() != null)
-                        .collect(toMap(c -> c.getAppointment().getId(), c -> c, (a, b) -> a));
+        Map<Long, Checkin> checkinMap = apptIds.isEmpty() ? Map.of()
+                : checkinRepository.findByAppointmentIdIn(apptIds).stream()
+                    .filter(c -> c.getAppointment() != null)
+                    .collect(toMap(c -> c.getAppointment().getId(), c -> c, (a, b) -> a));
 
         List<AppointmentDto> items = appts.stream()
-                .map(a -> AppointmentDto.from(a, checkinMap.get(a.getId())))
+                .map(a -> AppointmentDto.from(a, checkinMap.get(a.getId()), isDoctorOnDuty(a, onDutyByPeriod)))
                 .toList();
 
         int total = appts.size();
@@ -83,6 +119,15 @@ public class StaffServiceImpl implements StaffService {
         );
 
         return new StaffAppointmentListResponse(queryDate.toString(), items, summary);
+    }
+
+    /** null = không xác định (phiếu không có bác sĩ hoặc không có khung giờ). */
+    private Boolean isDoctorOnDuty(Appointment a, Map<Period, Set<Long>> onDutyByPeriod) {
+        if (a.getDoctor() == null || a.getTimeSlot() == null || a.getTimeSlot().getPeriod() == null) {
+            return null;
+        }
+        Set<Long> ids = onDutyByPeriod.get(a.getTimeSlot().getPeriod());
+        return ids != null && ids.contains(a.getDoctor().getId());
     }
 
     @Override
@@ -146,14 +191,24 @@ public class StaffServiceImpl implements StaffService {
 
         for (TimeSlot slot : slots) {
             long booked = appointmentSeatRepository.countByAppointmentDateAndTimeSlotId(queryDate, slot.getId());
-            int capacity = slot.getMaxPatients() != null && slot.getMaxPatients() > 0 ? slot.getMaxPatients() : 6;
+            int capacity = clinicSettingService.getSlotCapacity();
             int remaining = Math.max(0, capacity - (int) booked);
 
             boolean isPast = queryDate.isBefore(today) || (queryDate.equals(today) && slot.getEndTime().isBefore(nowTime));
             boolean isFull = remaining <= 0;
-            boolean available = !isPast && !isFull;
+            boolean hasDoctor = doctorAssignmentService.hasDoctorOnDuty(queryDate, slot);
+            boolean available = !isPast && !isFull && hasDoctor;
 
-            String reason = isPast ? "PAST" : (isFull ? "SLOT_FULL" : null);
+            String reason;
+            if (isPast) {
+                reason = "PAST";
+            } else if (!hasDoctor) {
+                reason = "NO_DOCTOR";
+            } else if (isFull) {
+                reason = "SLOT_FULL";
+            } else {
+                reason = null;
+            }
             String start = slot.getStartTime().toString().substring(0, 5);
             String end = slot.getEndTime().toString().substring(0, 5);
 
@@ -824,6 +879,71 @@ public class StaffServiceImpl implements StaffService {
                 "newBookings", newBookings,
                 "cancelledToday", cancelledToday
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MyScheduleResponse getMySchedule(User currentUser) {
+        if (currentUser == null) {
+            throw AppException.unauthorized("Chưa đăng nhập");
+        }
+        Doctor doctor = doctorRepository.findByUserId(currentUser.getId())
+                .orElseThrow(() -> AppException.unprocessable(
+                        "Tài khoản này không gắn với hồ sơ bác sĩ nào."));
+        if (!Boolean.TRUE.equals(doctor.getIsActive())) {
+            throw AppException.unprocessable("Hồ sơ bác sĩ đang tạm ngưng hoạt động.");
+        }
+
+        // TÁI SỬ DỤNG logic chuẩn hoá FULL_DAY của trang admin
+        DoctorScheduleMatrixResponse matrix = doctorScheduleAdminService.getWeeklyScheduleMatrix();
+        DoctorScheduleMatrixResponse.DoctorScheduleRow row = matrix.getDoctors().stream()
+                .filter(d -> doctor.getId().equals(d.getId()))
+                .findFirst()
+                .orElse(null);   // bác sĩ inactive sẽ không có trong matrix -> coi như lịch trống
+
+        LocalDate today = LocalDate.now(clock);
+        List<DoctorDayOffDto> offs = doctorDayOffRepository
+                .findByDoctorIdAndOffDateGreaterThanEqualOrderByOffDateAsc(doctor.getId(), today)
+                .stream()
+                .map(o -> DoctorDayOffDto.builder()
+                        .id(o.getId())
+                        .doctorId(doctor.getId())
+                        .doctorName(doctor.getFullName())
+                        .offDate(o.getOffDate())
+                        .period(o.getPeriod())
+                        .reason(o.getReason())
+                        .createdAt(o.getCreatedAt())
+                        .build())
+                .sorted(Comparator.comparing(DoctorDayOffDto::getOffDate)
+                        .thenComparing(d -> periodOrder(d.getPeriod())))  // FULL_DAY, MORNING, AFTERNOON
+                .toList();
+
+        return MyScheduleResponse.builder()
+                .doctorId(doctor.getId())
+                .fullName(doctor.getFullName())
+                .title(doctor.getTitle())
+                .specialty(doctor.getSpecialty())
+                .days(matrix.getDays())
+                .shifts(row != null ? row.getSchedules() : emptySevenDays())
+                .dayOffs(offs)
+                .build();
+    }
+
+    private int periodOrder(Period period) {
+        if (period == null) return 99;
+        return switch (period) {
+            case FULL_DAY -> 1;
+            case MORNING -> 2;
+            case AFTERNOON -> 3;
+        };
+    }
+
+    private Map<String, List<String>> emptySevenDays() {
+        Map<String, List<String>> map = new LinkedHashMap<>();
+        for (String day : List.of("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN")) {
+            map.put(day, List.of());
+        }
+        return map;
     }
 }
 

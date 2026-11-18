@@ -12,6 +12,7 @@ import java.util.List;
 
 @Repository
 public interface DoctorScheduleRepository extends JpaRepository<DoctorSchedule, Long> {
+    List<DoctorSchedule> findByDoctorId(Long doctorId);
     List<DoctorSchedule> findByDoctorIdAndIsActiveTrue(Long doctorId);
     List<DoctorSchedule> findByDoctorIdAndDayOfWeekAndIsActiveTrue(Long doctorId, DayOfWeek dayOfWeek);
     List<DoctorSchedule> findByDayOfWeekAndIsActiveTrue(DayOfWeek dayOfWeek);

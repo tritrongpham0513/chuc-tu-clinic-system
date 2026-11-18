@@ -3,7 +3,6 @@ package com.chuctupk.service.impl;
 import com.chuctupk.dto.response.TimeSlotResponse;
 import com.chuctupk.entity.TimeSlot;
 import com.chuctupk.entity.enums.AppointmentStatus;
-import com.chuctupk.entity.enums.DayOfWeek;
 import com.chuctupk.exception.AppException;
 import com.chuctupk.repository.*;
 import com.chuctupk.service.ClinicSettingService;
@@ -25,13 +24,12 @@ public class TimeSlotServiceImpl implements TimeSlotService {
 
     private final TimeSlotRepository timeSlotRepository;
     private final DoctorRepository doctorRepository;
-    private final DoctorScheduleRepository doctorScheduleRepository;
-    private final DoctorDayOffRepository doctorDayOffRepository;
     private final ClinicHolidayRepository clinicHolidayRepository;
     private final AppointmentRepository appointmentRepository;
     private final AppointmentSeatRepository appointmentSeatRepository;
     private final ClinicSettingService clinicSettingService;
     private final com.chuctupk.service.SlotPolicy slotPolicy;
+    private final com.chuctupk.service.DoctorAssignmentService doctorAssignmentService;
     private final Clock clock;
 
     @Override
@@ -60,8 +58,6 @@ public class TimeSlotServiceImpl implements TimeSlotService {
             throw AppException.unprocessable("Phòng khám nghỉ lễ vào ngày này");
         }
 
-        DayOfWeek dow = DayOfWeek.from(date.getDayOfWeek());
-
         List<TimeSlot> allSlots = timeSlotRepository.findByIsActiveTrueOrderBySortOrderAsc();
         List<TimeSlotResponse> availableSlots = new ArrayList<>();
 
@@ -82,12 +78,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
             }
 
             // Lấy danh sách bác sĩ trực ca (có lịch làm việc và không nghỉ)
-            List<Long> scheduledDoctorIds = doctorScheduleRepository.findScheduledDoctorIds(dow, slot.getPeriod());
-            List<Long> offDoctorIds = doctorDayOffRepository.findDoctorIdsOffOnDateAndPeriod(date, slot.getPeriod());
-
-            List<Long> activeDoctorIds = scheduledDoctorIds.stream()
-                    .filter(id -> !offDoctorIds.contains(id))
-                    .toList();
+            List<Long> activeDoctorIds = doctorAssignmentService.findOnDutyDoctorIds(date, slot.getPeriod());
 
             // Quy tắc 4: Slot không có bác sĩ trực thì loại khỏi danh sách
             if (activeDoctorIds.isEmpty()) {

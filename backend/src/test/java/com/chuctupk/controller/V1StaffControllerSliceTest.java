@@ -28,6 +28,10 @@ import java.util.Map;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -37,6 +41,7 @@ class V1StaffControllerSliceTest {
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private User staffUser;
+    private com.chuctupk.service.DoctorAssignmentService doctorAssignmentService;
 
     static class StubStaffService implements StaffService {
         private final PatientDto samplePatient = new PatientDto(
@@ -56,6 +61,14 @@ class V1StaffControllerSliceTest {
         public StaffAppointmentListResponse getAppointments(LocalDate date) {
             StaffAppointmentSummaryDto summary = new StaffAppointmentSummaryDto(1, 0, 0, 0, 0, 1);
             return new StaffAppointmentListResponse(date != null ? date.toString() : "2026-11-14", List.of(sampleAppt), summary);
+        }
+
+        @Override
+        public StaffAppointmentListResponse getMyAppointments(LocalDate date, User currentUser) {
+            return new StaffAppointmentListResponse(
+                    date != null ? date.toString() : "2026-11-14",
+                    List.of(),
+                    new StaffAppointmentSummaryDto(0, 0, 0, 0, 0, 0));
         }
 
         @Override
@@ -184,6 +197,11 @@ class V1StaffControllerSliceTest {
         public Map<String, Object> getDashboardBadges() {
             return Map.of("newBookings", 1L, "cancelledToday", 0L);
         }
+
+        @Override
+        public MyScheduleResponse getMySchedule(User currentUser) {
+            return MyScheduleResponse.builder().build();
+        }
     }
 
     @BeforeEach
@@ -201,7 +219,7 @@ class V1StaffControllerSliceTest {
         );
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        com.chuctupk.service.DoctorAssignmentService doctorAssignmentService = org.mockito.Mockito.mock(com.chuctupk.service.DoctorAssignmentService.class);
+        doctorAssignmentService = org.mockito.Mockito.mock(com.chuctupk.service.DoctorAssignmentService.class);
         StaffController controller = new StaffController(new StubStaffService(), doctorAssignmentService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler())
@@ -219,6 +237,58 @@ class V1StaffControllerSliceTest {
                 .andExpect(jsonPath("$.data.items", hasSize(1)))
                 .andExpect(jsonPath("$.data.summary.total", is(1)))
                 .andExpect(jsonPath("$.data.summary.booked", is(1)));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/staff/appointments?mine=1 - Bác sĩ chỉ nhận lịch của mình")
+    void testGetMyAppointmentsForDoctor() throws Exception {
+        User doctor = User.builder()
+                .id(1L).username("bacsi").fullName("Bác sĩ Nguyễn Văn Minh")
+                .role(Role.DOCTOR).isActive(true).build();
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(doctor, null, Collections.emptyList()));
+
+        mockMvc.perform(get("/api/v1/staff/appointments?date=2026-11-14&mine=1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items", hasSize(0)))
+                .andExpect(jsonPath("$.data.summary.total", is(0)));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/staff/appointments?mine=1 - Lễ tân gửi mine vẫn nhận danh sách đầy đủ")
+    void testMineIgnoredForNonDoctor() throws Exception {
+        // staffUser (STAFF) đã được set trong @BeforeEach
+        mockMvc.perform(get("/api/v1/staff/appointments?date=2026-11-14&mine=1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items", hasSize(1)))
+                .andExpect(jsonPath("$.data.summary.total", is(1)));
+    }
+
+    @Test
+    @DisplayName("PATCH /api/v1/staff/appointments/{id}/doctor - Bác sĩ bị từ chối 403")
+    void testAssignDoctorForbiddenForDoctor() throws Exception {
+        User doctor = User.builder()
+                .id(1L).username("bacsi").fullName("Bác sĩ Nguyễn Văn Minh")
+                .role(Role.DOCTOR).isActive(true).build();
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(doctor, null, Collections.emptyList()));
+
+        mockMvc.perform(patch("/api/v1/staff/appointments/100/doctor?doctorId=2"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message", is("Chỉ lễ tân hoặc quản trị viên được đổi bác sĩ của phiếu khám.")));
+
+        verify(doctorAssignmentService, never()).assignDoctor(any(), any());
+    }
+
+    @Test
+    @DisplayName("PATCH /api/v1/staff/appointments/{id}/doctor - Lễ tân phân công bác sĩ thành công")
+    void testAssignDoctorSuccessForStaff() throws Exception {
+        mockMvc.perform(patch("/api/v1/staff/appointments/100/doctor?doctorId=2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success", is(true)))
+                .andExpect(jsonPath("$.message", is("Phân công bác sĩ thành công")));
+
+        verify(doctorAssignmentService, times(1)).assignDoctor(100L, 2L);
     }
 
     @Test

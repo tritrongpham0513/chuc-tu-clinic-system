@@ -52,15 +52,15 @@ public class DataSeederRunner implements ApplicationRunner {
             List<TimeSlot> slots = List.of(
                     TimeSlot.builder().slotLabel("08:00 - 09:00").startTime(LocalTime.of(8, 0)).endTime(LocalTime.of(9, 0)).period(Period.MORNING).maxPatients(5).sortOrder(1).isActive(true).build(),
                     TimeSlot.builder().slotLabel("09:00 - 10:00").startTime(LocalTime.of(9, 0)).endTime(LocalTime.of(10, 0)).period(Period.MORNING).maxPatients(5).sortOrder(2).isActive(true).build(),
-                    TimeSlot.builder().slotLabel("10:00 - 11:00").startTime(LocalTime.of(11, 0)).endTime(LocalTime.of(11, 0)).period(Period.MORNING).maxPatients(5).sortOrder(3).isActive(true).build(),
+                    TimeSlot.builder().slotLabel("10:00 - 11:00").startTime(LocalTime.of(10, 0)).endTime(LocalTime.of(11, 0)).period(Period.MORNING).maxPatients(5).sortOrder(3).isActive(true).build(),
                     TimeSlot.builder().slotLabel("11:00 - 12:00").startTime(LocalTime.of(11, 0)).endTime(LocalTime.of(12, 0)).period(Period.MORNING).maxPatients(5).sortOrder(4).isActive(true).build(),
                     TimeSlot.builder().slotLabel("13:00 - 14:00").startTime(LocalTime.of(13, 0)).endTime(LocalTime.of(14, 0)).period(Period.AFTERNOON).maxPatients(5).sortOrder(5).isActive(true).build(),
                     TimeSlot.builder().slotLabel("14:00 - 15:00").startTime(LocalTime.of(14, 0)).endTime(LocalTime.of(15, 0)).period(Period.AFTERNOON).maxPatients(5).sortOrder(6).isActive(true).build(),
                     TimeSlot.builder().slotLabel("15:00 - 16:00").startTime(LocalTime.of(15, 0)).endTime(LocalTime.of(16, 0)).period(Period.AFTERNOON).maxPatients(5).sortOrder(7).isActive(true).build(),
-                    TimeSlot.builder().slotLabel("16:00 - 17:00").startTime(LocalTime.of(16, 0)).endTime(LocalTime.of(17, 0)).period(Period.AFTERNOON).maxPatients(5).sortOrder(8).isActive(true).build()
+                    TimeSlot.builder().slotLabel("16:00 - 16:30").startTime(LocalTime.of(16, 0)).endTime(LocalTime.of(16, 30)).period(Period.AFTERNOON).maxPatients(5).sortOrder(8).isActive(true).build()
             );
             timeSlotRepository.saveAll(slots);
-            log.info("Đã khởi tạo thành công 8 khung giờ khám 60 phút (5 chỗ/slot).");
+            log.info("Đã khởi tạo thành công 8 khung giờ khám chuẩn (5 chỗ/slot, đóng cửa 16:30).");
         }
     }
 
@@ -74,7 +74,8 @@ public class DataSeederRunner implements ApplicationRunner {
         saveSettingIfMissing("max_profiles", "10", "Số hồ sơ người thân tối đa được tạo trên 1 tài khoản");
         saveSettingIfMissing("auto_invite", "0", "Tự động mời người kế tiếp vào ghế khi có ghế trống (1: bật, 0: tắt)");
         saveSettingIfMissing("reception_open", "08:00", "Giờ mở cửa tiếp nhận");
-        saveSettingIfMissing("reception_close", "17:00", "Giờ đóng cửa tiếp nhận");
+        saveSettingIfMissing("reception_close", "16:30", "Giờ đóng cửa tiếp nhận");
+        saveSettingIfMissing("working_hours", "8:00 - 16:30", "Giờ làm việc hiển thị trên web");
         saveSettingIfMissing("no_show_cancel_at", "17:00", "Giờ hệ thống tự động hủy các lịch chưa đến trong ngày");
     }
 

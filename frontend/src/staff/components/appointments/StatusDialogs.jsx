@@ -58,6 +58,15 @@ export function CheckinDialog({ appt, onClose, onDone }) {
     <TDialog title="Xác nhận check-in" onClose={onClose}>
       <div className="t-dialog-body">
         <Summary items={apptSummary(appt)} />
+        {appt.doctorOnDuty === false && (
+          <div className="t-tint-gold t-iconrow">
+            <Icon name="warning" size={26} strokeWidth={1.75} />
+            <p className="t-text">
+              Bác sĩ của phiếu này không trực ngày này. Vẫn có thể check-in cho bệnh nhân,
+              nhưng nên đổi bác sĩ ở màn hình Lịch trong ngày.
+            </p>
+          </div>
+        )}
         <p className="t-text">
           Xác nhận bệnh nhân <strong className="t-strong">đã có mặt</strong> tại phòng khám. Hệ thống sẽ ghi nhận thời điểm tiếp nhận là{' '}
           <strong className="t-strong">{fmtTime(new Date()).replace(/^0/, '')}</strong>.

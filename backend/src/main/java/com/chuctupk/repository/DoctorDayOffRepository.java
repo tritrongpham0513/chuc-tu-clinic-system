@@ -2,6 +2,7 @@ package com.chuctupk.repository;
 
 import com.chuctupk.entity.DoctorDayOff;
 import com.chuctupk.entity.enums.Period;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,6 +15,11 @@ import java.util.List;
 public interface DoctorDayOffRepository extends JpaRepository<DoctorDayOff, Long> {
     List<DoctorDayOff> findByDoctorIdAndOffDate(Long doctorId, LocalDate offDate);
     boolean existsByDoctorIdAndOffDate(Long doctorId, LocalDate offDate);
+
+    @EntityGraph(attributePaths = "doctor")
+    List<DoctorDayOff> findByOffDateGreaterThanEqualOrderByOffDateAsc(LocalDate from);
+
+    List<DoctorDayOff> findByDoctorIdAndOffDateGreaterThanEqualOrderByOffDateAsc(Long doctorId, LocalDate from);
 
     @Query("SELECT COUNT(ddo) > 0 FROM DoctorDayOff ddo " +
            "WHERE ddo.doctor.id = :doctorId AND ddo.offDate = :offDate " +

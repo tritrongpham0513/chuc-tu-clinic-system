@@ -244,3 +244,39 @@
 .db-next li { align-items: center; }
 .db-next-no { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 999px; background: #e3b659; color: #2a2118; font-weight: 700; }
 .db-next-no.prio { background: #2f5f8f; color: #fff; }
+
+/* ---------- Quản lý lịch trực bác sĩ ---------- */
+.ds-tabs { display: flex; gap: 12px; border-bottom: 2px solid var(--line-soft); margin-bottom: 24px; }
+.ds-tab-btn { min-height: 48px; padding: 0 20px; font-size: 17px; font-weight: 600; background: transparent; border: 0; border-bottom: 3px solid transparent; color: var(--ink-700); cursor: pointer; transition: all 0.15s; margin-bottom: -2px; }
+.ds-tab-btn:hover { color: var(--green-700); }
+.ds-tab-btn[aria-selected='true'] { color: var(--green-700); border-bottom-color: var(--green-700); font-weight: 700; }
+
+.ds-matrix-wrap { overflow-x: auto; background: var(--surface-card); border: 1px solid var(--line-soft); border-radius: 20px; box-shadow: var(--shadow-sm); }
+.ds-table { width: 100%; border-collapse: collapse; min-width: 980px; }
+.ds-th, .ds-td { padding: 14px 12px; border: 1px solid var(--line-soft); vertical-align: top; }
+.ds-th { background: var(--surface-200); font-size: 16px; font-weight: 700; color: var(--ink-900); text-align: center; }
+.ds-th-doctor { text-align: left; min-width: 190px; }
+.ds-sticky-col { position: sticky; left: 0; background: var(--surface-card); z-index: 2; box-shadow: 2px 0 6px rgba(0,0,0,0.06); }
+.ds-th.ds-sticky-col { background: var(--surface-200); z-index: 3; }
+
+.ds-doc-info { display: flex; flex-direction: column; gap: 4px; }
+.ds-doc-name { font-size: 17px; font-weight: 700; color: var(--ink-900); }
+.ds-doc-meta { font-size: 14px; color: var(--ink-500); }
+.ds-row-actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+.ds-cell { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+.ds-shift-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.ds-shift-btn { min-height: 48px; padding: 0 4px; font-size: 15px; font-weight: 600; border-radius: 8px; border: 1.5px solid var(--line-strong); background: var(--surface-100); color: var(--ink-700); cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; justify-content: center; }
+.ds-shift-btn:hover { border-color: var(--green-700); background: var(--surface-card); }
+.ds-shift-btn[aria-pressed='true'] { background: var(--green-100); border-color: var(--green-700); color: var(--green-700); font-weight: 700; }
+
+.ds-chip { display: inline-flex; align-items: center; justify-content: center; padding: 3px 8px; border-radius: 6px; font-size: 13px; font-weight: 700; text-align: center; }
+.ds-chip-full { background: var(--green-100); color: var(--green-700); }
+.ds-chip-part { background: var(--gold-100); color: var(--gold-700); }
+.ds-chip-off { background: var(--surface-200); color: var(--ink-500); }
+
+.ds-bar { background: var(--gold-100); border: 1px solid var(--gold-500); border-radius: 16px; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.ds-badge-today { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--alert-100); color: var(--alert-700); font-weight: 700; font-size: 14px; }
+.ds-badge-soon { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--gold-100); color: var(--gold-700); font-weight: 700; font-size: 14px; }
+.ds-badge-normal { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--surface-200); color: var(--ink-700); font-weight: 600; font-size: 14px; }
+

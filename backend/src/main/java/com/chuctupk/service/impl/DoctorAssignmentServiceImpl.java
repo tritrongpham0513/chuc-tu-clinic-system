@@ -35,14 +35,11 @@ public class DoctorAssignmentServiceImpl implements DoctorAssignmentService {
 
     @Override
     @Transactional(readOnly = true)
-    public Doctor pickDoctor(LocalDate date, TimeSlot slot) {
-        if (date == null || slot == null) {
-            throw AppException.badRequest("Ngày khám hoặc khung giờ không hợp lệ");
+    public List<Long> findOnDutyDoctorIds(LocalDate date, Period period) {
+        if (date == null || period == null) {
+            return List.of();
         }
-
         DayOfWeek dow = DayOfWeek.from(date.getDayOfWeek());
-        Period period = slot.getPeriod();
-
         List<Long> scheduledDoctorIds = doctorScheduleRepository.findScheduledDoctorIds(dow, period);
         List<Long> offDoctorIds = doctorDayOffRepository.findDoctorIdsOffOnDateAndPeriod(date, period);
 
@@ -53,15 +50,39 @@ public class DoctorAssignmentServiceImpl implements DoctorAssignmentService {
                 .toList();
 
         if (availableDoctorIds.isEmpty()) {
-            throw AppException.unprocessable("Khung giờ này chưa có bác sĩ trực, cô chú chọn khung khác hoặc gọi hotline");
+            return List.of();
         }
 
         List<Doctor> doctors = doctorRepository.findAllById(availableDoctorIds);
-        List<Doctor> activeDoctors = doctors.stream()
+        return doctors.stream()
                 .filter(d -> Boolean.TRUE.equals(d.getIsActive()))
                 .filter(d -> d.getUser() == null || Boolean.TRUE.equals(d.getUser().getIsActive()))
+                .map(Doctor::getId)
                 .toList();
+    }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasDoctorOnDuty(LocalDate date, TimeSlot slot) {
+        if (date == null || slot == null || slot.getPeriod() == null) {
+            return false;
+        }
+        return !findOnDutyDoctorIds(date, slot.getPeriod()).isEmpty();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Doctor pickDoctor(LocalDate date, TimeSlot slot) {
+        if (date == null || slot == null) {
+            throw AppException.badRequest("Ngày khám hoặc khung giờ không hợp lệ");
+        }
+
+        List<Long> onDutyDoctorIds = findOnDutyDoctorIds(date, slot.getPeriod());
+        if (onDutyDoctorIds.isEmpty()) {
+            throw AppException.unprocessable("Khung giờ này chưa có bác sĩ trực, cô chú chọn khung khác hoặc gọi hotline");
+        }
+
+        List<Doctor> activeDoctors = doctorRepository.findAllById(onDutyDoctorIds);
         if (activeDoctors.isEmpty()) {
             throw AppException.unprocessable("Khung giờ này chưa có bác sĩ trực, cô chú chọn khung khác hoặc gọi hotline");
         }

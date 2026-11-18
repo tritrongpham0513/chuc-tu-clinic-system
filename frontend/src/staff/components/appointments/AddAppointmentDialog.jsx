@@ -216,7 +216,7 @@ export function AddAppointmentDialog({ patient: initialPatient, onClose, onBooke
             </span>
             <SlotChoices date={date} value={start} onChange={setStart} />
             <p className="t-text" style={{ color: 'var(--gold-700)', fontWeight: 600 }}>
-              Phòng khám nhận bệnh 8:00 – 17:00. Mỗi khung giờ tính cả tiếng (10:00 là từ 10:00 đến 11:00), khung đang diễn ra vẫn đặt được. Khung đã hết giờ trong hôm nay và
+              Phòng khám nhận bệnh 8:00 – 16:30. Mỗi khung giờ tính cả tiếng (10:00 là từ 10:00 đến 11:00, khung cuối 16:00 là đến 16:30), khung đang diễn ra vẫn đặt được. Khung đã hết giờ trong hôm nay và
               khung đã đủ 6 phiếu đặt trước hiện màu xám. Đặt hộ được từ hôm nay đến {maxDays} ngày sau.
             </p>
           </div>

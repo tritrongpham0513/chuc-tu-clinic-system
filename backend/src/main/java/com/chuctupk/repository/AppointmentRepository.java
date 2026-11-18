@@ -81,4 +81,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Object[]> findLatestCompletedVisitDates(@Param("patientIds") List<Long> patientIds);
 
     List<Appointment> findByAppointmentDateAndStatus(LocalDate appointmentDate, AppointmentStatus status);
+
+    long countByDoctorIdAndAppointmentDateAndStatusIn(Long doctorId, LocalDate appointmentDate, java.util.Collection<AppointmentStatus> statuses);
 }

@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, matchPath, useLocation, useNavigate } from 'react-router-dom';
 import { useDismiss } from '../../shared/lib/hooks.js';
-import { isAdmin, useSession } from '../../shared/lib/session.jsx';
+import { isAdmin, isDoctor, useSession } from '../../shared/lib/session.jsx';
 import { ROLE_LABELS } from '../../shared/lib/format.js';
 import { Icon } from '../../shared/ui/Icon.jsx';
 import './staff.css';
+
+const MY_SCHEDULE_NAV = { to: '/noi-bo/lich-cua-toi', label: 'Lịch trực của tôi', icon: 'calendar' };
 
 const STAFF_NAV = [
   { to: '/noi-bo/lich-trong-ngay', label: 'Lịch trong ngày', icon: 'calendar' },
@@ -14,6 +16,7 @@ const STAFF_NAV = [
 const ADMIN_NAV = [
   { to: '/noi-bo/quan-tri', label: 'Tổng quan', icon: 'dashboard', end: true },
   ...STAFF_NAV,
+  { to: '/noi-bo/quan-tri/lich-truc', label: 'Lịch trực bác sĩ', icon: 'calendar' },
   { to: '/noi-bo/quan-tri/bai-viet', label: 'Quản lý bài viết', icon: 'news' },
   { to: '/noi-bo/quan-tri/tai-khoan', label: 'Quản lý tài khoản', icon: 'userPlus' },
 ];
@@ -28,7 +31,11 @@ export function StaffLayout() {
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const admin = isAdmin(user);
-  const nav = admin ? ADMIN_NAV : STAFF_NAV;
+  const nav = admin
+    ? ADMIN_NAV
+    : isDoctor(user)
+    ? [...STAFF_NAV, MY_SCHEDULE_NAV]
+    : STAFF_NAV;
   const wide = WIDE.some((p) => matchPath(p, pathname));
   const extraWide = EXTRA_WIDE.some((p) => matchPath(p, pathname));
 

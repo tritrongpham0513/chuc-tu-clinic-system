@@ -24,6 +24,7 @@ const SLOT_REASON_LABELS = {
   OUTSIDE_RECEPTION: 'Ngoài giờ khám',
   SLOT_FULL: 'Đã hết chỗ',
   FULL: 'Đã hết chỗ',
+  NO_DOCTOR: 'Chưa có ca trực',
 };
 
 function formatSlotReason(reason) {

@@ -41,7 +41,7 @@ public class ClinicSettingServiceImpl implements ClinicSettingService {
     public static final int DEFAULT_PRIORITY_EARLY_MINUTES = 15;
     public static final LocalTime DEFAULT_NO_SHOW_CANCEL_AT = LocalTime.of(17, 0);
     public static final LocalTime DEFAULT_RECEPTION_OPEN = LocalTime.of(8, 0);
-    public static final LocalTime DEFAULT_RECEPTION_CLOSE = LocalTime.of(17, 0);
+    public static final LocalTime DEFAULT_RECEPTION_CLOSE = LocalTime.of(16, 30);
     public static final boolean DEFAULT_AUTO_INVITE = false;
 
     private static final long CACHE_TTL_MS = 5 * 60 * 1000L; // 5 phút
@@ -115,7 +115,7 @@ public class ClinicSettingServiceImpl implements ClinicSettingService {
 
     @Override
     public LocalTime getReceptionClose() {
-        String val = getSettingValue(KEY_RECEPTION_CLOSE, "17:00");
+        String val = getSettingValue(KEY_RECEPTION_CLOSE, "16:30");
         try {
             return LocalTime.parse(val.trim());
         } catch (DateTimeParseException e) {

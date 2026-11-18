@@ -1,0 +1,343 @@
+/* =========================================================================
+   Giao diện Lịch trực của tôi (Dành riêng cho Bác sĩ)
+   Thiết kế chuẩn hệ thống Phòng khám Chúc Từ:
+   - Tông màu Warm Herbal & Wood (Xanh thảo mộc & Nâu gỗ)
+   - Tương thích 100% Dark Mode & Light Mode qua Semantic Tokens
+   - Font chữ to rõ, tương phản cao, thân thiện với bác sĩ và nhân viên
+   ========================================================================= */
+
+/* Dòng mô tả đầu trang: Khoảng cách thông thoáng với khung thẻ bên dưới */
+.ms-header {
+  margin-bottom: 32px;
+}
+
+.ms-lead {
+  font-size: 16px;
+  line-height: 25px;
+  color: var(--ink-700);
+  margin-top: 8px;
+}
+
+/* Thanh ghi chú ca trực */
+.ms-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  padding: 8px 14px;
+  background: var(--surface-100);
+  border-radius: 12px;
+  font-size: 14px;
+  color: var(--ink-700);
+  border: 1px solid var(--line-soft);
+}
+
+.ms-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ms-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.ms-legend-dot.full {
+  background: var(--green-600);
+}
+.ms-legend-dot.part {
+  background: var(--gold-500);
+}
+
+/* =========================================================================
+   1. MA TRẬN 7 NGÀY TRỰC TUẦN (DESKTOP)
+   ========================================================================= */
+.ms-matrix-desktop-wrap {
+  overflow-x: auto;
+  margin-top: 20px;
+  padding-bottom: 4px;
+}
+
+.ms-matrix-desktop {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(96px, 1fr));
+  gap: 8px;
+  min-width: 680px;
+}
+
+.ms-day-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 12px 8px 14px;
+  border: 1.5px solid var(--line-soft);
+  border-radius: 16px;
+  background-color: var(--surface-100);
+  text-align: center;
+  min-height: 168px;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ms-day-card:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Thẻ hôm nay: Nổi bật trang nhã bằng viền xanh thảo mộc */
+.ms-day-card.is-today {
+  border: 2px solid var(--green-600);
+  background-color: var(--surface-200);
+  box-shadow: 0 4px 16px rgba(46, 91, 55, 0.16);
+}
+
+/* Phần đầu thẻ ngày: Cố định chiều cao để 7 thẻ bằng nhau tăm tắp */
+.ms-day-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+/* Badge HÔM NAY trên thẻ */
+.ms-today-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff !important;
+  background-color: var(--green-700);
+  padding: 2px 8px;
+  border-radius: 9999px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 16px;
+  height: 20px;
+}
+
+/* Khoảng trống đồng kích thước với badge để các ngày khác không bị lệch */
+.ms-today-placeholder {
+  display: block;
+  height: 20px;
+  margin-bottom: 6px;
+  visibility: hidden;
+}
+
+.ms-day-name {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink-900);
+  line-height: 22px;
+}
+
+/* Khối chứa 2 ca Sáng & Chiều */
+.ms-shifts-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-top: auto;
+}
+
+/* Từng khối ca trực: Xếp 2 dòng (Tên ca ở trên, Trạng thái ở dưới) - Chống tràn 100% */
+.ms-slot-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 4px 7px;
+  border-radius: 10px;
+  gap: 2px;
+  transition: all 0.15s ease;
+}
+
+.ms-slot-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  opacity: 0.9;
+}
+
+.ms-slot-status {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+/* Trạng thái CÓ LỊCH TRỰC: Màu xanh thảo mộc tươi tắn */
+.ms-slot-box.is-active {
+  background-color: var(--green-100);
+  color: var(--green-700);
+  border: 1.5px solid var(--green-600);
+}
+
+.ms-slot-box.is-active .ms-slot-status {
+  color: var(--green-700);
+}
+
+/* Trạng thái NGHỈ: Màu trung tính dịu mắt */
+.ms-slot-box.is-off {
+  background-color: var(--surface-200);
+  color: var(--ink-500);
+  border: 1.5px dashed var(--line-strong);
+}
+
+.ms-slot-box.is-off .ms-slot-status {
+  color: var(--ink-500);
+  font-weight: 500;
+}
+
+/* =========================================================================
+   2. DANH SÁCH DỌC TRÊN DI ĐỘNG (< 820px)
+   ========================================================================= */
+.ms-matrix-mobile {
+  display: none;
+}
+
+@media (max-width: 820px) {
+  .ms-matrix-desktop-wrap {
+    display: none;
+  }
+
+  .ms-matrix-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .ms-mobile-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    border: 1.5px solid var(--line-soft);
+    border-radius: 14px;
+    background-color: var(--surface-100);
+    gap: 12px;
+  }
+
+  .ms-mobile-row.is-today {
+    border: 2px solid var(--green-600);
+    background-color: var(--surface-200);
+    box-shadow: 0 2px 10px rgba(46, 91, 55, 0.14);
+  }
+
+  .ms-mobile-day {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .ms-mobile-day-name {
+    font-family: var(--font-serif);
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--ink-900);
+  }
+
+  .ms-mobile-slots {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ms-mobile-slots .ms-slot-box {
+    flex-direction: row;
+    gap: 6px;
+    padding: 6px 12px;
+    min-width: 100px;
+  }
+}
+
+/* =========================================================================
+   3. BẢNG NGÀY NGHỈ SẮP TỚI
+   ========================================================================= */
+.ms-table-wrap {
+  margin-top: 16px;
+  border: 1px solid var(--line-soft);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--surface-card);
+}
+
+.ms-table-wrap .t-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ms-table-wrap th {
+  background: var(--surface-200);
+  color: var(--ink-900);
+  font-weight: 700;
+  font-size: 16px;
+  padding: 14px 18px;
+  text-align: left;
+  border-bottom: 2px solid var(--line-strong);
+}
+
+.ms-table-wrap td {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--ink-900);
+  vertical-align: middle;
+  font-size: 16px;
+}
+
+.ms-table-wrap tr:last-child td {
+  border-bottom: none;
+}
+
+.ms-table-wrap tbody tr:hover {
+  background-color: var(--surface-100);
+}
+
+.ms-date-cell {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Badge trạng thái ngày nghỉ */
+.ms-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.ms-badge-alert {
+  background-color: var(--alert-100);
+  color: var(--alert-700);
+  border: 1px solid var(--alert-700);
+}
+
+.ms-badge-gold {
+  background-color: var(--gold-100);
+  color: var(--gold-700);
+  border: 1px solid var(--gold-500);
+}
+
+.ms-period-pill {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  background-color: var(--surface-200);
+  color: var(--ink-700);
+  border: 1px solid var(--line-soft);
+}

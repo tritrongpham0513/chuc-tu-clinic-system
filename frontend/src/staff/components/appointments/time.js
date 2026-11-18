@@ -14,7 +14,7 @@ export const minutesOf = (hhmm) => {
   return h * 60 + m;
 };
 
-/** Đang trong giờ nhận bệnh (8:00 – 17:00, giờ Việt Nam). Chỉ hỗ trợ giao diện: Backend kiểm tra lại khi check-in. */
+/** Đang trong giờ nhận bệnh (8:00 – 16:30, giờ Việt Nam). Chỉ hỗ trợ giao diện: Backend kiểm tra lại khi check-in. */
 export function isReceivingNow() {
   const m = nowMinutesVN();
   return m >= minutesOf(RECEIVING_HOURS.open) && m < minutesOf(RECEIVING_HOURS.close);

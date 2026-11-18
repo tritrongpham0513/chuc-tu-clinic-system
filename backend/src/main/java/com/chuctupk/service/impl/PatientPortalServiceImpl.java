@@ -295,8 +295,19 @@ public class PatientPortalServiceImpl implements PatientPortalService {
             com.chuctupk.service.SlotPolicy.SlotStatus status = slotPolicy.evaluate(
                     date, slot, now, com.chuctupk.service.SlotPolicy.BookingChannel.PATIENT_PORTAL, remaining
             );
-            boolean available = (status == com.chuctupk.service.SlotPolicy.SlotStatus.OK);
-            String reason = !available ? status.toReason() : null;
+            boolean hasDoctor = doctorAssignmentService.hasDoctorOnDuty(date, slot);
+            boolean available = (status == com.chuctupk.service.SlotPolicy.SlotStatus.OK) && hasDoctor;
+
+            String reason;
+            if (status == com.chuctupk.service.SlotPolicy.SlotStatus.PAST) {
+                reason = "PAST";
+            } else if (!hasDoctor) {
+                reason = "NO_DOCTOR";
+            } else if (!available) {
+                reason = status.toReason();
+            } else {
+                reason = null;
+            }
 
             String start = slot.getStartTime().toString().substring(0, 5);
             String end = slot.getEndTime().toString().substring(0, 5);

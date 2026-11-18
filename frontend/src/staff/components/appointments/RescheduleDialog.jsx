@@ -39,7 +39,13 @@ export function SlotChoices({ date, value, onChange, current }) {
     const running = today && minutesOf(s.start) <= now && now < minutesOf(s.end);
     const full = s.booked >= s.capacity;
     const isCurrent = s.start === current;
-    const sub = full ? `Đã đủ ${s.capacity} phiếu đặt trước` : running ? 'Đang diễn ra' : null;
+    const sub = full
+      ? `Đã đủ ${s.capacity} phiếu đặt trước`
+      : running
+      ? 'Đang diễn ra'
+      : !s.available && s.reason === 'NO_DOCTOR'
+      ? 'Chưa có ca trực'
+      : null;
     return (
       <button
         key={s.start}

@@ -30,9 +30,9 @@ export const SERVICE_TYPES = {
 export const APPOINTMENT_STATUSES = ['BOOKED', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
 export const ACTIVE_STATUSES = ['BOOKED', 'CHECKED_IN', 'IN_PROGRESS'];
 
-// Giờ nhận bệnh (giờ Việt Nam), tất cả các ngày: chỉ check-in trong khoảng này, từ 17:00 là đóng cửa.
+// Giờ nhận bệnh (giờ Việt Nam), tất cả các ngày: chỉ check-in trong khoảng này, từ 16:30 là đóng cửa.
 // Từ noShowCancel, phiếu trong ngày còn Chưa đến tự chuyển sang Đã huỷ.
-export const RECEIVING_HOURS = { open: '08:00', close: '17:00', label: '8:00 – 17:00', noShowCancel: '17:15' };
+export const RECEIVING_HOURS = { open: '08:00', close: '16:30', label: '8:00 – 16:30', noShowCancel: '17:00' };
 export const STATUS_LABELS = {
   BOOKED: 'Chưa đến',
   CHECKED_IN: 'Đã check-in',

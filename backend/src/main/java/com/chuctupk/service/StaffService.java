@@ -13,6 +13,8 @@ public interface StaffService {
 
     StaffAppointmentListResponse getAppointments(LocalDate date);
 
+    StaffAppointmentListResponse getMyAppointments(LocalDate date, User currentUser);
+
     StaffAppointmentDatesResponse getAppointmentDates(String month);
 
     StaffAppointmentLookupResponse lookupAppointment(String code);
@@ -44,5 +46,7 @@ public interface StaffService {
     QueueStateDto undoEnter(Long id);
 
     QueueStateDto setAutoInvite(boolean enabled);
+
+    MyScheduleResponse getMySchedule(User currentUser);
 }
 

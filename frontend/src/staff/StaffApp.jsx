@@ -2,13 +2,14 @@ import { useEffect } from 'react';
 import { Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
 import { StaffLayout } from './components/StaffLayout.jsx';
 import { Empty, Loading } from '../shared/ui/ui.jsx';
-import { isAdmin, isStaff, useSession } from '../shared/lib/session.jsx';
+import { isAdmin, isDoctor, isStaff, useSession } from '../shared/lib/session.jsx';
 
 import StaffLogin from './pages/auth/StaffLogin.jsx';
 import { homeFor } from './lib/home.js';
 import ChangePassword from './pages/auth/ChangePassword.jsx';
 
 import DailySchedule from './pages/staff/DailySchedule.jsx';
+import MySchedule from './pages/staff/MySchedule.jsx';
 import Queue from './pages/staff/Queue.jsx';
 import QueueDisplay from './pages/staff/QueueDisplay.jsx';
 import Patients from './pages/staff/Patients.jsx';
@@ -17,6 +18,7 @@ import RecordForm from './pages/staff/RecordForm.jsx';
 import AccountInfo from './pages/staff/AccountInfo.jsx';
 
 import Dashboard from './pages/admin/Dashboard.jsx';
+import DoctorSchedules from './pages/admin/DoctorSchedules.jsx';
 import Accounts from './pages/admin/Accounts.jsx';
 import Posts from './pages/admin/Posts.jsx';
 import PostEditor from './pages/admin/PostEditor.jsx';
@@ -32,6 +34,13 @@ function RequireStaff({ admin, children }) {
   if (!isStaff(user)) return <Navigate to="/noi-bo/dang-nhap" replace />;
   if (user.mustChangePassword) return <Navigate to="/noi-bo/doi-mat-khau" replace />;
   if (admin && !isAdmin(user)) return <Navigate to="/noi-bo/lich-trong-ngay" replace />;
+  return children;
+}
+
+function RequireDoctor({ children }) {
+  const { user, loading } = useSession();
+  if (loading) return <Loading />;
+  if (!isDoctor(user)) return <Navigate to="/noi-bo/lich-trong-ngay" replace />;
   return children;
 }
 
@@ -82,6 +91,7 @@ export default function StaffApp() {
 
       <Route element={<RequireStaff><StaffLayout /></RequireStaff>}>
         <Route path="lich-trong-ngay" element={<DailySchedule />} />
+        <Route path="lich-cua-toi" element={<RequireDoctor><MySchedule /></RequireDoctor>} />
         <Route path="dat-ho" element={<CounterBookingRedirect />} />
         <Route path="hang-doi" element={<Queue />} />
         <Route path="benh-nhan" element={<Patients />} />
@@ -93,6 +103,7 @@ export default function StaffApp() {
 
       <Route element={<RequireStaff admin><StaffLayout /></RequireStaff>}>
         <Route path="quan-tri" element={<Dashboard />} />
+        <Route path="quan-tri/lich-truc" element={<DoctorSchedules />} />
         <Route path="quan-tri/tai-khoan" element={<Accounts />} />
         <Route path="quan-tri/bai-viet" element={<Posts />} />
         <Route path="quan-tri/bai-viet/moi" element={<PostEditor />} />

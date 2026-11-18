@@ -10,7 +10,7 @@ export const CLINIC = {
   // Zalo của phòng khám dùng cùng số điện thoại chính
   zaloUrl: 'https://zalo.me/0397116666',
   phone2: '0835 555 115',
-  hours: '8:00 – 17:00',
+  hours: '8:00 – 16:30',
   mapUrl: 'https://www.google.com/maps/search/?api=1&query=57%2F8-10+%C4%90i%E1%BB%87n+Bi%C3%AAn+Ph%E1%BB%A7%2C+B%C3%ACnh+Th%E1%BA%A1nh%2C+TP.HCM',
 };
 
@@ -29,23 +29,62 @@ export function weekday(dateStr) {
   return WEEKDAYS[parseDay(dateStr).getUTCDay()];
 }
 
+const VN_TZ = 'Asia/Ho_Chi_Minh';
+
+/**
+ * Tách ngày/giờ theo giờ Việt Nam.
+ * - Chuỗi KHÔNG có timezone ("2026-11-17 10:00:00"): backend đã gửi giờ tường VN
+ *   -> đọc thẳng các con số, KHÔNG cộng trừ gì.
+ * - Date hoặc chuỗi có Z/offset: quy đổi sang Asia/Ho_Chi_Minh.
+ * Trả null nếu không parse được.
+ */
+function vnParts(value) {
+  if (value == null || value === '') return null;
+
+  if (typeof value === 'string') {
+    const m = value.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::\d{2})?)?$/);
+    if (m) {
+      return {
+        y: +m[1],
+        m: +m[2],
+        d: +m[3],
+        h: m[4] != null ? +m[4] : null,
+        mi: m[5] != null ? +m[5] : null,
+      };
+    }
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: VN_TZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  })
+    .formatToParts(date)
+    .reduce((acc, p) => {
+      acc[p.type] = p.value;
+      return acc;
+    }, {});
+
+  return { y: +parts.year, m: +parts.month, d: +parts.day, h: +parts.hour, mi: +parts.minute };
+}
+
 /** 20/10/2026 */
 export function fmtDate(value) {
-  if (!value) return '—';
-  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    const [y, m, d] = value.split('-');
-    return `${d}/${m}/${y}`;
-  }
-  const d = new Date(value);
-  const vn = new Date(d.getTime() + 7 * 3600_000);
-  return `${pad(vn.getUTCDate())}/${pad(vn.getUTCMonth() + 1)}/${vn.getUTCFullYear()}`;
+  const p = vnParts(value);
+  return p ? `${pad(p.d)}/${pad(p.m)}/${p.y}` : '—';
 }
 
 /** 09:05 theo giờ Việt Nam */
 export function fmtTime(value) {
-  if (!value) return '—';
-  const vn = new Date(new Date(value).getTime() + 7 * 3600_000);
-  return `${pad(vn.getUTCHours())}:${pad(vn.getUTCMinutes())}`;
+  const p = vnParts(value);
+  return p && p.h != null ? `${pad(p.h)}:${pad(p.mi)}` : '—';
 }
 
 /** "08:00" → "8:00 – 9:00" */

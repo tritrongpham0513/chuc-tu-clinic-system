@@ -60,7 +60,7 @@ export function stateNote(a, isToday) {
   return '';
 }
 
-export function RowMenu({ a, isToday, isPast, open, onToggle, act }) {
+export function RowMenu({ a, isToday, isPast, open, onToggle, act, canChangeDoctor = true }) {
   const location = useLocation();
   const ref = useDismiss(open, onToggle);
   const { menuRef, up } = useMenuPlacement(open, ref);
@@ -73,6 +73,9 @@ export function RowMenu({ a, isToday, isPast, open, onToggle, act }) {
   }
   // Mời vào khám và hoàn tác vào khám chỉ làm ở trang Hàng đợi, để mọi thay đổi ghế nằm một chỗ
   if (a.status === 'BOOKED' && !isPast) items.push(['reschedule', 'clock', 'Đổi giờ khám']);
+  if (canChangeDoctor && (a.status === 'BOOKED' || a.status === 'CHECKED_IN') && !isPast) {
+    items.push(['change-doctor', 'userPlus', 'Đổi bác sĩ']);
+  }
   if (a.status === 'IN_PROGRESS') items.push(['record', 'file', 'Ghi nhận lượt khám']);
   if (a.status === 'COMPLETED') items.push(['record', 'file', 'Xem lượt khám']);
   items.push(['patient', 'user', 'Mở hồ sơ bệnh nhân']);

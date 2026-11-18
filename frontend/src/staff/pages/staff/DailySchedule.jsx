@@ -11,7 +11,9 @@ import { Pager } from '../../components/Pager.jsx';
 import { AddAppointmentDialog } from '../../components/appointments/AddAppointmentDialog.jsx';
 import { CancelDialog, CheckinDialog, UndoCheckinDialog } from '../../components/appointments/StatusDialogs.jsx';
 import { RescheduleDialog } from '../../components/appointments/RescheduleDialog.jsx';
+import { ChangeDoctorDialog } from '../../components/appointments/ChangeDoctorDialog.jsx';
 import { StatusChip, stateNote, RowMenu } from './scheduleParts.jsx';
+import { useSession, isDoctor } from '../../../shared/lib/session.jsx';
 
 const PER_PAGE = 10;
 
@@ -43,6 +45,9 @@ const norm = (t) =>
 /** Lịch trong ngày: lọc trạng thái, tra cứu, check-in, đổi giờ, huỷ, hoàn tác check-in (mời vào khám ở trang Hàng đợi) (UC.7.1 – UC.7.7). */
 export default function DailySchedule() {
   useDocumentTitle('Lịch trong ngày');
+  const { user } = useSession();
+  const doctorView = isDoctor(user);
+  const [mine, setMine] = useState(() => isDoctor(user));
   const [params, setParams] = useSearchParams();
   const today = todayVN();
   const date = params.get('ngay') || today;
@@ -61,7 +66,10 @@ export default function DailySchedule() {
   const [marked, setMarked] = useState(() => new Set());
   const calRef = useDismiss(calOpen, () => setCalOpen(false));
 
-  const { data, loading, error: loadError, reload } = useAsync(() => api.get(`/staff/appointments${qs({ date })}`), [date]);
+  const { data, loading, error: loadError, reload } = useAsync(
+    () => api.get(`/staff/appointments${qs({ date, mine: mine && doctorView ? 1 : undefined })}`),
+    [date, mine]
+  );
 
   // Mở sẵn hộp thoại Thêm lịch khám: ?them=1, hoặc ?dat=<mã hồ sơ> để vào thẳng bước chọn giờ
   useEffect(() => {
@@ -165,6 +173,7 @@ export default function DailySchedule() {
     if (key === 'checkin') return setDialog({ type: 'checkin', appt: a });
     if (key === 'undo-checkin') return setDialog({ type: 'undo', appt: a });
     if (key === 'reschedule') return setDialog({ type: 'reschedule', appt: a });
+    if (key === 'change-doctor') return setDialog({ type: 'change-doctor', appt: a });
     if (key === 'cancel') return setDialog({ type: 'cancel', appt: a });
   };
 
@@ -267,7 +276,11 @@ export default function DailySchedule() {
 
       <div className="t-stats">
         <div className="t-stat">
-          <p>{isToday ? 'Tổng lịch hôm nay' : `Tổng lịch ngày ${fmtDate(date).slice(0, 5)}`}</p>
+          <p>
+            {mine && doctorView
+              ? 'Tổng lịch của tôi'
+              : isToday ? 'Tổng lịch hôm nay' : `Tổng lịch ngày ${fmtDate(date).slice(0, 5)}`}
+          </p>
           <p>{active.length}</p>
         </div>
         <div className="t-stat green">
@@ -291,22 +304,53 @@ export default function DailySchedule() {
         <p className="t-label" style={{ padding: '20px 24px 12px' }}>
           Lịch khám {dayLabel} — {rows.length} lượt
         </p>
-        <div role="group" aria-label="Lọc theo trạng thái" className="t-filters" style={{ padding: '0 24px 18px' }}>
-          {FILTERS.map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              className="t-filter"
-              aria-pressed={filter === key}
-              onClick={() => {
-                setFilter(key);
-                setPage(1);
-              }}
-            >
-              {label}
-              <span className="t-filter-n">{key === 'all' ? all.length : count(key)}</span>
-            </button>
-          ))}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', padding: '0 24px 18px' }}>
+          {doctorView && (
+            <div role="group" aria-label="Phạm vi lịch khám" style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                className="t-filter"
+                aria-pressed={mine}
+                onClick={() => {
+                  setMine(true);
+                  setPage(1);
+                }}
+              >
+                Lịch của tôi
+              </button>
+              <button
+                type="button"
+                className="t-filter"
+                aria-pressed={!mine}
+                onClick={() => {
+                  setMine(false);
+                  setPage(1);
+                }}
+              >
+                Cả phòng khám
+              </button>
+            </div>
+          )}
+          {doctorView && mine && (
+            <span className="t-text">Số liệu phía trên chỉ tính phiếu của bạn.</span>
+          )}
+          <div role="group" aria-label="Lọc theo trạng thái" className="t-filters">
+            {FILTERS.map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                className="t-filter"
+                aria-pressed={filter === key}
+                onClick={() => {
+                  setFilter(key);
+                  setPage(1);
+                }}
+              >
+                {label}
+                <span className="t-filter-n">{key === 'all' ? all.length : count(key)}</span>
+              </button>
+            ))}
+          </div>
         </div>
         {loading && !data && <Loading />}
         {data && all.length > 0 && rows.length > 0 && (
@@ -326,6 +370,9 @@ export default function DailySchedule() {
                 </div>
                 <div role="columnheader" className="t-th">
                   Giờ khám dự kiến
+                </div>
+                <div role="columnheader" className="t-th">
+                  Bác sĩ
                 </div>
                 <div role="columnheader" className="t-th">
                   Trạng thái
@@ -362,6 +409,12 @@ export default function DailySchedule() {
                         {shortTime(a.slotStart)}
                       </div>
                       <div role="cell" className="t-td">
+                        <span className={a.doctor ? 't-td-name' : 't-td-sub'}>{a.doctor || 'Chưa phân công'}</span>
+                        {a.status !== 'CANCELLED' && a.doctorOnDuty === false && (
+                          <span className="t-doctor-warn">Bác sĩ không trực ngày này</span>
+                        )}
+                      </div>
+                      <div role="cell" className="t-td">
                         <StatusChip a={a} />
                         {note && <span className="t-state-note">{note}</span>}
                       </div>
@@ -373,6 +426,7 @@ export default function DailySchedule() {
                           open={menu === a.id}
                           onToggle={() => setMenu((m) => (m === a.id ? null : a.id))}
                           act={act}
+                          canChangeDoctor={!doctorView}
                         />
                       </div>
                       {a.status === 'CANCELLED' && (
@@ -397,9 +451,11 @@ export default function DailySchedule() {
         )}
         {data && all.length === 0 && (
           <div className="t-empty">
-            <p>Ngày này chưa có lịch khám</p>
+            <p>{mine && doctorView ? 'Hôm nay bạn chưa có bệnh nhân nào được phân công.' : 'Ngày này chưa có lịch khám'}</p>
             <p className="t-text">
-              Bệnh nhân muốn khám ngày này thì bấm <strong>Thêm lịch khám</strong> để đặt hộ.
+              {mine && doctorView
+                ? 'Khi có bệnh nhân đặt lịch hoặc lễ tân phân công, phiếu khám sẽ hiện ở đây.'
+                : <>Bệnh nhân muốn khám ngày này thì bấm <strong>Thêm lịch khám</strong> để đặt hộ.</>}
             </p>
           </div>
         )}
@@ -421,6 +477,7 @@ export default function DailySchedule() {
       {dialog?.type === 'checkin' && <CheckinDialog appt={dialog.appt} onClose={() => setDialog(null)} onDone={done} />}
       {dialog?.type === 'undo' && <UndoCheckinDialog appt={dialog.appt} onClose={() => setDialog(null)} onDone={done} />}
       {dialog?.type === 'reschedule' && <RescheduleDialog appt={dialog.appt} onClose={() => setDialog(null)} onDone={done} />}
+      {dialog?.type === 'change-doctor' && <ChangeDoctorDialog appt={dialog.appt} onClose={() => setDialog(null)} onDone={done} />}
       {dialog?.type === 'cancel' && <CancelDialog appt={dialog.appt} onClose={() => setDialog(null)} onDone={done} />}
     </>
   );

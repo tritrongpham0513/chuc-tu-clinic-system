@@ -2,10 +2,22 @@ package com.chuctupk.service;
 
 import com.chuctupk.entity.Doctor;
 import com.chuctupk.entity.TimeSlot;
+import com.chuctupk.entity.enums.Period;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public interface DoctorAssignmentService {
+
+    /**
+     * Tìm danh sách ID bác sĩ trực ca hợp lệ (có lịch trực, không nghỉ, đang hoạt động).
+     */
+    List<Long> findOnDutyDoctorIds(LocalDate date, Period period);
+
+    /**
+     * Kiểm tra xem khung giờ tại ngày khám có bác sĩ nào trực hay không.
+     */
+    boolean hasDoctorOnDuty(LocalDate date, TimeSlot slot);
 
     /**
      * Tự động chọn bác sĩ trực phù hợp nhất cho khung giờ khám:

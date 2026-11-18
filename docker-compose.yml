@@ -29,7 +29,6 @@ services:
       - --default-authentication-plugin=mysql_native_password
     volumes:
       - chuctupk_mysql_data:/var/lib/mysql
-      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD:-root} || exit 1"]
       interval: 5s
@@ -58,13 +57,13 @@ services:
       DDL_AUTO: ${DDL_AUTO:-validate}
       UPLOAD_DIR: /app/uploads
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
-      OTP_EXPOSE_DEV_CODE: ${OTP_EXPOSE_DEV_CODE:-true}
+      OTP_EXPOSE_DEV_CODE: ${OTP_EXPOSE_DEV_CODE:-false}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:*,http://127.0.0.1:*,http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,https://*.vercel.app,https://*.onrender.com}
       DB_URL: jdbc:mysql://mysql:3306/${DB_NAME:-phongkham_chuctu}?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
       DB_USERNAME: root
       DB_PASSWORD: ${DB_ROOT_PASSWORD:-root}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-MatKhauAdmin@2026}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Bắt buộc đặt ADMIN_PASSWORD trong file .env}
       ADMIN_PHONE: ${ADMIN_PHONE:-0912345678}
       ADMIN_FULL_NAME: ${ADMIN_FULL_NAME:-Quản trị viên Phòng khám}
       SMS_ENABLED: ${SMS_ENABLED:-false}

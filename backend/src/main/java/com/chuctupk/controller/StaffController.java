@@ -6,6 +6,7 @@ import com.chuctupk.dto.request.RescheduleAppointmentRequest;
 import com.chuctupk.dto.request.StaffCreateAppointmentRequest;
 import com.chuctupk.dto.response.*;
 import com.chuctupk.entity.User;
+import com.chuctupk.exception.AppException;
 import com.chuctupk.service.StaffService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -42,11 +43,26 @@ public class StaffController {
         return ResponseEntity.ok(ApiResponse.success(badges, "Lấy thông tin huy hiệu thành công"));
     }
 
+    @GetMapping("/my-schedule")
+    @Operation(summary = "Bác sĩ xem lịch trực tuần và ngày nghỉ sắp tới của chính mình")
+    public ResponseEntity<ApiResponse<MyScheduleResponse>> getMySchedule(
+            @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                staffService.getMySchedule(currentUser),
+                "Lấy lịch trực thành công"));
+    }
+
     @GetMapping("/appointments")
-    @Operation(summary = "Lấy danh sách lịch khám theo ngày kèm thống kê")
+    @Operation(summary = "Danh sách lịch khám theo ngày (bác sĩ có thể chỉ xem lịch của mình)")
     public ResponseEntity<ApiResponse<StaffAppointmentListResponse>> getAppointments(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        StaffAppointmentListResponse response = staffService.getAppointments(date);
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false, defaultValue = "false") boolean mine,
+            @AuthenticationPrincipal User currentUser) {
+        boolean doctorMine = mine && currentUser != null
+                && currentUser.getRole() == com.chuctupk.entity.enums.Role.DOCTOR;
+        StaffAppointmentListResponse response = doctorMine
+                ? staffService.getMyAppointments(date, currentUser)
+                : staffService.getAppointments(date);
         return ResponseEntity.ok(ApiResponse.success(response, "Lấy danh sách lịch hẹn thành công"));
     }
 
@@ -112,10 +128,16 @@ public class StaffController {
     }
 
     @PatchMapping("/appointments/{id}/doctor")
-    @Operation(summary = "Phân công hoặc đổi bác sĩ khám")
+    @Operation(summary = "Phân công hoặc đổi bác sĩ khám (chỉ lễ tân/quản trị viên)")
     public ResponseEntity<ApiResponse<Map<String, Object>>> assignDoctor(
             @PathVariable Long id,
-            @RequestParam Long doctorId) {
+            @RequestParam Long doctorId,
+            @AuthenticationPrincipal User currentUser) {
+        if (currentUser != null
+                && currentUser.getRole() == com.chuctupk.entity.enums.Role.DOCTOR) {
+            throw AppException.forbidden(
+                    "Chỉ lễ tân hoặc quản trị viên được đổi bác sĩ của phiếu khám.");
+        }
         doctorAssignmentService.assignDoctor(id, doctorId);
         return ResponseEntity.ok(ApiResponse.success(
                 Map.of("appointmentId", id, "doctorId", doctorId),
