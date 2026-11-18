@@ -116,74 +116,13 @@ class AppointmentControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/appointments -> 201 Created kèm header Location")
-    void testCreateAppointment_CreatedWithLocationHeader() throws Exception {
-        AppointmentCreateRequest req = AppointmentCreateRequest.builder()
-                .fullName("Lê Văn T")
-                .phone("0987654321")
-                .yearOfBirth(1965)
-                .gender(Gender.MALE)
-                .appointmentDate(LocalDate.now().plusDays(2))
-                .timeSlotId(1L)
-                .build();
-
-        AppointmentResponse res = AppointmentResponse.builder()
-                .bookingCode("PKCT-20261102-1234")
-                .patientName("Lê Văn T")
-                .appointmentDate(req.getAppointmentDate())
-                .status(AppointmentStatus.PENDING)
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        when(appointmentService.createAppointment(any())).thenReturn(res);
-
+    @DisplayName("POST /api/v1/appointments -> Endpoint đã bị loại bỏ (404 Not Found)")
+    void testCreateAppointment_Removed() throws Exception {
         mockMvc.perform(post("/api/v1/appointments")
                         .header("Authorization", "Bearer " + getValidToken())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/api/v1/appointments/PKCT-20261102-1234"))
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.bookingCode").value("PKCT-20261102-1234"));
-    }
-
-    @Test
-    @DisplayName("POST /api/v1/appointments -> 400 Bad Request khi sai số điện thoại")
-    void testCreateAppointment_InvalidPhone() throws Exception {
-        AppointmentCreateRequest req = AppointmentCreateRequest.builder()
-                .fullName("Lê Văn T")
-                .phone("0123456789") // Đầu số 012 cũ không hợp lệ
-                .yearOfBirth(1965)
-                .gender(Gender.MALE)
-                .appointmentDate(LocalDate.now().plusDays(2))
-                .timeSlotId(1L)
-                .build();
-
-        mockMvc.perform(post("/api/v1/appointments")
-                        .header("Authorization", "Bearer " + getValidToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.fields.phone", notNullValue()));
-    }
-
-    @Test
-    @DisplayName("POST /api/v1/appointments -> 401 Unauthorized khi không có token")
-    void testCreateAppointment_UnauthorizedWithoutToken() throws Exception {
-        AppointmentCreateRequest req = AppointmentCreateRequest.builder()
-                .fullName("Lê Văn T")
-                .phone("0987654321")
-                .yearOfBirth(1965)
-                .gender(Gender.MALE)
-                .appointmentDate(LocalDate.now().plusDays(2))
-                .timeSlotId(1L)
-                .build();
-
-        mockMvc.perform(post("/api/v1/appointments")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isUnauthorized());
+                        .content("{}"))
+                .andExpect(status().isNotFound());
     }
 
     @Test

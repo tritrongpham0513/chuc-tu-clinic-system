@@ -101,14 +101,18 @@ public class SmsServiceImpl implements SmsService {
         }
     }
 
+    String buildEsmsContent(String content, String otpCode) {
+        return (otpCode != null && brandname != null && !brandname.isBlank())
+                ? String.format("Ma xac nhan cua ban la %s", otpCode)
+                : content;
+    }
+
     private boolean sendRealSms(String phone, String content, String otpCode) throws Exception {
         log.info("Đang gửi SMS thật qua nhà cung cấp [{}] đến số {}...", provider, PhoneValidator.mask(phone));
 
         if ("esms".equalsIgnoreCase(provider)) {
             // eSMS Brandname CSKH yêu cầu đúng cú pháp template đã duyệt với nhà mạng: "Ma xac nhan cua ban la {P}"
-            String esmsContent = (brandname != null && !brandname.isBlank())
-                    ? String.format("Ma xac nhan cua ban la %s", otpCode)
-                    : content;
+            String esmsContent = buildEsmsContent(content, otpCode);
             return sendViaEsms(phone, esmsContent);
         } else {
             return sendViaSpeedSms(phone, content);

@@ -37,8 +37,9 @@ public class StaffRecordController {
     @GetMapping("/records/{id}")
     @Operation(summary = "Xem chi tiết phiếu kết quả khám bệnh kèm lịch sử chỉnh sửa")
     public ResponseEntity<ApiResponse<RecordDetailResponse>> getRecord(
+            @AuthenticationPrincipal User staff,
             @PathVariable Long id) {
-        RecordDetailResponse response = staffRecordService.getRecord(id);
+        RecordDetailResponse response = staffRecordService.getRecord(staff, id);
         return ResponseEntity.ok(ApiResponse.success(response, "Lấy thông tin phiếu kết quả thành công"));
     }
 

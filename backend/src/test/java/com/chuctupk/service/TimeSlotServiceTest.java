@@ -255,8 +255,25 @@ class TimeSlotServiceTest {
     @Test
     @DisplayName("5. Cả ngày không có bác sĩ trực: Trả về mảng rỗng với HTTP 200 (không ném lỗi 422)")
     void testWholeDayNoDoctors_ReturnsEmptyList200() {
-        // Ngày khám xa (sau 6 ngày) không có xếp lịch nào
+        // Ngày khám xa (sau 6 ngày) và đăng ký nghỉ cho toàn bộ bác sĩ trực
         LocalDate futureDate = LocalDate.now(clock).plusDays(6);
+        DayOfWeek futureDow = DayOfWeek.from(futureDate.getDayOfWeek());
+        java.util.Set<Long> scheduledDoctorIds = new java.util.HashSet<>();
+        scheduledDoctorIds.addAll(doctorScheduleRepository.findScheduledDoctorIds(futureDow, Period.MORNING));
+        scheduledDoctorIds.addAll(doctorScheduleRepository.findScheduledDoctorIds(futureDow, Period.AFTERNOON));
+        for (Long docId : scheduledDoctorIds) {
+            doctorRepository.findById(docId).ifPresent(d -> {
+                if (doctorDayOffRepository.findByDoctorIdAndOffDate(d.getId(), futureDate).isEmpty()) {
+                    doctorDayOffRepository.save(DoctorDayOff.builder()
+                            .doctor(d)
+                            .offDate(futureDate)
+                            .period(Period.FULL_DAY)
+                            .reason("Nghỉ đột xuất")
+                            .build());
+                }
+            });
+        }
+
         List<TimeSlotResponse> slots = timeSlotService.getAvailableTimeSlots(futureDate, null);
         assertNotNull(slots);
         assertTrue(slots.isEmpty(), "Ngày không có bác sĩ trực nào phải trả về mảng rỗng");
@@ -266,6 +283,23 @@ class TimeSlotServiceTest {
     @DisplayName("6. POST đặt lịch vào slot không có bác sĩ trực: Phải nhận lỗi 422 Unprocessable Entity")
     void testPostIntoSlotWithoutDoctor_Throws422() {
         LocalDate futureDate = LocalDate.now(clock).plusDays(6);
+        DayOfWeek futureDow = DayOfWeek.from(futureDate.getDayOfWeek());
+        java.util.Set<Long> scheduledDoctorIds = new java.util.HashSet<>();
+        scheduledDoctorIds.addAll(doctorScheduleRepository.findScheduledDoctorIds(futureDow, Period.MORNING));
+        scheduledDoctorIds.addAll(doctorScheduleRepository.findScheduledDoctorIds(futureDow, Period.AFTERNOON));
+        for (Long docId : scheduledDoctorIds) {
+            doctorRepository.findById(docId).ifPresent(d -> {
+                if (doctorDayOffRepository.findByDoctorIdAndOffDate(d.getId(), futureDate).isEmpty()) {
+                    doctorDayOffRepository.save(DoctorDayOff.builder()
+                            .doctor(d)
+                            .offDate(futureDate)
+                            .period(Period.FULL_DAY)
+                            .reason("Nghỉ đột xuất")
+                            .build());
+                }
+            });
+        }
+
         // futureDate không có bác sĩ nào trực ca sáng
         AppointmentCreateRequest req = AppointmentCreateRequest.builder()
                 .fullName("Bệnh nhân Đặt Slot Trống")

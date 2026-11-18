@@ -7,6 +7,7 @@ import com.chuctupk.dto.response.RecordDetailResponse;
 import com.chuctupk.entity.*;
 import com.chuctupk.entity.enums.AppointmentStatus;
 import com.chuctupk.entity.enums.CheckinStatus;
+import com.chuctupk.entity.enums.Role;
 import com.chuctupk.exception.AppException;
 import com.chuctupk.exception.ErrorCode;
 import com.chuctupk.repository.*;
@@ -46,8 +47,20 @@ public class StaffRecordServiceImpl implements StaffRecordService {
     @Override
     @Transactional
     public RecordDetailResponse createRecord(User staff, Long appointmentId, CreateRecordRequest request) {
+        if (staff == null || staff.getRole() != Role.DOCTOR) {
+            throw AppException.of(ErrorCode.FORBIDDEN, "Chỉ bác sĩ mới được lập phiếu kết quả");
+        }
+
         Appointment appt = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> AppException.notFound("Không tìm thấy phiếu khám"));
+
+        if (appt.getDoctor() == null) {
+            throw AppException.unprocessable("Phiếu khám chưa được gán bác sĩ");
+        }
+
+        if (appt.getDoctor().getUser() == null || !appt.getDoctor().getUser().getId().equals(staff.getId())) {
+            throw AppException.of(ErrorCode.FORBIDDEN, "Bạn không phụ trách phiếu khám này");
+        }
 
         if (medicalRecordRepository.findByAppointmentId(appointmentId).isPresent()) {
             throw AppException.of(ErrorCode.RECORD_EXISTS, "Phiếu khám này đã được lập kết quả khám bệnh");
@@ -63,17 +76,6 @@ public class StaffRecordServiceImpl implements StaffRecordService {
         }
 
         Doctor doctor = appt.getDoctor();
-        if (doctor == null && request.doctorName() != null && !request.doctorName().isBlank()) {
-            String dName = request.doctorName().trim();
-            doctor = doctorRepository.findAll().stream()
-                    .filter(d -> d.getFullName() != null && d.getFullName().equalsIgnoreCase(dName))
-                    .findFirst()
-                    .orElse(null);
-        }
-        if (doctor == null) {
-            doctor = doctorRepository.findAll().stream().findFirst().orElse(null);
-        }
-
         String doctorDisplayName = request.doctorName() != null && !request.doctorName().isBlank()
                 ? request.doctorName().trim()
                 : (doctor != null ? doctor.getFullName() : "BS. Nguyễn Văn Minh");
@@ -149,9 +151,39 @@ public class StaffRecordServiceImpl implements StaffRecordService {
 
     @Override
     @Transactional(readOnly = true)
-    public RecordDetailResponse getRecord(Long id) {
+    public RecordDetailResponse getRecord(User staff, Long id) {
+        if (staff == null) {
+            throw AppException.unauthorized("Chưa đăng nhập");
+        }
+
+        if (staff.getRole() != Role.ADMIN && staff.getRole() != Role.DOCTOR) {
+            throw AppException.of(ErrorCode.FORBIDDEN, "Bạn không có quyền xem phiếu kết quả khám này");
+        }
+
         MedicalRecord r = medicalRecordRepository.findById(id)
                 .orElseThrow(() -> AppException.notFound("Không tìm thấy phiếu kết quả khám"));
+
+        if (staff.getRole() == Role.DOCTOR) {
+            boolean isDoctorOfRecord = (r.getAppointment() != null && r.getAppointment().getDoctor() != null
+                    && r.getAppointment().getDoctor().getUser() != null
+                    && r.getAppointment().getDoctor().getUser().getId().equals(staff.getId()))
+                    || (r.getDoctor() != null && r.getDoctor().getUser() != null
+                    && r.getDoctor().getUser().getId().equals(staff.getId()));
+
+            boolean hasAppointmentWithDoctor = false;
+            if (r.getPatient() != null) {
+                Doctor doc = doctorRepository.findByUserId(staff.getId()).orElse(null);
+                if (doc != null) {
+                    hasAppointmentWithDoctor = appointmentRepository.findByPatientId(r.getPatient().getId())
+                            .stream()
+                            .anyMatch(a -> a.getDoctor() != null && doc.getId().equals(a.getDoctor().getId()));
+                }
+            }
+
+            if (!isDoctorOfRecord && !hasAppointmentWithDoctor) {
+                throw AppException.of(ErrorCode.FORBIDDEN, "Bạn không có quyền xem phiếu kết quả khám này");
+            }
+        }
 
         List<MedicalRecordEdit> edits = medicalRecordEditRepository.findByRecordIdOrderByEditedAtDesc(id);
         return new RecordDetailResponse(MedicalRecordPatientDto.from(r, true, edits, clock));
@@ -160,8 +192,18 @@ public class StaffRecordServiceImpl implements StaffRecordService {
     @Override
     @Transactional
     public RecordDetailResponse updateRecord(User staff, Long id, UpdateRecordRequest request) {
+        if (staff == null || staff.getRole() != Role.DOCTOR) {
+            throw AppException.of(ErrorCode.FORBIDDEN, "Chỉ bác sĩ mới được lập phiếu kết quả");
+        }
+
         MedicalRecord r = medicalRecordRepository.findById(id)
                 .orElseThrow(() -> AppException.notFound("Không tìm thấy phiếu kết quả khám"));
+
+        if (r.getAppointment() == null || r.getAppointment().getDoctor() == null
+                || r.getAppointment().getDoctor().getUser() == null
+                || !r.getAppointment().getDoctor().getUser().getId().equals(staff.getId())) {
+            throw AppException.of(ErrorCode.FORBIDDEN, "Bạn không phụ trách phiếu khám này");
+        }
 
         LocalDateTime created = r.getCreatedAt() != null ? r.getCreatedAt() : LocalDateTime.now(clock);
         LocalDateTime expiresAt = created.plusHours(24);

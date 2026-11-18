@@ -115,7 +115,7 @@ class V1StaffPatientAndRecordSliceTest {
         }
 
         @Override
-        public RecordDetailResponse getRecord(Long id) {
+        public RecordDetailResponse getRecord(User staff, Long id) {
             return new RecordDetailResponse(sampleRecord);
         }
 

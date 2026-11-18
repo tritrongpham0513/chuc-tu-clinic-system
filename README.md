@@ -38,8 +38,7 @@ Dành riêng cho đối tượng người bệnh lớn tuổi (50–80 tuổi) m
 chuc-tu-clinic-system/
 ├── frontend/           # React 18 (Vite) + Tailwind CSS + Nginx Reverse Proxy
 ├── backend/            # Java 17 + Spring Boot 4 (Clean Layered Architecture)
-├── database/           # Bộ script MySQL 8.0 migrations (001 - 008)
-├── docker/mysql/init/  # 10 file SQL tự động nạp khi container khởi tạo lần đầu
+├── backend/src/main/resources/db/migration/  # Flyway migration V1..V3 (tự chạy khi backend khởi động)
 ├── docs/               # OpenAPI spec (openapi-v1.yaml), smoke-test.http, changelog
 ├── docker-compose.yml  # File điều phối chạy 3 container (MySQL, Backend, Frontend)
 └── README.md           # Tài liệu hướng dẫn sử dụng (File này)
@@ -66,13 +65,25 @@ git clone -b feat/clinic-management-system https://github.com/tritrongpham0513/c
 cd chuc-tu-clinic-system
 ```
 
-### Bước 2: Khởi chạy toàn bộ hệ thống
+### Bước 2: Thiết lập biến môi trường
+Tạo file `.env` từ file mẫu trước khi khởi chạy:
+- Trên Windows (PowerShell):
+  ```powershell
+  Copy-Item .env.example .env
+  ```
+- Trên Linux / macOS:
+  ```bash
+  cp .env.example .env
+  ```
+> ⚠️ **Bắt buộc**: Mở file `.env` và đặt mật khẩu cho `ADMIN_PASSWORD` (tối thiểu 8 ký tự), do `docker-compose.yml` yêu cầu biến này để khởi tạo tài khoản quản trị viên ban đầu.
+
+### Bước 3: Khởi chạy toàn bộ hệ thống
 ```powershell
 docker compose up --build -d
 ```
 *(Lần đầu chạy, Docker sẽ tải image và build các service trong khoảng 1–2 phút. Các lần sau khởi động chỉ mất vài giây).*
 
-### Bước 3: Kiểm tra trạng thái các dịch vụ
+### Bước 4: Kiểm tra trạng thái các dịch vụ
 ```powershell
 docker compose ps
 ```
@@ -120,12 +131,12 @@ docker compose down -v
 - MySQL 8.0+ đang chạy ở cổng 3306
 
 ### Bước 1: Khởi tạo Database
-1. Tạo database:
+1. Tạo database rỗng:
    ```sql
    CREATE DATABASE phongkham_chuctu CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
    ```
-2. Chạy lần lượt các script trong thư mục `database/` (từ `001` đến `008`) hoặc `docker/mysql/init/` (từ `01` đến `10`).
-   > **Lưu ý quan trọng**: Hệ thống cấu hình `ddl-auto: validate` nên database bắt buộc phải được chạy đủ migrations (đặc biệt là 008 thêm cột `reschedule_count` và chuẩn hoá `slot_capacity`) trước khi backend khởi động.
+2. Không cần chạy script tay. Khi backend khởi động, Flyway tự áp dụng `backend/src/main/resources/db/migration/` (V1 tạo bảng, V2 seed dữ liệu nền, V3 seed bài viết). Với database đã có sẵn bảng, cấu hình `baseline-on-migrate: true` + `baseline-version: 0` sẽ đánh dấu baseline rồi áp dụng tiếp V2, V3.
+3. `ddl-auto: validate` nghĩa là entity phải khớp schema; nếu lệch, backend sẽ dừng ngay khi khởi động và in ra bảng/cột sai.
 
 ### Bước 2: Chạy Backend (Port 8080)
 1. Tạo file `backend/.env` từ file mẫu `.env.example`:
@@ -162,11 +173,13 @@ Hệ thống đã nạp sẵn các tài khoản mẫu để bạn có thể đă
 ### 1. Phân hệ Nội bộ (Đăng nhập tại `http://localhost:3000/noi-bo/`)
 | Vai trò | Tên đăng nhập | Email | Mật khẩu khởi tạo | Quyền hạn chính |
 | :--- | :--- | :--- | :--- | :--- |
-| **Quản trị viên (ADMIN)** | `admin` | `admin@chuctu.vn` | `MatKhauAdmin@2026` | Toàn quyền: Quản lý tài khoản, duyệt bài viết, xem dashboard thống kê |
-| **Bác sĩ (DOCTOR)** | `bacsi` | `bsnam@chuctu.vn` | `MatKhauAdmin@2026` | Gọi số khám, chẩn đoán, kê đơn, ghi nhận bệnh án |
-| **Tiếp tân (STAFF / RECEPTIONIST)** | `letan` | `letan@chuctu.vn` | `MatKhauAdmin@2026` | Tiếp đón, check-in bệnh nhân, xếp vào hàng đợi, đổi lịch hẹn |
+| **Quản trị viên (ADMIN)** | `admin` | `admin@chuctu.vn` | Giá trị `ADMIN_PASSWORD` (đặt trong `.env`) | Toàn quyền: Quản lý tài khoản, duyệt bài viết, xem dashboard thống kê |
+| **Bác sĩ 1 (DOCTOR)** | `bacsi` | `bsnam@chuctu.vn` | Giá trị `ADMIN_PASSWORD` (đặt trong `.env`) | Gọi số khám, chẩn đoán, kê đơn, ghi nhận bệnh án |
+| **Bác sĩ 2 (DOCTOR)** | `bacsi2` | `bshoa@chuctu.vn` | Giá trị `ADMIN_PASSWORD` (đặt trong `.env`) | Xem lịch trực của tôi, khám và ghi nhận kết quả khám |
+| **Tiếp tân 1 (STAFF)** | `letan` | `letan@chuctu.vn` | Giá trị `ADMIN_PASSWORD` (đặt trong `.env`) | Tiếp đón, check-in bệnh nhân, xếp vào hàng đợi, đổi lịch hẹn |
+| **Tiếp tân 2 (STAFF)** | `letan2` | `letan2@chuctu.vn` | Giá trị `ADMIN_PASSWORD` (đặt trong `.env`) | Lịch trong ngày, tra cứu và hỗ trợ bệnh nhân |
 
-> 💡 **Mẹo đăng nhập:** Bạn có thể đăng nhập bằng **Tên đăng nhập** (ví dụ: `admin`, `bacsi`, `letan`) hoặc **Email** đều được. Mật khẩu khởi tạo cho toàn bộ tài khoản mẫu là `MatKhauAdmin@2026`.
+> 💡 **Mẹo đăng nhập:** Bạn có thể đăng nhập bằng **Tên đăng nhập** (ví dụ: `admin`, `bacsi`, `bacsi2`, `letan`, `letan2`) hoặc **Email** đều được. Mật khẩu khởi tạo cho toàn bộ tài khoản mẫu được cấu hình đồng bộ qua biến `ADMIN_PASSWORD` trong file `.env`.
 
 ### 2. Cổng Người bệnh (Đăng nhập tại `http://localhost:3000/dang-nhap` hoặc khi Đặt lịch)
 - **Số điện thoại**: Bất kỳ số điện thoại hợp lệ tại Việt Nam (Ví dụ: `0987654321`, `0912345678`, `0901234567`).

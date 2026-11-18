@@ -9,7 +9,7 @@ public interface StaffRecordService {
 
     RecordDetailResponse createRecord(User staff, Long appointmentId, CreateRecordRequest request);
 
-    RecordDetailResponse getRecord(Long id);
+    RecordDetailResponse getRecord(User staff, Long id);
 
     RecordDetailResponse updateRecord(User staff, Long id, UpdateRecordRequest request);
 }

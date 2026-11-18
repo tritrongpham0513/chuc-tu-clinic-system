@@ -1,7 +1,6 @@
 package com.chuctupk.controller;
 
 import com.chuctupk.dto.request.AppointmentCancelRequest;
-import com.chuctupk.dto.request.AppointmentCreateRequest;
 import com.chuctupk.dto.response.ApiResponse;
 import com.chuctupk.dto.response.AppointmentResponse;
 import com.chuctupk.exception.AppException;
@@ -13,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
 import java.util.Deque;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -25,21 +23,6 @@ public class AppointmentController {
 
     private final AppointmentService appointmentService;
     private final ConcurrentHashMap<String, Deque<Long>> lookupRateLimit = new ConcurrentHashMap<>();
-
-    @PostMapping
-    public ResponseEntity<ApiResponse<AppointmentResponse>> createAppointment(
-            @Valid @RequestBody AppointmentCreateRequest request
-    ) {
-        AppointmentResponse response = appointmentService.createAppointment(request);
-        URI location = URI.create("/api/v1/appointments/" + response.getBookingCode());
-        return ResponseEntity.created(location)
-                .body(ApiResponse.<AppointmentResponse>builder()
-                        .success(true)
-                        .statusCode(201)
-                        .message("Đặt lịch khám thành công")
-                        .data(response)
-                        .build());
-    }
 
     @GetMapping("/{bookingCode}")
     public ResponseEntity<ApiResponse<AppointmentResponse>> getAppointment(
