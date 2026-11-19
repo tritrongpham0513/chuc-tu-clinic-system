@@ -6,6 +6,7 @@ import com.chuctupk.entity.enums.Role;
 import com.chuctupk.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
@@ -35,6 +36,28 @@ public class DataSeederRunner implements ApplicationRunner {
     private final ArticleRepository articleRepository;
     private final PatientRepository patientRepository;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${app.admin.password:}")
+    private String adminPassword;
+
+    @Value("${spring.profiles.active:}")
+    private String activeProfiles;
+
+    private static final String DEV_SEED_PASSWORD = "ChucTu@2026";
+    private static final String DEV_SEED_WARNING =
+            "Chưa đặt ADMIN_PASSWORD — dùng mật khẩu seed mặc định cho môi trường phát triển. KHÔNG dùng cho production.";
+
+    private String resolveSeedPassword() {
+        if (adminPassword != null && !adminPassword.isBlank()) {
+            return adminPassword;
+        }
+        if (activeProfiles != null && activeProfiles.contains("prod")) {
+            throw new IllegalStateException(
+                    "Thiếu ADMIN_PASSWORD ở môi trường production — không được seed tài khoản với mật khẩu mặc định.");
+        }
+        log.warn(DEV_SEED_WARNING);
+        return DEV_SEED_PASSWORD;
+    }
 
     @Override
     @Transactional
@@ -86,9 +109,9 @@ public class DataSeederRunner implements ApplicationRunner {
     }
 
     private void seedStaffAndDoctor() {
-        String defaultPwHash = passwordEncoder.encode("MatKhauAdmin@2026");
+        String defaultPwHash = passwordEncoder.encode(resolveSeedPassword());
 
-        // Tiếp tân
+        // Tiếp tân 1
         if (userRepository.findByUsername("letan").isEmpty()) {
             userRepository.save(User.builder()
                     .username("letan")
@@ -103,9 +126,25 @@ public class DataSeederRunner implements ApplicationRunner {
             log.info("Đã khởi tạo tài khoản tiếp tân 'letan'.");
         }
 
-        // Bác sĩ
-        if (userRepository.findByUsername("bacsi").isEmpty()) {
-            User doctorUser = userRepository.save(User.builder()
+        // Tiếp tân 2
+        if (userRepository.findByUsername("letan2").isEmpty()) {
+            userRepository.save(User.builder()
+                    .username("letan2")
+                    .passwordHash(defaultPwHash)
+                    .fullName("Lễ tân Trần Thị Mai")
+                    .phone("0901234568")
+                    .email("letan2@chuctu.vn")
+                    .role(Role.STAFF)
+                    .isActive(true)
+                    .mustChangePassword(false)
+                    .build());
+            log.info("Đã khởi tạo tài khoản tiếp tân 'letan2'.");
+        }
+
+        // Bác sĩ 1
+        User doctorUser1 = userRepository.findByUsername("bacsi").orElse(null);
+        if (doctorUser1 == null) {
+            doctorUser1 = userRepository.save(User.builder()
                     .username("bacsi")
                     .passwordHash(defaultPwHash)
                     .fullName("Bác sĩ Nguyễn Văn Minh")
@@ -115,21 +154,51 @@ public class DataSeederRunner implements ApplicationRunner {
                     .isActive(true)
                     .mustChangePassword(false)
                     .build());
-
-            if (doctorRepository.count() == 0) {
-                doctorRepository.save(Doctor.builder()
-                        .user(doctorUser)
-                        .fullName("Bác sĩ Nguyễn Văn Minh")
-                        .title("Bác sĩ Y học cổ truyền")
-                        .specialty("Cơ xương khớp & Châm cứu")
-                        .experienceYears(15)
-                        .bio("Bác sĩ Y học cổ truyền giàu kinh nghiệm bắt mạch và bốc thuốc nam")
-                        .phone("0911223344")
-                        .isActive(true)
-                        .sortOrder(1)
-                        .build());
-            }
             log.info("Đã khởi tạo tài khoản bác sĩ 'bacsi'.");
+        }
+        if (doctorRepository.findByUserId(doctorUser1.getId()).isEmpty()) {
+            doctorRepository.save(Doctor.builder()
+                    .user(doctorUser1)
+                    .fullName("Bác sĩ Nguyễn Văn Minh")
+                    .title("Bác sĩ Y học cổ truyền")
+                    .specialty("Cơ xương khớp & Châm cứu")
+                    .experienceYears(15)
+                    .bio("Bác sĩ Y học cổ truyền giàu kinh nghiệm bắt mạch và bốc thuốc nam")
+                    .phone("0911223344")
+                    .isActive(true)
+                    .sortOrder(1)
+                    .build());
+            log.info("Đã khởi tạo hồ sơ bác sĩ 'bacsi'.");
+        }
+
+        // Bác sĩ 2
+        User doctorUser2 = userRepository.findByUsername("bacsi2").orElse(null);
+        if (doctorUser2 == null) {
+            doctorUser2 = userRepository.save(User.builder()
+                    .username("bacsi2")
+                    .passwordHash(defaultPwHash)
+                    .fullName("Bác sĩ Lê Thị Hoa")
+                    .phone("0911223355")
+                    .email("bshoa@chuctu.vn")
+                    .role(Role.DOCTOR)
+                    .isActive(true)
+                    .mustChangePassword(false)
+                    .build());
+            log.info("Đã khởi tạo tài khoản bác sĩ 'bacsi2'.");
+        }
+        if (doctorRepository.findByUserId(doctorUser2.getId()).isEmpty()) {
+            doctorRepository.save(Doctor.builder()
+                    .user(doctorUser2)
+                    .fullName("Bác sĩ Lê Thị Hoa")
+                    .title("Bác sĩ Y học cổ truyền")
+                    .specialty("Dưỡng sinh & Phục hồi chức năng")
+                    .experienceYears(10)
+                    .bio("Bác sĩ chuyên khoa châm cứu bấm huyệt và dưỡng sinh phục hồi")
+                    .phone("0911223355")
+                    .isActive(true)
+                    .sortOrder(2)
+                    .build());
+            log.info("Đã khởi tạo hồ sơ bác sĩ 'bacsi2'.");
         }
     }
 

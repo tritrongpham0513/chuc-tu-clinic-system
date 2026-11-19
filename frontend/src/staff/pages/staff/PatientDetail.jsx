@@ -4,7 +4,7 @@ import { Icon } from '../../../shared/ui/Icon.jsx';
 import { ErrorAlert, Loading } from '../../../shared/ui/ui.jsx';
 import { api } from '../../../shared/lib/api.js';
 import { GENDERS, ageFrom, fmtDate, shortTime, todayVN } from '../../../shared/lib/format.js';
-import { isAdmin, useSession } from '../../../shared/lib/session.jsx';
+import { isAdmin, isDoctor, useSession } from '../../../shared/lib/session.jsx';
 import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { PatientFields, focusFirstError, patientBody, patientForm, validatePatient } from '../../../site/components/PatientFields.jsx';
 import { NoticeDialog, TDialog } from '../../components/dialogs.jsx';
@@ -96,6 +96,7 @@ function EditPatientDialog({ patient, onClose, onSaved }) {
 export default function PatientDetail() {
   const { id } = useParams();
   const { user } = useSession();
+  const canEditRecord = isAdmin(user) || isDoctor(user);
   const { data, loading, error, setData } = useAsync(() => api.get(`/staff/patients/${id}`), [id]);
   const [dialog, setDialog] = useState(null);
   const [notice, setNotice] = useState(null);
@@ -280,7 +281,7 @@ export default function PatientDetail() {
             records={data.records}
             locked={p.isLocked}
             onView={(r) => setDialog({ type: 'view', record: r })}
-            onEdit={p.isLocked ? null : (r) => setDialog({ type: 'editRecord', record: r })}
+            onEdit={p.isLocked || !canEditRecord ? null : (r) => setDialog({ type: 'editRecord', record: r })}
           />
         ) : (
           <p className="t-text">Hồ sơ này chưa có lượt khám nào.</p>
@@ -308,7 +309,7 @@ export default function PatientDetail() {
           patient={p}
           locked={p.isLocked}
           onClose={() => setDialog(null)}
-          onEdit={() => setDialog({ type: 'editRecord', record: dialog.record })}
+          onEdit={canEditRecord ? () => setDialog({ type: 'editRecord', record: dialog.record }) : undefined}
         />
       )}
       {dialog?.type === 'editRecord' && (
