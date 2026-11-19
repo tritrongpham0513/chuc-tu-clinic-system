@@ -1,9 +1,6 @@
 package com.chuctupk.controller;
 
-import com.chuctupk.dto.request.AutoInviteRequest;
-import com.chuctupk.dto.request.CancelAppointmentStaffRequest;
-import com.chuctupk.dto.request.RescheduleAppointmentRequest;
-import com.chuctupk.dto.request.StaffCreateAppointmentRequest;
+import com.chuctupk.dto.request.*;
 import com.chuctupk.dto.response.*;
 import com.chuctupk.entity.User;
 import com.chuctupk.exception.AppException;
@@ -210,6 +207,44 @@ public class StaffController {
         boolean enabled = request.enabled() != null && request.enabled();
         QueueStateDto response = staffService.setAutoInvite(enabled);
         return ResponseEntity.ok(ApiResponse.success(response, "Cập nhật chế độ tự động mời thành công"));
+    }
+
+    // =========================================================================
+    // 4. NHẮC LỊCH THỦ CÔNG 1 CLICK (SPRINT 2)
+    // =========================================================================
+
+    @GetMapping("/appointments/{id}/reminder-preview")
+    @Operation(summary = "Xem trước nội dung tin nhắn nhắc lịch (1 click) cho bệnh nhân")
+    public ResponseEntity<ApiResponse<ReminderPreviewDto>> getReminderPreview(@PathVariable Long id) {
+        ReminderPreviewDto response = staffService.getReminderPreview(id);
+        return ResponseEntity.ok(ApiResponse.success(response, "Lấy nội dung nhắc lịch thành công"));
+    }
+
+    @PostMapping("/appointments/{id}/reminder-mark-sent")
+    @Operation(summary = "Xác nhận lễ tân đã gửi tin nhắc lịch cho bệnh nhân")
+    public ResponseEntity<ApiResponse<ReminderMarkSentResponse>> markReminderSent(
+            @AuthenticationPrincipal User staff,
+            @PathVariable Long id,
+            @RequestBody(required = false) ReminderMarkSentRequest request) {
+        ReminderMarkSentResponse response = staffService.markReminderSent(staff, id, request);
+        return ResponseEntity.ok(ApiResponse.success(response, "Đã ghi nhận nhắc lịch thành công"));
+    }
+
+    @PostMapping("/appointments/reminder-bulk-preview")
+    @Operation(summary = "Xem trước nội dung nhắc lịch hàng loạt cho danh sách phiếu khám")
+    public ResponseEntity<ApiResponse<BulkReminderPreviewResponse>> bulkReminderPreview(
+            @RequestBody BulkReminderPreviewRequest request) {
+        BulkReminderPreviewResponse response = staffService.bulkReminderPreview(request);
+        return ResponseEntity.ok(ApiResponse.success(response, "Lấy nội dung nhắc lịch hàng loạt thành công"));
+    }
+
+    @PostMapping("/appointments/reminder-bulk-mark-sent")
+    @Operation(summary = "Đánh dấu tất cả phiếu đã chọn là đã gửi nhắc lịch")
+    public ResponseEntity<ApiResponse<BulkReminderMarkSentResponse>> bulkReminderMarkSent(
+            @AuthenticationPrincipal User staff,
+            @RequestBody BulkReminderMarkSentRequest request) {
+        BulkReminderMarkSentResponse response = staffService.bulkReminderMarkSent(staff, request);
+        return ResponseEntity.ok(ApiResponse.success(response, "Đã ghi nhận nhắc lịch hàng loạt thành công"));
     }
 }
 

@@ -202,6 +202,26 @@ class V1StaffControllerSliceTest {
         public MyScheduleResponse getMySchedule(User currentUser) {
             return MyScheduleResponse.builder().build();
         }
+
+        @Override
+        public ReminderPreviewDto getReminderPreview(Long id) {
+            return new ReminderPreviewDto(id, "0987 *** 321", "Nội dung nhắc", "MANUAL", "CT-PK-01", "Bệnh nhân", "0987654321");
+        }
+
+        @Override
+        public ReminderMarkSentResponse markReminderSent(User staff, Long id, com.chuctupk.dto.request.ReminderMarkSentRequest request) {
+            return new ReminderMarkSentResponse(id, "2026-11-20T09:15:00");
+        }
+
+        @Override
+        public BulkReminderPreviewResponse bulkReminderPreview(com.chuctupk.dto.request.BulkReminderPreviewRequest request) {
+            return new BulkReminderPreviewResponse(List.of(), List.of());
+        }
+
+        @Override
+        public BulkReminderMarkSentResponse bulkReminderMarkSent(User staff, com.chuctupk.dto.request.BulkReminderMarkSentRequest request) {
+            return new BulkReminderMarkSentResponse(List.of(), "2026-11-20T09:15:00");
+        }
     }
 
     @BeforeEach
@@ -395,6 +415,55 @@ class V1StaffControllerSliceTest {
                 .andExpect(jsonPath("$.success", is(true)))
                 .andExpect(jsonPath("$.data.newBookings", is(1)))
                 .andExpect(jsonPath("$.data.cancelledToday", is(0)));
+    }
+
+    // =========================================================================
+    // SPRINT 2: NHẮC LỊCH THỦ CÔNG 1 CLICK (SLICE TESTS)
+    // =========================================================================
+
+    @Test
+    @DisplayName("GET /api/v1/staff/appointments/{id}/reminder-preview - Lấy nội dung preview")
+    void testGetReminderPreview() throws Exception {
+        mockMvc.perform(get("/api/v1/staff/appointments/100/reminder-preview"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success", is(true)))
+                .andExpect(jsonPath("$.data.appointmentId", is(100)))
+                .andExpect(jsonPath("$.data.phone", is("0987 *** 321")))
+                .andExpect(jsonPath("$.data.channel", is("MANUAL")));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/staff/appointments/{id}/reminder-mark-sent - Xác nhận đã gửi")
+    void testMarkReminderSent() throws Exception {
+        mockMvc.perform(post("/api/v1/staff/appointments/100/reminder-mark-sent")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"note\":\"Lễ tân đã gọi\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success", is(true)))
+                .andExpect(jsonPath("$.data.appointmentId", is(100)))
+                .andExpect(jsonPath("$.data.reminderSentAt", is("2026-11-20T09:15:00")));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/staff/appointments/reminder-bulk-preview - Bulk preview")
+    void testBulkReminderPreview() throws Exception {
+        mockMvc.perform(post("/api/v1/staff/appointments/reminder-bulk-preview")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"ids\":[100, 101]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success", is(true)))
+                .andExpect(jsonPath("$.data.items", hasSize(0)));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/staff/appointments/reminder-bulk-mark-sent - Bulk mark sent")
+    void testBulkReminderMarkSent() throws Exception {
+        mockMvc.perform(post("/api/v1/staff/appointments/reminder-bulk-mark-sent")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"ids\":[100, 101]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success", is(true)))
+                .andExpect(jsonPath("$.data.reminderSentAt", is("2026-11-20T09:15:00")));
     }
 }
 

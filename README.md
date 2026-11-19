@@ -65,25 +65,18 @@ git clone -b feat/clinic-management-system https://github.com/tritrongpham0513/c
 cd chuc-tu-clinic-system
 ```
 
-### Bước 2: Thiết lập biến môi trường
-Tạo file `.env` từ file mẫu trước khi khởi chạy:
-- Trên Windows (PowerShell):
-  ```powershell
-  Copy-Item .env.example .env
-  ```
-- Trên Linux / macOS:
-  ```bash
-  cp .env.example .env
-  ```
-> ⚠️ **Bắt buộc**: Mở file `.env` và đặt mật khẩu cho `ADMIN_PASSWORD` (tối thiểu 8 ký tự), do `docker-compose.yml` yêu cầu biến này để khởi tạo tài khoản quản trị viên ban đầu.
-
-### Bước 3: Khởi chạy toàn bộ hệ thống
+### Bước 2: Khởi chạy toàn bộ hệ thống (1 Lệnh duy nhất)
 ```powershell
 docker compose up --build -d
 ```
+*(Docker sẽ tự động nạp toàn bộ cấu hình mặc định chuẩn, tải image, biên dịch Backend & Frontend và khởi tạo CSDL với tài khoản mẫu).*
+
+> 💡 **Tùy chọn (Nếu muốn tùy chỉnh cổng hoặc mật khẩu riêng - 2 lệnh)**:
+> 1. Tạo file cấu hình: `cp .env.example .env` (hoặc `Copy-Item .env.example .env` trên PowerShell).
+> 2. Khởi chạy: `docker compose up --build -d`.
 *(Lần đầu chạy, Docker sẽ tải image và build các service trong khoảng 1–2 phút. Các lần sau khởi động chỉ mất vài giây).*
 
-### Bước 4: Kiểm tra trạng thái các dịch vụ
+### Bước 3: Kiểm tra trạng thái các dịch vụ
 ```powershell
 docker compose ps
 ```
@@ -185,7 +178,10 @@ Hệ thống đã nạp sẵn các tài khoản mẫu để bạn có thể đă
 
 ### 2. Cổng Người bệnh (Đăng nhập tại `http://localhost:3000/dang-nhap` hoặc khi Đặt lịch)
 - **Số điện thoại**: Bất kỳ số điện thoại hợp lệ tại Việt Nam (Ví dụ: `0987654321`, `0912345678`, `0901234567`).
-- **Mã OTP xác thực (Môi trường Dev)**: Nhập mã cố định `123456` để đăng nhập ngay mà không cần gửi SMS thật.
+- **Lấy mã OTP xác thực**:
+  1. *Trực tiếp trên giao diện Web*: Khi bấm "Gửi mã", popup sẽ tự động hiện dòng nhắc: `Chưa nối dịch vụ tin nhắn, mã xác nhận là: XXXXXX`. Bạn chỉ việc nhập đúng 6 số đó.
+  2. *Qua Terminal Docker*: Chạy lệnh `docker compose logs -f backend`, terminal sẽ in ra: `🔑 [SMS OTP - CHẾ ĐỘ THỬ NGHIỆM] SĐT: ... | Mã OTP: XXXXXX`.
+  3. *Nhận SMS thật*: Điền cấu hình `SMS_API_KEY` từ eSMS.vn vào file `.env` và đặt `SMS_ENABLED=true`.
 
 ---
 

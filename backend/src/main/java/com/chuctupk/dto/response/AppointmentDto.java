@@ -31,7 +31,8 @@ public record AppointmentDto(
         String enteredAt,
         Map<String, Object> checkin,
         Boolean doctorOnDuty,
-        String doctorId
+        String doctorId,
+        String reminderSentAt
 ) {
     public AppointmentDto(
             String id,
@@ -77,25 +78,81 @@ public record AppointmentDto(
                 enteredAt,
                 checkin,
                 null,
+                null,
+                null
+        );
+    }
+
+    public AppointmentDto(
+            String id,
+            String bookingCode,
+            String ticketCode,
+            PatientDto patient,
+            String doctor,
+            String serviceType,
+            String slotDate,
+            String slotStart,
+            String slotEnd,
+            String expectedTime,
+            String status,
+            String source,
+            String cancelReason,
+            String bookerName,
+            String bookerPhone,
+            String createdAt,
+            String updatedAt,
+            String checkInAt,
+            String enteredAt,
+            Map<String, Object> checkin,
+            Boolean doctorOnDuty,
+            String doctorId
+    ) {
+        this(
+                id,
+                bookingCode,
+                ticketCode,
+                patient,
+                doctor,
+                serviceType,
+                slotDate,
+                slotStart,
+                slotEnd,
+                expectedTime,
+                status,
+                source,
+                cancelReason,
+                bookerName,
+                bookerPhone,
+                createdAt,
+                updatedAt,
+                checkInAt,
+                enteredAt,
+                checkin,
+                doctorOnDuty,
+                doctorId,
                 null
         );
     }
 
     public static AppointmentDto from(Appointment a) {
-        return from(a, (Checkin) null, null);
+        return from(a, (Checkin) null, null, null);
     }
 
     public static AppointmentDto from(Appointment a, Integer queueNo) {
         if (a == null) return null;
         Map<String, Object> checkinMap = queueNo != null ? Map.of("queueNo", queueNo) : null;
-        return buildDto(a, checkinMap, null);
+        return buildDto(a, checkinMap, null, null);
     }
 
     public static AppointmentDto from(Appointment a, Checkin checkin) {
-        return from(a, checkin, null);
+        return from(a, checkin, null, null);
     }
 
     public static AppointmentDto from(Appointment a, Checkin checkin, Boolean doctorOnDuty) {
+        return from(a, checkin, doctorOnDuty, null);
+    }
+
+    public static AppointmentDto from(Appointment a, Checkin checkin, Boolean doctorOnDuty, String reminderSentAt) {
         if (a == null) return null;
         Map<String, Object> checkinMap = null;
         if (checkin != null) {
@@ -108,10 +165,10 @@ public record AppointmentDto(
             checkinMap.put("checkInTime", ContractMapper.formatIso(checkin.getCheckInTime()));
             checkinMap.put("enteredAt", ContractMapper.formatIso(checkin.getEnteredAt()));
         }
-        return buildDto(a, checkinMap, doctorOnDuty);
+        return buildDto(a, checkinMap, doctorOnDuty, reminderSentAt);
     }
 
-    private static AppointmentDto buildDto(Appointment a, Map<String, Object> checkinMap, Boolean doctorOnDuty) {
+    private static AppointmentDto buildDto(Appointment a, Map<String, Object> checkinMap, Boolean doctorOnDuty, String reminderSentAt) {
         String slotStart = "08:00";
         String slotEnd = "09:00";
         if (a.getTimeSlot() != null) {
@@ -151,7 +208,8 @@ public record AppointmentDto(
                 ContractMapper.formatIso(a.getEnteredAt()),
                 checkinMap,
                 doctorOnDuty,
-                a.getDoctor() != null ? String.valueOf(a.getDoctor().getId()) : null
+                a.getDoctor() != null ? String.valueOf(a.getDoctor().getId()) : null,
+                reminderSentAt
         );
     }
 }

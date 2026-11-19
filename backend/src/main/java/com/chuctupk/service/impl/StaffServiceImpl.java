@@ -1,9 +1,8 @@
 package com.chuctupk.service.impl;
 
+import com.chuctupk.common.PhoneValidator;
 import com.chuctupk.common.mapping.ContractMapper;
-import com.chuctupk.dto.request.CancelAppointmentStaffRequest;
-import com.chuctupk.dto.request.RescheduleAppointmentRequest;
-import com.chuctupk.dto.request.StaffCreateAppointmentRequest;
+import com.chuctupk.dto.request.*;
 import com.chuctupk.dto.response.*;
 import com.chuctupk.entity.*;
 import com.chuctupk.entity.enums.AppointmentSource;
@@ -13,13 +12,15 @@ import com.chuctupk.entity.enums.Period;
 import com.chuctupk.entity.enums.PriorityGroup;
 import com.chuctupk.exception.AppException;
 import com.chuctupk.exception.ErrorCode;
+import com.chuctupk.notification.DeliveryResult;
+import com.chuctupk.notification.ManualProvider;
 import com.chuctupk.repository.*;
 import com.chuctupk.service.ClinicSettingService;
 import com.chuctupk.service.DoctorScheduleAdminService;
 import com.chuctupk.service.SequenceGeneratorService;
 import com.chuctupk.service.StaffService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -40,7 +41,6 @@ import static java.util.stream.Collectors.toSet;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class StaffServiceImpl implements StaffService {
 
     private final AppointmentRepository appointmentRepository;
@@ -58,6 +58,85 @@ public class StaffServiceImpl implements StaffService {
     private final com.chuctupk.service.NotificationService notificationService;
     private final SequenceGeneratorService sequenceGeneratorService;
     private final Clock clock;
+    private final NotificationLogRepository notificationLogRepository;
+    private final ManualProvider manualProvider;
+
+    @Autowired
+    public StaffServiceImpl(
+            AppointmentRepository appointmentRepository,
+            CheckinRepository checkinRepository,
+            PatientRepository patientRepository,
+            TimeSlotRepository timeSlotRepository,
+            MedicalRecordRepository medicalRecordRepository,
+            AppointmentSeatRepository appointmentSeatRepository,
+            ClinicSettingService clinicSettingService,
+            com.chuctupk.service.SlotPolicy slotPolicy,
+            com.chuctupk.service.DoctorAssignmentService doctorAssignmentService,
+            com.chuctupk.repository.DoctorRepository doctorRepository,
+            DoctorScheduleAdminService doctorScheduleAdminService,
+            DoctorDayOffRepository doctorDayOffRepository,
+            com.chuctupk.service.NotificationService notificationService,
+            SequenceGeneratorService sequenceGeneratorService,
+            Clock clock,
+            NotificationLogRepository notificationLogRepository,
+            ManualProvider manualProvider
+    ) {
+        this.appointmentRepository = appointmentRepository;
+        this.checkinRepository = checkinRepository;
+        this.patientRepository = patientRepository;
+        this.timeSlotRepository = timeSlotRepository;
+        this.medicalRecordRepository = medicalRecordRepository;
+        this.appointmentSeatRepository = appointmentSeatRepository;
+        this.clinicSettingService = clinicSettingService;
+        this.slotPolicy = slotPolicy;
+        this.doctorAssignmentService = doctorAssignmentService;
+        this.doctorRepository = doctorRepository;
+        this.doctorScheduleAdminService = doctorScheduleAdminService;
+        this.doctorDayOffRepository = doctorDayOffRepository;
+        this.notificationService = notificationService;
+        this.sequenceGeneratorService = sequenceGeneratorService;
+        this.clock = clock;
+        this.notificationLogRepository = notificationLogRepository;
+        this.manualProvider = manualProvider;
+    }
+
+    public StaffServiceImpl(
+            AppointmentRepository appointmentRepository,
+            CheckinRepository checkinRepository,
+            PatientRepository patientRepository,
+            TimeSlotRepository timeSlotRepository,
+            MedicalRecordRepository medicalRecordRepository,
+            AppointmentSeatRepository appointmentSeatRepository,
+            ClinicSettingService clinicSettingService,
+            com.chuctupk.service.SlotPolicy slotPolicy,
+            com.chuctupk.service.DoctorAssignmentService doctorAssignmentService,
+            com.chuctupk.repository.DoctorRepository doctorRepository,
+            DoctorScheduleAdminService doctorScheduleAdminService,
+            DoctorDayOffRepository doctorDayOffRepository,
+            com.chuctupk.service.NotificationService notificationService,
+            SequenceGeneratorService sequenceGeneratorService,
+            Clock clock
+    ) {
+        this(
+                appointmentRepository,
+                checkinRepository,
+                patientRepository,
+                timeSlotRepository,
+                medicalRecordRepository,
+                appointmentSeatRepository,
+                clinicSettingService,
+                slotPolicy,
+                doctorAssignmentService,
+                doctorRepository,
+                doctorScheduleAdminService,
+                doctorDayOffRepository,
+                notificationService,
+                sequenceGeneratorService,
+                clock,
+                null,
+                null
+        );
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -103,8 +182,23 @@ public class StaffServiceImpl implements StaffService {
                     .filter(c -> c.getAppointment() != null)
                     .collect(toMap(c -> c.getAppointment().getId(), c -> c, (a, b) -> a));
 
+        // Ticket 6: Lấy thời điểm nhắc lịch gần nhất cho toàn bộ danh sách phiếu qua 1 query tổng hợp (tránh N+1)
+        Map<Long, LocalDateTime> reminderSentAtMap = new HashMap<>();
+        if (!apptIds.isEmpty() && notificationLogRepository != null) {
+            List<Object[]> reminderRows = notificationLogRepository.findLatestReminderSentAtByAppointmentIds(apptIds);
+            for (Object[] row : reminderRows) {
+                if (row != null && row.length >= 2 && row[0] != null && row[1] != null) {
+                    reminderSentAtMap.put((Long) row[0], (LocalDateTime) row[1]);
+                }
+            }
+        }
+
         List<AppointmentDto> items = appts.stream()
-                .map(a -> AppointmentDto.from(a, checkinMap.get(a.getId()), isDoctorOnDuty(a, onDutyByPeriod)))
+                .map(a -> {
+                    LocalDateTime sentAt = reminderSentAtMap.get(a.getId());
+                    String reminderSentAt = ContractMapper.formatIso(sentAt);
+                    return AppointmentDto.from(a, checkinMap.get(a.getId()), isDoctorOnDuty(a, onDutyByPeriod), reminderSentAt);
+                })
                 .toList();
 
         int total = appts.size();
@@ -944,6 +1038,182 @@ public class StaffServiceImpl implements StaffService {
             map.put(day, List.of());
         }
         return map;
+    }
+
+    // =========================================================================
+    // SPRINT 2: NHẮC LỊCH THỦ CÔNG 1 CLICK
+    // =========================================================================
+
+    private String getRecipientPhone(Appointment appointment) {
+        if (appointment == null) return null;
+        if (appointment.getBookerPhone() != null && !appointment.getBookerPhone().isBlank()) {
+            return appointment.getBookerPhone();
+        }
+        if (appointment.getPatient() != null && appointment.getPatient().getPhone() != null) {
+            return appointment.getPatient().getPhone();
+        }
+        return null;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ReminderPreviewDto getReminderPreview(Long id) {
+        if (id == null) {
+            throw AppException.badRequest("Mã phiếu khám không hợp lệ");
+        }
+        Appointment appointment = appointmentRepository.findById(id)
+                .orElseThrow(() -> AppException.notFound("Không tìm thấy phiếu khám với ID: " + id));
+
+        if (appointment.getStatus() == AppointmentStatus.CANCELLED || appointment.getStatus() == AppointmentStatus.COMPLETED) {
+            throw AppException.unprocessable("Phiếu đã huỷ/hoàn tất, không cần nhắc");
+        }
+
+        String rawPhone = getRecipientPhone(appointment);
+        String maskedPhone = PhoneValidator.mask(rawPhone);
+
+        ManualProvider provider = this.manualProvider != null ? this.manualProvider : new ManualProvider(null);
+        String content = provider.compose(appointment);
+
+        String patientName = appointment.getPatient() != null ? appointment.getPatient().getFullName() : appointment.getBookerName();
+
+        return new ReminderPreviewDto(
+                appointment.getId(),
+                maskedPhone,
+                content,
+                ManualProvider.CHANNEL,
+                appointment.getBookingCode(),
+                patientName,
+                rawPhone
+        );
+    }
+
+    @Override
+    @Transactional
+    public ReminderMarkSentResponse markReminderSent(User staff, Long id, ReminderMarkSentRequest request) {
+        if (id == null) {
+            throw AppException.badRequest("Mã phiếu khám không hợp lệ");
+        }
+        Appointment appointment = appointmentRepository.findById(id)
+                .orElseThrow(() -> AppException.notFound("Không tìm thấy phiếu khám với ID: " + id));
+
+        String rawPhone = getRecipientPhone(appointment);
+        String maskedPhone = PhoneValidator.mask(rawPhone);
+        if (maskedPhone == null || maskedPhone.isBlank()) {
+            maskedPhone = "---";
+        }
+
+        LocalDateTime now = LocalDateTime.now(clock);
+
+        NotificationLog logEntry = NotificationLog.builder()
+                .appointment(appointment)
+                .channel(ManualProvider.CHANNEL)
+                .template("REMINDER_MANUAL")
+                .recipientMasked(maskedPhone)
+                .status(DeliveryResult.Status.SENT.name())
+                .errorCode(null)
+                .provider("manual")
+                .createdAt(now)
+                .build();
+
+        if (notificationLogRepository != null) {
+            notificationLogRepository.save(logEntry);
+        }
+
+        String sentIso = ContractMapper.formatIso(now);
+        log.info("Lễ tân {} đã xác nhận gửi nhắc lịch cho phiếu {} lúc {}",
+                staff != null ? staff.getUsername() : "system",
+                appointment.getBookingCode(),
+                sentIso);
+
+        return new ReminderMarkSentResponse(appointment.getId(), sentIso);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BulkReminderPreviewResponse bulkReminderPreview(BulkReminderPreviewRequest request) {
+        List<Long> ids = request != null && request.ids() != null ? request.ids() : List.of();
+        if (ids.isEmpty()) {
+            return new BulkReminderPreviewResponse(List.of(), List.of());
+        }
+
+        List<ReminderPreviewDto> items = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
+        ManualProvider provider = this.manualProvider != null ? this.manualProvider : new ManualProvider(null);
+
+        for (Long id : ids) {
+            if (id == null) continue;
+            Optional<Appointment> opt = appointmentRepository.findById(id);
+            if (opt.isEmpty()) {
+                warnings.add("Không tìm thấy phiếu khám có ID: " + id);
+                continue;
+            }
+            Appointment a = opt.get();
+            if (a.getStatus() == AppointmentStatus.CANCELLED || a.getStatus() == AppointmentStatus.COMPLETED) {
+                warnings.add("Phiếu " + (a.getBookingCode() != null ? a.getBookingCode() : id) + " đã huỷ/hoàn tất, không cần nhắc");
+                continue;
+            }
+
+            String rawPhone = getRecipientPhone(a);
+            String maskedPhone = PhoneValidator.mask(rawPhone);
+            String content = provider.compose(a);
+            String patientName = a.getPatient() != null ? a.getPatient().getFullName() : a.getBookerName();
+
+            items.add(new ReminderPreviewDto(
+                    a.getId(),
+                    maskedPhone,
+                    content,
+                    ManualProvider.CHANNEL,
+                    a.getBookingCode(),
+                    patientName,
+                    rawPhone
+            ));
+        }
+
+        return new BulkReminderPreviewResponse(items, warnings);
+    }
+
+    @Override
+    @Transactional
+    public BulkReminderMarkSentResponse bulkReminderMarkSent(User staff, BulkReminderMarkSentRequest request) {
+        List<Long> ids = request != null && request.ids() != null ? request.ids() : List.of();
+        if (ids.isEmpty()) {
+            return new BulkReminderMarkSentResponse(List.of(), ContractMapper.formatIso(LocalDateTime.now(clock)));
+        }
+
+        LocalDateTime now = LocalDateTime.now(clock);
+        List<Long> updatedIds = new ArrayList<>();
+
+        for (Long id : ids) {
+            if (id == null) continue;
+            Optional<Appointment> opt = appointmentRepository.findById(id);
+            if (opt.isEmpty()) continue;
+            Appointment a = opt.get();
+
+            String rawPhone = getRecipientPhone(a);
+            String maskedPhone = PhoneValidator.mask(rawPhone);
+            if (maskedPhone == null || maskedPhone.isBlank()) {
+                maskedPhone = "---";
+            }
+
+            NotificationLog logEntry = NotificationLog.builder()
+                    .appointment(a)
+                    .channel(ManualProvider.CHANNEL)
+                    .template("REMINDER_MANUAL")
+                    .recipientMasked(maskedPhone)
+                    .status(DeliveryResult.Status.SENT.name())
+                    .errorCode(null)
+                    .provider("manual")
+                    .createdAt(now)
+                    .build();
+
+            if (notificationLogRepository != null) {
+                notificationLogRepository.save(logEntry);
+            }
+            updatedIds.add(id);
+        }
+
+        String sentIso = ContractMapper.formatIso(now);
+        return new BulkReminderMarkSentResponse(updatedIds, sentIso);
     }
 }
 

@@ -7,6 +7,7 @@ import com.chuctupk.entity.NotificationLog;
 import com.chuctupk.entity.enums.AppointmentStatus;
 import com.chuctupk.notification.DeliveryResult;
 import com.chuctupk.notification.LogProvider;
+import com.chuctupk.notification.ManualProvider;
 import com.chuctupk.notification.NotificationMessage;
 import com.chuctupk.notification.NotificationProvider;
 import com.chuctupk.notification.NotificationLogSaver;
@@ -235,6 +236,17 @@ public class NotificationServiceImpl implements NotificationService {
                 }
             }
         }
+    }
+
+    @Override
+    public String composeManualReminder(Appointment appointment) {
+        if (providers != null) {
+            NotificationProvider p = providers.get("manual");
+            if (p instanceof ManualProvider mp) {
+                return mp.compose(appointment);
+            }
+        }
+        return new ManualProvider(null).compose(appointment);
     }
 
     private String getRecipientPhone(Appointment appointment) {

@@ -18,4 +18,9 @@ public interface NotificationService {
      * Quét và gửi tin nhắn SMS nhắc lịch khám trước giờ hẹn 2 tiếng.
      */
     void sendUpcomingReminders();
+
+    /**
+     * Soạn nội dung nhắc lịch thủ công (1 click) cho nhân viên lễ tân.
+     */
+    String composeManualReminder(Appointment appointment);
 }

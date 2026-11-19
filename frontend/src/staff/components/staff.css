@@ -311,8 +311,8 @@
 /* Bảng Lịch trong ngày có thêm cột Bác sĩ: dưới 1100px phải cuộn ngang để không bóp cột */
 @media (max-width: 1100px) {
   .t-scroll { overflow-x: auto; }
-  .t-scroll .t-sched { min-width: 940px; }
-  .t-scroll .t-sched.with-no { min-width: 1020px; }
+  .t-scroll .t-sched { min-width: 1060px; }
+  .t-scroll .t-sched.with-no { min-width: 1150px; }
 }
 
 .t-empty { padding: 28px 24px 32px; border-top: 1px solid var(--line-soft); }
@@ -579,11 +579,11 @@ button.t-check { cursor: pointer; }
 .t-datebar-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .t-datebtn { flex: 1 1 220px; justify-content: flex-start; gap: 12px; padding: 0 18px; background: var(--t-white); color: var(--ink-900); font-weight: 700; }
 .t-datebtn svg { color: var(--green-700); }
-.t-sched .t-tr { grid-template-columns: 220px minmax(0, 1.4fr) 120px 170px minmax(0, 1.2fr) 110px; }
-.t-sched.with-no .t-tr { grid-template-columns: 104px 220px minmax(0, 1.4fr) 120px 170px minmax(0, 1.2fr) 110px; }
+.t-sched .t-tr { grid-template-columns: 48px 210px minmax(0, 1.4fr) 110px 160px minmax(0, 1.2fr) 180px; }
+.t-sched.with-no .t-tr { grid-template-columns: 48px 90px 210px minmax(0, 1.4fr) 110px 160px minmax(0, 1.2fr) 180px; }
 .t-sched .t-tr.prio { background: var(--t-blue-100); }
 .t-sched .t-tr.cancel { background: var(--t-cancel-bg); }
-.t-sched .t-td-act { padding: 14px 12px 14px 16px; }
+.t-sched .t-td-act { padding: 10px 12px; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
 .t-queue-no { font-family: var(--font-serif); font-size: 24px; line-height: 32px; font-weight: 700; color: var(--green-700); }
 .t-cancel-reason { grid-column: 1 / -1; padding: 0 16px 14px; color: var(--alert-700); }
 .t-state-note { display: block; margin-top: 6px; line-height: 22px; color: var(--ink-500); }
@@ -726,3 +726,213 @@ button.t-check { cursor: pointer; }
 .t-doctor-name { font-size: 16px; font-weight: 700; color: var(--ink-900); }
 .t-doctor-meta { font-size: 14px; color: var(--ink-700); }
 .t-pick.locked .t-pick-main span:nth-child(2) { color: var(--ink-700); }
+
+/* ---------- SPRINT 2: NHẮC LỊCH THỦ CÔNG 1 CLICK (ELDERLY-FIRST UX) ---------- */
+
+.t-th-check,
+.t-td-check {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 4px !important;
+}
+
+.t-checkbox {
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  accent-color: var(--green-700);
+}
+
+.t-btn-reminder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 48px;
+  min-width: 48px;
+  padding: 0 14px;
+  background: var(--surface-100);
+  border: 2px solid var(--green-700);
+  border-radius: 12px;
+  color: var(--green-800);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.t-btn-reminder:hover {
+  background: var(--green-100);
+  color: var(--green-900);
+}
+
+.t-btn-reminder:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.t-reminder-sent {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--green-700);
+  background: var(--green-100);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--green-300, #a3d9a5);
+}
+
+.t-bulk-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+  background: var(--gold-100);
+  border-bottom: 2px solid var(--gold-500);
+  animation: fadeIn 150ms ease-in-out;
+}
+
+.t-bulk-count {
+  font-size: 17px;
+  color: var(--ink-900);
+}
+
+.t-bulk-btn {
+  min-height: 48px !important;
+  padding: 0 22px !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}
+
+.t-reminder-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  background: var(--surface-200);
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-size: 16px;
+}
+
+.t-reminder-phone {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--green-800);
+}
+
+.t-reminder-textarea {
+  font-size: 18px !important;
+  line-height: 1.6 !important;
+  color: var(--ink-900) !important;
+  background: var(--surface-100) !important;
+  border: 2px solid var(--line-strong) !important;
+  border-radius: 12px !important;
+  padding: 14px 16px !important;
+  resize: vertical;
+}
+
+.t-copy-feedback {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  background: var(--green-100);
+  color: var(--green-800);
+  font-size: 17px;
+  font-weight: 700;
+  border: 1px solid var(--green-600);
+  border-radius: 12px;
+}
+
+.t-reminder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.t-reminder-copy-btn {
+  min-height: 52px !important;
+  padding: 0 24px !important;
+  font-size: 18px !important;
+}
+
+.t-reminder-links {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.t-reminder-link-btn {
+  min-height: 48px !important;
+  padding: 0 16px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  border: 1.5px solid var(--line-strong) !important;
+  text-decoration: none !important;
+  color: var(--ink-800) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  border-radius: 12px !important;
+}
+
+.t-reminder-link-btn:hover {
+  background: var(--green-100) !important;
+  border-color: var(--green-700) !important;
+  color: var(--green-800) !important;
+}
+
+.t-bulk-card {
+  border: 1.5px solid var(--line-soft);
+  border-radius: 14px;
+  padding: 16px;
+  background: var(--surface-card);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.t-bulk-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+}
+
+.t-bulk-badge {
+  background: var(--green-700);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+
+.t-bulk-card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.t-bulk-warn {
+  background: var(--gold-100);
+  border: 1px solid var(--gold-500);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 15px;
+  color: var(--ink-900);
+}
+

@@ -55,7 +55,7 @@ public class SmsServiceImpl implements SmsService {
 
         // 1. Nếu cổng SMS đang tắt hoặc chưa cấu hình API key -> SKIPPED (giả lập/test)
         if (!smsEnabled || apiKey == null || apiKey.isBlank()) {
-            log.info("[SMS OTP] Cổng SMS đang tắt (chế độ giả lập/test) cho SĐT: {}", maskedPhone);
+            log.info("🔑 [SMS OTP - CHẾ ĐỘ THỬ NGHIỆM] SĐT: {} | Mã OTP: {}", maskedPhone, otpCode);
             return OtpSendResult.SKIPPED;
         }
 

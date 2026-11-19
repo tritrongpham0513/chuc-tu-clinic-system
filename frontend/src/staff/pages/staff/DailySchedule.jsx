@@ -12,6 +12,7 @@ import { AddAppointmentDialog } from '../../components/appointments/AddAppointme
 import { CancelDialog, CheckinDialog, UndoCheckinDialog } from '../../components/appointments/StatusDialogs.jsx';
 import { RescheduleDialog } from '../../components/appointments/RescheduleDialog.jsx';
 import { ChangeDoctorDialog } from '../../components/appointments/ChangeDoctorDialog.jsx';
+import { ReminderDialog, BulkReminderDialog } from '../../components/appointments/ReminderDialog.jsx';
 import { StatusChip, stateNote, RowMenu } from './scheduleParts.jsx';
 import { useSession, isDoctor } from '../../../shared/lib/session.jsx';
 
@@ -64,6 +65,7 @@ export default function DailySchedule() {
   const [lookupMsg, setLookupMsg] = useState(null);
   const [calOpen, setCalOpen] = useState(false);
   const [marked, setMarked] = useState(() => new Set());
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
   const calRef = useDismiss(calOpen, () => setCalOpen(false));
 
   const { data, loading, error: loadError, reload } = useAsync(
@@ -95,6 +97,7 @@ export default function DailySchedule() {
     setLookupMsg(null);
     setPage(1);
     setMenu(null);
+    setSelectedIds(new Set());
   };
 
   const onMonth = useCallback((ym) => {
@@ -119,6 +122,38 @@ export default function DailySchedule() {
   const current = Math.min(page, pages);
   const shown = rows.slice((current - 1) * PER_PAGE, current * PER_PAGE);
   const withNo = filter === 'CHECKED_IN';
+
+  // Phiếu có hiệu lực trên trang hiện tại để chọn hàng loạt
+  const eligibleShown = useMemo(
+    () => shown.filter((a) => a.status !== 'CANCELLED' && a.status !== 'COMPLETED'),
+    [shown],
+  );
+  const allSelected = eligibleShown.length > 0 && eligibleShown.every((a) => selectedIds.has(a.id));
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        eligibleShown.forEach((a) => next.delete(a.id));
+        return next;
+      });
+    } else {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        eligibleShown.forEach((a) => next.add(a.id));
+        return next;
+      });
+    }
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const showResults = () => document.getElementById('lt-ketqua')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
@@ -352,11 +387,43 @@ export default function DailySchedule() {
             ))}
           </div>
         </div>
+        {selectedIds.size > 0 && (
+          <div className="t-bulk-bar" role="region" aria-label="Thao tác hàng loạt">
+            <span className="t-bulk-count">
+              Đã chọn <strong>{selectedIds.size}</strong> phiếu khám
+            </span>
+            <button
+              type="button"
+              className="t-btn t-btn-primary t-btn-bold t-bulk-btn"
+              onClick={() => setDialog({ type: 'bulk-reminder', ids: Array.from(selectedIds) })}
+              aria-label={`Nhắc lịch cho ${selectedIds.size} phiếu đã chọn`}
+            >
+              <Icon name="chat" size={20} />
+              Nhắc đã chọn ({selectedIds.size})
+            </button>
+            <button
+              type="button"
+              className="t-btn t-btn-ghost"
+              onClick={() => setSelectedIds(new Set())}
+            >
+              Bỏ chọn
+            </button>
+          </div>
+        )}
         {loading && !data && <Loading />}
         {data && all.length > 0 && rows.length > 0 && (
           <div className="t-scroll">
             <div role="table" aria-label="Lịch khám trong ngày" className={`t-table t-sched ${withNo ? 'with-no' : ''}`}>
               <div role="row" className="t-tr t-thead">
+                <div role="columnheader" className="t-th t-th-check">
+                  <input
+                    type="checkbox"
+                    className="t-checkbox"
+                    checked={allSelected}
+                    onChange={toggleSelectAll}
+                    aria-label="Chọn tất cả phiếu trên trang này"
+                  />
+                </div>
                 {withNo && (
                   <div role="columnheader" className="t-th">
                     Thứ tự
@@ -392,6 +459,17 @@ export default function DailySchedule() {
                       className={`t-tr ${a.status === 'CANCELLED' ? 'cancel' : prio ? 'prio' : ''}`}
                       style={menu === a.id ? { position: 'relative', zIndex: 30 } : undefined}
                     >
+                      <div role="cell" className="t-td t-td-check">
+                        {a.status !== 'CANCELLED' && a.status !== 'COMPLETED' ? (
+                          <input
+                            type="checkbox"
+                            className="t-checkbox"
+                            checked={selectedIds.has(a.id)}
+                            onChange={() => toggleSelect(a.id)}
+                            aria-label={`Chọn phiếu ${a.ticketCode} của ${a.patient?.fullName || ''}`}
+                          />
+                        ) : null}
+                      </div>
                       {withNo && (
                         <div role="cell" className="t-td t-queue-no">
                           {a.checkin?.queueNo ?? ''}
@@ -417,8 +495,26 @@ export default function DailySchedule() {
                       <div role="cell" className="t-td">
                         <StatusChip a={a} />
                         {note && <span className="t-state-note">{note}</span>}
+                        {a.reminderSentAt && (
+                          <span className="t-reminder-sent" title={`Đã nhắc lúc ${fmtTime(a.reminderSentAt)}`}>
+                            <Icon name="check" size={16} strokeWidth={2.5} />
+                            Đã nhắc {fmtTime(a.reminderSentAt)}
+                          </span>
+                        )}
                       </div>
                       <div role="cell" className="t-td t-td-act">
+                        {a.status !== 'CANCELLED' && a.status !== 'COMPLETED' && (
+                          <button
+                            type="button"
+                            className="t-btn-reminder"
+                            aria-label={`Nhắc lịch cho bệnh nhân ${a.patient?.fullName || a.ticketCode}`}
+                            onClick={() => setDialog({ type: 'reminder', appt: a })}
+                            title="Nhắc lịch khám cho bệnh nhân qua tin nhắn"
+                          >
+                            <Icon name="chat" size={18} />
+                            <span>Nhắc lịch</span>
+                          </button>
+                        )}
                         <RowMenu
                           a={a}
                           isToday={isToday}
@@ -479,6 +575,25 @@ export default function DailySchedule() {
       {dialog?.type === 'reschedule' && <RescheduleDialog appt={dialog.appt} onClose={() => setDialog(null)} onDone={done} />}
       {dialog?.type === 'change-doctor' && <ChangeDoctorDialog appt={dialog.appt} onClose={() => setDialog(null)} onDone={done} />}
       {dialog?.type === 'cancel' && <CancelDialog appt={dialog.appt} onClose={() => setDialog(null)} onDone={done} />}
+      {dialog?.type === 'reminder' && (
+        <ReminderDialog
+          appt={dialog.appt}
+          onClose={() => setDialog(null)}
+          onDone={(message) => {
+            done(message);
+          }}
+        />
+      )}
+      {dialog?.type === 'bulk-reminder' && (
+        <BulkReminderDialog
+          ids={dialog.ids}
+          onClose={() => setDialog(null)}
+          onDone={(message) => {
+            setSelectedIds(new Set());
+            done(message);
+          }}
+        />
+      )}
     </>
   );
 }

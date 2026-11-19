@@ -35,7 +35,7 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 # Lấy file JAR từ stage builder
 COPY --from=builder /app/target/*.jar app.jar
-RUN chown -R appuser:appgroup /app
+RUN mkdir -p /app/uploads && chown -R appuser:appgroup /app
 
 USER appuser
 

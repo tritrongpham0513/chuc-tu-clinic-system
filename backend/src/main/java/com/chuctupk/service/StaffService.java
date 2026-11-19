@@ -1,8 +1,6 @@
 package com.chuctupk.service;
 
-import com.chuctupk.dto.request.CancelAppointmentStaffRequest;
-import com.chuctupk.dto.request.RescheduleAppointmentRequest;
-import com.chuctupk.dto.request.StaffCreateAppointmentRequest;
+import com.chuctupk.dto.request.*;
 import com.chuctupk.dto.response.*;
 import com.chuctupk.entity.User;
 
@@ -48,5 +46,16 @@ public interface StaffService {
     QueueStateDto setAutoInvite(boolean enabled);
 
     MyScheduleResponse getMySchedule(User currentUser);
-}
 
+    // =========================================================================
+    // SPRINT 2: NHẮC LỊCH THỦ CÔNG 1 CLICK
+    // =========================================================================
+
+    ReminderPreviewDto getReminderPreview(Long id);
+
+    ReminderMarkSentResponse markReminderSent(User staff, Long id, ReminderMarkSentRequest request);
+
+    BulkReminderPreviewResponse bulkReminderPreview(BulkReminderPreviewRequest request);
+
+    BulkReminderMarkSentResponse bulkReminderMarkSent(User staff, BulkReminderMarkSentRequest request);
+}
