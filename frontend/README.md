@@ -50,7 +50,9 @@ Mở trình duyệt:
 
 Khi chạy `npm run dev`, Vite tự chuyển mọi yêu cầu `/api` sang backend ở `localhost:4000`. Trình duyệt chỉ thấy một địa chỉ nên cookie đăng nhập hoạt động giống như khi chạy thật.
 
-Tài khoản để đăng nhập thử (khi backend đã seed): Admin `admin@chuctu.vn`, Tiếp tân `letan@chuctu.vn`, mật khẩu mặc định `ChucTu@2026`. Mật khẩu seed mặc định chỉ dùng ở môi trường phát triển khi **chưa** đặt `ADMIN_PASSWORD`. Khi triển khai, mật khẩu lấy theo biến `ADMIN_PASSWORD` trong `.env`.
+Tài khoản để đăng nhập thử (khi backend đã seed):
+- **admin/letan/bacsi** (`admin@chuctu.vn`, `letan@chuctu.vn`, `bsnam@chuctu.vn` - từ V2 migration): mật khẩu ban đầu `MatKhauAdmin@2026` (bắt buộc đổi mật khẩu khi đăng nhập lần đầu).
+- **letan2/bacsi2** (`letan2@chuctu.vn`, `bshoa@chuctu.vn` - từ DataSeederRunner): mật khẩu lấy theo biến `ADMIN_PASSWORD` trong `.env`, nếu chưa đặt thì mặc định `ChucTu@2026` (không bắt buộc đổi mật khẩu, vào làm việc ngay).
 
 ### Build bản chạy thật
 

@@ -171,15 +171,15 @@ Trình duyệt mở tại: `http://localhost:5173` (Vite Proxy sẽ tự động
 Hệ thống đã nạp sẵn các tài khoản mẫu để bạn có thể đăng nhập kiểm thử ngay mà không cần tạo mới:
 
 ### 1. Phân hệ Nội bộ (Đăng nhập tại `http://localhost:3000/noi-bo/`)
-| Vai trò | Tên đăng nhập | Email | Mật khẩu khởi tạo | Quyền hạn chính |
+| Vai trò | Tên đăng nhập | Email | Mật khẩu khởi tạo | Quyền hạn & Nguồn gốc |
 | :--- | :--- | :--- | :--- | :--- |
-| **Quản trị viên (ADMIN)** | `admin` | `admin@chuctu.vn` | Giá trị `ADMIN_PASSWORD` (đặt trong `.env`) | Toàn quyền: Quản lý tài khoản, duyệt bài viết, xem dashboard thống kê |
-| **Bác sĩ 1 (DOCTOR)** | `bacsi` | `bsnam@chuctu.vn` | Giá trị `ADMIN_PASSWORD` (đặt trong `.env`) | Gọi số khám, chẩn đoán, kê đơn, ghi nhận bệnh án |
-| **Bác sĩ 2 (DOCTOR)** | `bacsi2` | `bshoa@chuctu.vn` | Giá trị `ADMIN_PASSWORD` (đặt trong `.env`) | Xem lịch trực của tôi, khám và ghi nhận kết quả khám |
-| **Tiếp tân 1 (STAFF)** | `letan` | `letan@chuctu.vn` | Giá trị `ADMIN_PASSWORD` (đặt trong `.env`) | Tiếp đón, check-in bệnh nhân, xếp vào hàng đợi, đổi lịch hẹn |
-| **Tiếp tân 2 (STAFF)** | `letan2` | `letan2@chuctu.vn` | Giá trị `ADMIN_PASSWORD` (đặt trong `.env`) | Lịch trong ngày, tra cứu và hỗ trợ bệnh nhân |
+| **Quản trị viên (ADMIN)** | `admin` | `admin@chuctu.vn` | `MatKhauAdmin@2026` | Toàn quyền; từ V2 migration (bắt buộc đổi mật khẩu lần đầu) |
+| **Bác sĩ 1 (DOCTOR)** | `bacsi` | `bsnam@chuctu.vn` | `MatKhauAdmin@2026` | Khám & ghi bệnh án; từ V2 migration (bắt buộc đổi mật khẩu lần đầu) |
+| **Tiếp tân 1 (STAFF)** | `letan` | `letan@chuctu.vn` | `MatKhauAdmin@2026` | Đón tiếp, check-in, đổi lịch; từ V2 migration (bắt buộc đổi mật khẩu lần đầu) |
+| **Bác sĩ 2 (DOCTOR)** | `bacsi2` | `bshoa@chuctu.vn` | `ADMIN_PASSWORD` (mặc định `ChucTu@2026`) | Khám theo ca trực; từ DataSeederRunner (vào làm việc ngay) |
+| **Tiếp tân 2 (STAFF)** | `letan2` | `letan2@chuctu.vn` | `ADMIN_PASSWORD` (mặc định `ChucTu@2026`) | Đón tiếp bệnh nhân; từ DataSeederRunner (vào làm việc ngay) |
 
-> 💡 **Mẹo đăng nhập:** Bạn có thể đăng nhập bằng **Tên đăng nhập** (ví dụ: `admin`, `bacsi`, `bacsi2`, `letan`, `letan2`) hoặc **Email** đều được. Mật khẩu khởi tạo cho toàn bộ tài khoản mẫu được cấu hình đồng bộ qua biến `ADMIN_PASSWORD` trong file `.env`.
+> 💡 **Mẹo đăng nhập:** Bạn có thể đăng nhập bằng **Tên đăng nhập** (ví dụ: `admin`, `bacsi`, `bacsi2`, `letan`, `letan2`) hoặc **Email** đều được. Các tài khoản từ V2 migration (`admin`, `bacsi`, `letan`) dùng mật khẩu ban đầu `MatKhauAdmin@2026` và sẽ yêu cầu đổi mật khẩu ở lần đăng nhập đầu tiên; các tài khoản từ runner (`letan2`, `bacsi2`) lấy theo biến `ADMIN_PASSWORD` (mặc định `ChucTu@2026` nếu chưa đặt) và không yêu cầu đổi mật khẩu.
 
 ### 2. Cổng Người bệnh (Đăng nhập tại `http://localhost:3000/dang-nhap` hoặc khi Đặt lịch)
 - **Số điện thoại**: Bất kỳ số điện thoại hợp lệ tại Việt Nam (Ví dụ: `0987654321`, `0912345678`, `0901234567`).
