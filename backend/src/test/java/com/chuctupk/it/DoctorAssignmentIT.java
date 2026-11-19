@@ -201,6 +201,15 @@ class DoctorAssignmentIT {
                 .reason("Nghỉ phép")
                 .build());
 
+        // Vô hiệu hoá mọi lịch trực khác để bài test không phụ thuộc dữ liệu seed
+        for (DoctorSchedule other : doctorScheduleRepository.findAll()) {
+            if (!other.getDoctor().getId().equals(doctorA.getId())
+                    && Boolean.TRUE.equals(other.getIsActive())) {
+                other.setIsActive(false);
+            }
+        }
+        doctorScheduleRepository.flush();
+
         final LocalDate testDate = mondayDate;
         AppException ex = assertThrows(AppException.class, () ->
                 doctorAssignmentService.pickDoctor(testDate, morningSlot)

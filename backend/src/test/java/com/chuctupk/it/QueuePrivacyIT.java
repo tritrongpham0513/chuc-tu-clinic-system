@@ -11,6 +11,8 @@ import com.chuctupk.repository.AppointmentRepository;
 import com.chuctupk.repository.AppointmentSeatRepository;
 import com.chuctupk.repository.PatientRepository;
 import com.chuctupk.repository.TimeSlotRepository;
+import com.chuctupk.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +55,18 @@ class QueuePrivacyIT {
 
     @Autowired
     private TimeSlotRepository timeSlotRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    /** Tài khoản seed phải đổi mật khẩu lần đầu; test này cần quyền làm việc bình thường. */
+    @BeforeEach
+    void clearSeedPasswordFlag() {
+        userRepository.findByUsername("letan").ifPresent(u -> {
+            u.setMustChangePassword(false);
+            userRepository.save(u);
+        });
+    }
 
     @Test
     @DisplayName("P0-3: GET /api/v1/queue/today đã xoá hoàn toàn -> 404")

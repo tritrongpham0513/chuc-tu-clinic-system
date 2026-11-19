@@ -1,6 +1,8 @@
 package com.chuctupk.it;
 
 import com.chuctupk.config.JwtTokenProvider;
+import com.chuctupk.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +31,18 @@ class UploadIT {
 
     @Autowired
     private JwtTokenProvider tokenProvider;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    /** Tài khoản seed phải đổi mật khẩu lần đầu; test này cần quyền làm việc bình thường. */
+    @BeforeEach
+    void clearSeedPasswordFlag() {
+        userRepository.findByUsername("admin").ifPresent(u -> {
+            u.setMustChangePassword(false);
+            userRepository.save(u);
+        });
+    }
 
     @Test
     @DisplayName("B6: Anonymous gọi POST /api/v1/uploads -> 401 Unauthorized")
