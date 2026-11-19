@@ -168,5 +168,13 @@ public class MeController {
         Map<String, Object> data = patientPortalService.getMyHistory(currentUser);
         return ResponseEntity.ok(ApiResponse.ok(data, "Lấy lịch sử khám bệnh thành công"));
     }
+
+    @GetMapping("/notifications")
+    @Operation(summary = "Xem thông báo nhắc lịch khám của tôi trong 7 ngày tới")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getMyNotifications(
+            @AuthenticationPrincipal User currentUser) {
+        Map<String, Object> data = patientPortalService.getMyNotifications(currentUser);
+        return ResponseEntity.ok(ApiResponse.ok(data, "Lấy danh sách thông báo thành công"));
+    }
 }
 

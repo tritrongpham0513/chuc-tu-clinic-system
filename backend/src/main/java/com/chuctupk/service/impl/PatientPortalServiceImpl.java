@@ -721,6 +721,56 @@ public class PatientPortalServiceImpl implements PatientPortalService {
         return getMyAppointments(currentUser, "HISTORY");
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getMyNotifications(User currentUser) {
+        if (currentUser == null) {
+            throw AppException.unauthorized("Vui lòng đăng nhập");
+        }
+
+        LocalDate startDate = LocalDate.now(clock);
+        LocalDate endDate = startDate.plusDays(6); // Đúng 7 ngày tính cả ngày hôm nay
+        List<AppointmentStatus> statuses = List.of(AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED);
+
+        List<Appointment> upcoming = appointmentRepository.findUpcomingRemindersByUser(
+                currentUser.getId(),
+                statuses,
+                startDate,
+                endDate,
+                org.springframework.data.domain.PageRequest.of(0, 20)
+        );
+
+        DateTimeFormatter dayMonthFmt = DateTimeFormatter.ofPattern("dd/MM");
+        List<NotificationItemDto> items = upcoming.stream().map(a -> {
+            String timeStr = a.getTimeSlot() != null && a.getTimeSlot().getStartTime() != null
+                    ? ContractMapper.formatTime(a.getTimeSlot().getStartTime())
+                    : "08:00";
+            String dateStr = a.getAppointmentDate() != null
+                    ? a.getAppointmentDate().format(dayMonthFmt)
+                    : "";
+            String body = String.format("Phiếu %s lúc %s ngày %s",
+                    a.getBookingCode(), timeStr, dateStr);
+
+            LocalTime slotStart = a.getTimeSlot() != null && a.getTimeSlot().getStartTime() != null
+                    ? a.getTimeSlot().getStartTime()
+                    : LocalTime.of(8, 0);
+            LocalDateTime at = a.getAppointmentDate() != null
+                    ? LocalDateTime.of(a.getAppointmentDate(), slotStart)
+                    : LocalDateTime.now(clock);
+
+            return new NotificationItemDto(
+                    "REMINDER",
+                    "Nhắc lịch khám",
+                    body,
+                    a.getId(),
+                    at.toString(),
+                    false
+            );
+        }).toList();
+
+        return Map.of("items", items);
+    }
+
     // =========================================================================
     // HELPER METHODS
     // =========================================================================

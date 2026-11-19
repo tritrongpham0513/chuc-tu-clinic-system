@@ -8,6 +8,7 @@ import { useSession } from '../../../shared/lib/session.jsx';
 import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { AddressFields, dobError, DobField, FieldError, joinAddress, joinDob, splitAddress, splitDob } from '../../components/fields.jsx';
 import { Picker } from '../../components/Picker.jsx';
+import UpcomingReminders from './UpcomingReminders.jsx';
 import './account.css';
 
 // Theo màn "Tài khoản · Thông tin" của prototype (TaiKhoan-ThongTin.dc.html)
@@ -128,6 +129,8 @@ export default function AccountInfo() {
               </div>
             </div>
           )}
+
+          <UpcomingReminders />
 
           {form && (
             <form className="k-card" onSubmit={save} noValidate>

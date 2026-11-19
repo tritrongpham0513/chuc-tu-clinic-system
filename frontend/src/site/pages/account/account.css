@@ -94,3 +94,177 @@
   .k-head-row .a-btn-primary { width: 100%; }
   .k-pcard-actions button { font-size: 16px; flex-direction: column; gap: 2px; }
 }
+
+/* Khối nhắc lịch khám sắp tới (Sprint 1 - Elderly-First UX) */
+.k-reminders-card {
+  border-left: 4px solid var(--gold-700);
+  animation: kFadeIn 180ms ease-in-out;
+}
+
+@keyframes kFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.k-reminders-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-serif);
+  font-size: 26px;
+  line-height: 36px;
+  font-weight: 700;
+  color: var(--ink-900);
+}
+.k-reminders-title svg {
+  color: var(--gold-700);
+  flex-shrink: 0;
+}
+
+.k-reminders-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--alert-100);
+  border: 1px solid var(--alert-700);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  color: var(--alert-700);
+}
+
+.k-reminders-error-text {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  line-height: 28px;
+  font-weight: 600;
+}
+
+.k-btn-retry {
+  min-height: 48px;
+  padding: 8px 20px;
+  font-size: 18px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.k-reminders-empty {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--surface-100);
+  border: 1px dashed var(--line-soft);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  color: var(--ink-500);
+}
+
+.k-reminders-empty p {
+  font-size: 19px;
+  line-height: 29px;
+  color: var(--ink-700);
+  font-weight: 500;
+}
+
+.k-reminders-empty svg {
+  color: var(--ink-500);
+  flex-shrink: 0;
+}
+
+.k-reminders-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.k-reminder-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: var(--surface-100);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  transition: background-color 150ms ease-in-out;
+}
+
+.k-reminder-item:hover {
+  background: var(--gold-100);
+}
+
+.k-reminder-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 999 1 300px;
+  min-width: 0;
+}
+
+.k-reminder-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--gold-700);
+  background: var(--surface-card);
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--gold-200, rgba(217, 119, 6, 0.2));
+}
+
+.k-reminder-body {
+  font-size: 19px;
+  line-height: 29px;
+  font-weight: 600;
+  color: var(--ink-900);
+}
+
+.k-reminder-action {
+  flex-shrink: 0;
+}
+
+.k-btn-view {
+  min-height: 48px;
+  min-width: 130px;
+  padding: 10px 24px;
+  font-size: 18px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  border-radius: var(--radius-md);
+}
+
+@media (max-width: 600px) {
+  .k-reminder-item {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 18px;
+    gap: 14px;
+  }
+  .k-reminder-action {
+    width: 100%;
+  }
+  .k-btn-view {
+    width: 100%;
+  }
+  .k-btn-retry {
+    width: 100%;
+    justify-content: center;
+  }
+}
+

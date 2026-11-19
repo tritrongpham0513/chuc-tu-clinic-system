@@ -83,4 +83,15 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Appointment> findByAppointmentDateAndStatus(LocalDate appointmentDate, AppointmentStatus status);
 
     long countByDoctorIdAndAppointmentDateAndStatusIn(Long doctorId, LocalDate appointmentDate, java.util.Collection<AppointmentStatus> statuses);
+
+    @Query("SELECT a FROM Appointment a WHERE a.patient.user.id = :userId " +
+           "AND a.status IN :statuses " +
+           "AND a.appointmentDate BETWEEN :startDate AND :endDate " +
+           "ORDER BY a.appointmentDate ASC, a.timeSlot.startTime ASC")
+    List<Appointment> findUpcomingRemindersByUser(
+            @Param("userId") Long userId,
+            @Param("statuses") java.util.Collection<AppointmentStatus> statuses,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            org.springframework.data.domain.Pageable pageable);
 }

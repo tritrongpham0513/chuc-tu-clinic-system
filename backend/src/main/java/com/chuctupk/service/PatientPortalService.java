@@ -32,5 +32,8 @@ public interface PatientPortalService {
     Map<String, Object> rescheduleAppointment(User currentUser, Long id, com.chuctupk.dto.request.RescheduleAppointmentRequest request);
     Map<String, Object> getAppointmentResult(User currentUser, Long id);
     Map<String, Object> getMyHistory(User currentUser);
+
+    // 5. Thông báo trong app cho bệnh nhân
+    Map<String, Object> getMyNotifications(User currentUser);
 }
 

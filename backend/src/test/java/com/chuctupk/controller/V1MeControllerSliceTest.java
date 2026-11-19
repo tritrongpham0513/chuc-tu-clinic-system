@@ -135,6 +135,15 @@ class V1MeControllerSliceTest {
         public Map<String, Object> getMyHistory(User currentUser) {
             return getMyAppointments(currentUser, "HISTORY");
         }
+
+        @Override
+        public Map<String, Object> getMyNotifications(User currentUser) {
+            com.chuctupk.dto.response.NotificationItemDto item = new com.chuctupk.dto.response.NotificationItemDto(
+                    "REMINDER", "Nhắc lịch khám", "Phiếu CT-PK-26-2011-001 lúc 08:00 ngày 20/11",
+                    10L, "2026-11-20T08:00:00", false
+            );
+            return Map.of("items", List.of(item));
+        }
     }
 
     @BeforeEach
@@ -258,6 +267,19 @@ class V1MeControllerSliceTest {
                 .andExpect(jsonPath("$.success", is(true)))
                 .andExpect(jsonPath("$.message", is("Đổi lịch khám thành công")))
                 .andExpect(jsonPath("$.data.appointment.slotDate", is("2026-11-22")));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/me/notifications - Lấy danh sách thông báo nhắc lịch của tôi")
+    void testGetMyNotifications() throws Exception {
+        mockMvc.perform(get("/api/v1/me/notifications").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success", is(true)))
+                .andExpect(jsonPath("$.statusCode", is(200)))
+                .andExpect(jsonPath("$.data.items", hasSize(1)))
+                .andExpect(jsonPath("$.data.items[0].type", is("REMINDER")))
+                .andExpect(jsonPath("$.data.items[0].title", is("Nhắc lịch khám")))
+                .andExpect(jsonPath("$.data.items[0].appointmentId", is(10)));
     }
 }
 

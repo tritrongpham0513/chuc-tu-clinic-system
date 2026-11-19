@@ -147,6 +147,8 @@ docker compose down -v
    DB_PASSWORD=your_password
    # Bắt buộc: Secret ký JWT (tối thiểu 32 bytes, Base64). Tạo bằng: openssl rand -base64 32
    JWT_SECRET=your_base64_jwt_secret_here_32bytes_or_more
+   # Tầng thông báo: log (mặc định) | sms (muốn gửi SMS thật phải đặt NOTIFICATION_PROVIDER=sms và SMS_ENABLED=true)
+   NOTIFICATION_PROVIDER=log
    SMS_ENABLED=false
    ```
 2. Khởi động Backend:

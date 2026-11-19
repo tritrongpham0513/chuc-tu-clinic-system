@@ -81,3 +81,7 @@ app:
     secret-key: ${SMS_SECRET_KEY:}          # SecretKey copy từ eSMS.vn
     sms-type: ${SMS_TYPE:2}                 # 2: Brandname CSKH/OTP (khuyên dùng khi có Brandname), 8: Đầu số cố định
     brandname: ${SMS_BRAND_NAME:Baotrixemay} # Tên Brandname đã đăng ký trên eSMS (ví dụ Baotrixemay)
+
+notification:
+  provider: ${NOTIFICATION_PROVIDER:log}   # log | sms
+
