@@ -33,6 +33,7 @@ spring:
     baseline-on-migrate: true
     baseline-version: 0
     locations: classpath:db/migration
+    out-of-order: true
 
   jpa:
     open-in-view: false
