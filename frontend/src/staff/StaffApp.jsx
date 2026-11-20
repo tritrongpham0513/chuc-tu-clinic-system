@@ -19,6 +19,7 @@ import AccountInfo from './pages/staff/AccountInfo.jsx';
 
 import Dashboard from './pages/admin/Dashboard.jsx';
 import DoctorSchedules from './pages/admin/DoctorSchedules.jsx';
+import AdminDoctors from './pages/admin/AdminDoctors.jsx';
 import Accounts from './pages/admin/Accounts.jsx';
 import Posts from './pages/admin/Posts.jsx';
 import PostEditor from './pages/admin/PostEditor.jsx';
@@ -104,6 +105,7 @@ export default function StaffApp() {
       <Route element={<RequireStaff admin><StaffLayout /></RequireStaff>}>
         <Route path="quan-tri" element={<Dashboard />} />
         <Route path="quan-tri/lich-truc" element={<DoctorSchedules />} />
+        <Route path="quan-tri/bac-si" element={<AdminDoctors />} />
         <Route path="quan-tri/tai-khoan" element={<Accounts />} />
         <Route path="quan-tri/bai-viet" element={<Posts />} />
         <Route path="quan-tri/bai-viet/moi" element={<PostEditor />} />

@@ -4,7 +4,56 @@ import { fmtStamp } from '../../lib/format.js';
 import { editState } from './recordForm.js';
 
 /** Lịch sử khám: ngày, chẩn đoán, người ghi nhận, xem / sửa phiếu. */
-export function HistoryTable({ records, locked, onView, onEdit, withVitals }) {
+export function HistoryTable({ records, locked, onView, onEdit, withVitals, isReceptionist }) {
+  if (isReceptionist) {
+    const gridRec = { gridTemplateColumns: '200px minmax(0, 1fr) 200px 140px', alignItems: 'center' };
+    return (
+      <div className="t-boxed t-scroll">
+        <div role="table" aria-label="Lịch sử khám của hồ sơ" className="t-table">
+          <div role="row" className="t-tr t-thead" style={gridRec}>
+            <div role="columnheader" className="t-th">
+              Ngày khám
+            </div>
+            <div role="columnheader" className="t-th">
+              Bác sĩ
+            </div>
+            <div role="columnheader" className="t-th">
+              Hẹn tái khám
+            </div>
+            <div role="columnheader" className="t-th">
+              Toa thuốc
+            </div>
+          </div>
+          <div role="rowgroup" className="t-tbody">
+            {records.map((r) => (
+              <div key={r.id} role="row" className="t-tr" style={gridRec}>
+                <div role="cell" className="t-td">
+                  <span className="t-td-name">{fmtDate(r.visitDate)}</span>
+                  {r.appointment?.ticketCode && <span className="t-td-sub">{r.appointment.ticketCode}</span>}
+                </div>
+                <div role="cell" className="t-td t-text">
+                  {r.doctorName || '—'}
+                </div>
+                <div role="cell" className="t-td t-text">
+                  {r.followUpDate ? fmtDate(r.followUpDate) : '—'}
+                </div>
+                <div role="cell" className="t-td">
+                  {r.hasPrescription ? (
+                    <span className="t-chip t-chip-green" style={{ padding: '2px 12px' }}>
+                      Có
+                    </span>
+                  ) : (
+                    <span className="t-muted">Không</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const grid = { gridTemplateColumns: withVitals ? '200px minmax(0, 1fr) 150px 170px 190px' : '200px minmax(0, 1fr) 160px 190px', alignItems: 'start' };
   return (
     <div className="t-boxed t-scroll">

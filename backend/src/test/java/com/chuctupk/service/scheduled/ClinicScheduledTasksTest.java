@@ -116,6 +116,9 @@ class ClinicScheduledTasksTest {
         @Override public List<Object[]> findLatestCompletedVisitDates(List<Long> patientIds) { return Collections.emptyList(); }
         @Override public long countByDoctorIdAndAppointmentDateAndStatusIn(Long doctorId, LocalDate appointmentDate, java.util.Collection<AppointmentStatus> statuses) { return 0; }
         @Override public List<Appointment> findUpcomingRemindersByUser(Long userId, java.util.Collection<AppointmentStatus> statuses, LocalDate startDate, LocalDate endDate, Pageable pageable) { return Collections.emptyList(); }
+        @Override public boolean existsByPatientIdAndDoctorUserId(Long patientId, Long userId) { return false; }
+        @Override public boolean existsByPatientIdAndDoctorId(Long patientId, Long doctorId) { return false; }
+        @Override public long countFutureAppointmentsForDoctor(Long doctorId, LocalDate today, java.util.Collection<AppointmentStatus> excludeStatuses) { return 0; }
         @Override public void flush() {}
         @Override public <S extends Appointment> S saveAndFlush(S entity) { return null; }
         @Override public <S extends Appointment> List<S> saveAllAndFlush(Iterable<S> entities) { return null; }

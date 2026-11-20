@@ -52,6 +52,9 @@ class CapacityConsistencyIT {
             assertThat(clinicSettingService.getSlotCapacity()).isEqualTo(4);
 
             LocalDate targetDate = LocalDate.now().plusDays(2);
+            while (targetDate.getDayOfWeek().getValue() >= 6) {
+                targetDate = targetDate.plusDays(1);
+            }
             Map<String, Object> avail = patientPortalService.getAvailability(targetDate);
             @SuppressWarnings("unchecked")
             List<com.chuctupk.dto.response.SlotAvailabilityDto> slots =
@@ -81,6 +84,9 @@ class CapacityConsistencyIT {
     @DisplayName("B2: So sánh /time-slots và /me/availability cùng ngày -> số lượng slot khả dụng và remaining đồng nhất")
     void testCompareTimeSlotsAndAvailabilityConsistency() {
         LocalDate targetDate = LocalDate.now().plusDays(2);
+        while (targetDate.getDayOfWeek().getValue() >= 6) {
+            targetDate = targetDate.plusDays(1);
+        }
         com.chuctupk.entity.enums.DayOfWeek dow = com.chuctupk.entity.enums.DayOfWeek.from(targetDate.getDayOfWeek());
 
         // Đảm bảo có bác sĩ trực cả ngày để time-slots hiển thị các khung giờ khả dụng

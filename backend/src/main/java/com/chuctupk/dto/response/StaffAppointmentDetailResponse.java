@@ -5,6 +5,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.ALWAYS)
 public record StaffAppointmentDetailResponse(
         AppointmentDto appointment,
-        MedicalRecordPatientDto record
-) {}
-
+        Object record
+) {
+    public StaffAppointmentDetailResponse(AppointmentDto appointment, MedicalRecordPatientDto record) {
+        this(appointment, (Object) record);
+    }
+}

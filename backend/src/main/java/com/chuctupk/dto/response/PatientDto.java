@@ -52,6 +52,13 @@ public record PatientDto(
         return from(p, (LocalDate) null);
     }
 
+    public PatientDto withoutMedicalHistory() {
+        return new PatientDto(
+                id, patientCode, fullName, phone, dob, birthYear, gender, relationship, address,
+                null, isPrimary, isLocked, active, createdAt, updatedAt, infoUpdatedAt, lastVisitDate
+        );
+    }
+
     public static PatientDto from(Patient p, LocalDate lastVisitDate) {
         if (p == null) return null;
         boolean locked = Boolean.FALSE.equals(p.getIsActive()) || p.getLockedAt() != null;

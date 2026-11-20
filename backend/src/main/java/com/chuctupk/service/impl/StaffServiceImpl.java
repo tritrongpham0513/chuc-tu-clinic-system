@@ -262,14 +262,35 @@ public class StaffServiceImpl implements StaffService {
     @Override
     @Transactional(readOnly = true)
     public StaffAppointmentDetailResponse getAppointmentDetail(Long id) {
+        return getAppointmentDetail(id, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public StaffAppointmentDetailResponse getAppointmentDetail(Long id, User currentUser) {
         Appointment a = appointmentRepository.findById(id)
                 .orElseThrow(() -> AppException.notFound("Không tìm thấy phiếu"));
         MedicalRecord rec = medicalRecordRepository.findByAppointmentId(id).orElse(null);
         Checkin checkin = checkinRepository.findByAppointmentId(id).orElse(null);
 
+        com.chuctupk.entity.enums.Role role = currentUser != null ? currentUser.getRole() : null;
+        if (role == null) {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof User u) {
+                role = u.getRole();
+            }
+        }
+
+        Object recordDto;
+        if (role == com.chuctupk.entity.enums.Role.STAFF) {
+            recordDto = rec != null ? RecordSummaryDto.from(rec) : null;
+        } else {
+            recordDto = rec != null ? MedicalRecordPatientDto.from(rec) : null;
+        }
+
         return new StaffAppointmentDetailResponse(
                 AppointmentDto.from(a, checkin),
-                rec != null ? MedicalRecordPatientDto.from(rec) : null
+                recordDto
         );
     }
 

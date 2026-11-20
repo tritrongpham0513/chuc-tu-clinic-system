@@ -19,6 +19,10 @@ public interface StaffService {
 
     StaffAppointmentDetailResponse getAppointmentDetail(Long id);
 
+    default StaffAppointmentDetailResponse getAppointmentDetail(Long id, User currentUser) {
+        return getAppointmentDetail(id);
+    }
+
     StaffAvailabilityResponse getAvailability(LocalDate date);
 
     Map<String, Object> createCounterAppointment(User staff, StaffCreateAppointmentRequest request);

@@ -2,23 +2,30 @@ package com.chuctupk.service.impl;
 
 import com.chuctupk.common.mapping.ContractMapper;
 import com.chuctupk.common.PhoneValidator;
+import com.chuctupk.dto.request.BreakGlassRequest;
 import com.chuctupk.dto.request.StaffCreatePatientRequest;
 import com.chuctupk.dto.request.StaffUpdatePatientRequest;
 import com.chuctupk.dto.response.*;
 import com.chuctupk.entity.Appointment;
 import com.chuctupk.entity.MedicalRecord;
 import com.chuctupk.entity.Patient;
+import com.chuctupk.entity.RecordAccessLog;
+import com.chuctupk.entity.User;
 import com.chuctupk.entity.enums.Gender;
+import com.chuctupk.entity.enums.Role;
 import com.chuctupk.exception.AppException;
 import com.chuctupk.exception.ErrorCode;
 import com.chuctupk.repository.AppointmentRepository;
 import com.chuctupk.repository.MedicalRecordRepository;
 import com.chuctupk.repository.PatientRepository;
+import com.chuctupk.repository.RecordAccessLogRepository;
 import com.chuctupk.repository.UserRepository;
 import com.chuctupk.service.SequenceGeneratorService;
 import com.chuctupk.service.StaffPatientService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +42,7 @@ public class StaffPatientServiceImpl implements StaffPatientService {
     private final PatientRepository patientRepository;
     private final AppointmentRepository appointmentRepository;
     private final MedicalRecordRepository medicalRecordRepository;
+    private final RecordAccessLogRepository recordAccessLogRepository;
     private final UserRepository userRepository;
     private final SequenceGeneratorService sequenceGeneratorService;
     private final Clock clock;
@@ -42,8 +50,27 @@ public class StaffPatientServiceImpl implements StaffPatientService {
     @Override
     @Transactional(readOnly = true)
     public StaffPatientListResponse getPatients(String q, Boolean locked, int page, int limit) {
+        return getPatients(q, locked, page, limit, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public StaffPatientListResponse getPatients(String q, Boolean locked, int page, int limit, User currentUser) {
+        if (currentUser == null) {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof User u) {
+                currentUser = u;
+            }
+        }
+
         int pageSize = limit > 0 ? Math.min(limit, 100) : 10;
-        List<Patient> all = patientRepository.findAll();
+        List<Patient> all;
+
+        if (currentUser != null && currentUser.getRole() == Role.DOCTOR) {
+            all = patientRepository.findDistinctPatientsByDoctorUserId(currentUser.getId());
+        } else {
+            all = patientRepository.findAll();
+        }
 
         List<Patient> filtered = all.stream()
                 .filter(p -> {
@@ -152,8 +179,96 @@ public class StaffPatientServiceImpl implements StaffPatientService {
     @Override
     @Transactional(readOnly = true)
     public StaffPatientDetailResponse getPatientDetail(Long id) {
+        return getPatientDetail(id, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public StaffPatientDetailResponse getPatientDetail(Long id, User currentUser) {
+        if (currentUser == null) {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof User u) {
+                currentUser = u;
+            }
+        }
+
+        Role role = currentUser != null ? currentUser.getRole() : null;
+
         Patient p = patientRepository.findById(id)
                 .orElseThrow(() -> AppException.notFound("Không tìm thấy hồ sơ người bệnh"));
+
+        if (role == Role.DOCTOR) {
+            boolean hasTreated = appointmentRepository.existsByPatientIdAndDoctorUserId(id, currentUser.getId());
+            boolean hasBreakGlass = recordAccessLogRepository.existsByUserIdAndPatientIdAndScope(currentUser.getId(), id, "BREAK_GLASS");
+            if (!hasTreated && !hasBreakGlass) {
+                throw new AppException(ErrorCode.FORBIDDEN, "Bạn chưa từng phụ trách bệnh nhân này", Map.of("canBreakGlass", true));
+            }
+        }
+
+        List<Appointment> appts = appointmentRepository.findByPatientId(id).stream()
+                .sorted(Comparator.comparing(Appointment::getAppointmentDate, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(Appointment::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .toList();
+
+        List<AppointmentDto> apptDtos = appts.stream()
+                .map(AppointmentDto::from)
+                .toList();
+
+        List<MedicalRecord> records = medicalRecordRepository.findByPatientIdOrderByCreatedAtDesc(id);
+
+        if (role == Role.STAFF) {
+            List<RecordSummaryDto> summaryDtos = records.stream()
+                    .map(RecordSummaryDto::from)
+                    .toList();
+            PatientDto staffPatientDto = PatientDto.from(p).withoutMedicalHistory();
+            return new StaffPatientDetailResponse(staffPatientDto, apptDtos, summaryDtos);
+        }
+
+        List<MedicalRecordPatientDto> recordDtos = records.stream()
+                .map(r -> MedicalRecordPatientDto.from(r, true, null, clock))
+                .toList();
+
+        return new StaffPatientDetailResponse(PatientDto.from(p), apptDtos, recordDtos);
+    }
+
+    @Override
+    @Transactional
+    public StaffPatientDetailResponse breakGlass(Long id, BreakGlassRequest request, User currentUser) {
+        if (currentUser == null) {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof User u) {
+                currentUser = u;
+            }
+        }
+        if (currentUser == null) {
+            throw AppException.unauthorized("Chưa đăng nhập");
+        }
+        if (currentUser.getRole() != Role.DOCTOR) {
+            throw AppException.forbidden("Chỉ bác sĩ mới có quyền truy cập hồ sơ khẩn cấp");
+        }
+
+        Patient p = patientRepository.findById(id)
+                .orElseThrow(() -> AppException.notFound("Không tìm thấy hồ sơ người bệnh"));
+
+        boolean inNormalScope = appointmentRepository.existsByPatientIdAndDoctorUserId(id, currentUser.getId());
+        if (inNormalScope) {
+            throw AppException.badRequest("Bệnh nhân này đã thuộc phạm vi phụ trách của bạn, không cần mở quyền khẩn cấp");
+        }
+
+        String reason = request != null ? request.reason() : null;
+        if (reason == null || reason.trim().length() < 10) {
+            throw AppException.unprocessable("Vui lòng ghi rõ lý do (ít nhất 10 ký tự)");
+        }
+
+        RecordAccessLog accessLog = RecordAccessLog.builder()
+                .user(currentUser)
+                .patientId(id)
+                .recordId(null)
+                .scope("BREAK_GLASS")
+                .reason(reason.trim())
+                .createdAt(LocalDateTime.now(clock))
+                .build();
+        recordAccessLogRepository.save(accessLog);
 
         List<Appointment> appts = appointmentRepository.findByPatientId(id).stream()
                 .sorted(Comparator.comparing(Appointment::getAppointmentDate, Comparator.nullsLast(Comparator.reverseOrder()))

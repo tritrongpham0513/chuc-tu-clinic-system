@@ -1,10 +1,12 @@
 package com.chuctupk.controller;
 
+import com.chuctupk.dto.request.BreakGlassRequest;
 import com.chuctupk.dto.request.StaffCreatePatientRequest;
 import com.chuctupk.dto.request.StaffUpdatePatientRequest;
 import com.chuctupk.dto.response.ApiResponse;
 import com.chuctupk.dto.response.StaffPatientDetailResponse;
 import com.chuctupk.dto.response.StaffPatientListResponse;
+import com.chuctupk.entity.User;
 import com.chuctupk.service.StaffPatientService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -32,8 +35,9 @@ public class StaffPatientController {
             @RequestParam(required = false) String q,
             @RequestParam(required = false) Boolean locked,
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int limit) {
-        StaffPatientListResponse response = staffPatientService.getPatients(q, locked, page, limit);
+            @RequestParam(defaultValue = "10") int limit,
+            @AuthenticationPrincipal User currentUser) {
+        StaffPatientListResponse response = staffPatientService.getPatients(q, locked, page, limit, currentUser);
         return ResponseEntity.ok(ApiResponse.success(response, "Lấy danh sách bệnh nhân thành công"));
     }
 
@@ -58,9 +62,20 @@ public class StaffPatientController {
     @GetMapping("/{id}")
     @Operation(summary = "Xem chi tiết hồ sơ bệnh nhân cùng toàn bộ lịch sử khám và phiếu kết quả")
     public ResponseEntity<ApiResponse<StaffPatientDetailResponse>> getPatientDetail(
-            @PathVariable Long id) {
-        StaffPatientDetailResponse response = staffPatientService.getPatientDetail(id);
+            @PathVariable Long id,
+            @AuthenticationPrincipal User currentUser) {
+        StaffPatientDetailResponse response = staffPatientService.getPatientDetail(id, currentUser);
         return ResponseEntity.ok(ApiResponse.success(response, "Lấy thông tin hồ sơ bệnh nhân thành công"));
+    }
+
+    @PostMapping("/{id}/break-glass")
+    @Operation(summary = "Truy cập hồ sơ bệnh nhân khẩn cấp ngoài phạm vi phụ trách (Break-glass)")
+    public ResponseEntity<ApiResponse<StaffPatientDetailResponse>> breakGlass(
+            @PathVariable Long id,
+            @RequestBody BreakGlassRequest request,
+            @AuthenticationPrincipal User currentUser) {
+        StaffPatientDetailResponse response = staffPatientService.breakGlass(id, request, currentUser);
+        return ResponseEntity.ok(ApiResponse.success(response, "Truy cập hồ sơ khẩn cấp thành công"));
     }
 
     @PatchMapping("/{id}")

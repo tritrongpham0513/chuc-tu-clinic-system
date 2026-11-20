@@ -94,4 +94,17 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
             org.springframework.data.domain.Pageable pageable);
+
+    @Query("SELECT COUNT(a) > 0 FROM Appointment a WHERE a.patient.id = :patientId AND a.doctor.user.id = :userId")
+    boolean existsByPatientIdAndDoctorUserId(@Param("patientId") Long patientId, @Param("userId") Long userId);
+
+    @Query("SELECT COUNT(a) > 0 FROM Appointment a WHERE a.patient.id = :patientId AND a.doctor.id = :doctorId")
+    boolean existsByPatientIdAndDoctorId(@Param("patientId") Long patientId, @Param("doctorId") Long doctorId);
+
+    @Query("SELECT COUNT(a) FROM Appointment a WHERE a.doctor.id = :doctorId AND a.appointmentDate >= :today AND a.status NOT IN :excludeStatuses")
+    long countFutureAppointmentsForDoctor(
+            @Param("doctorId") Long doctorId,
+            @Param("today") LocalDate today,
+            @Param("excludeStatuses") java.util.Collection<AppointmentStatus> excludeStatuses
+    );
 }

@@ -1,5 +1,6 @@
 package com.chuctupk.controller;
 
+import com.chuctupk.dto.request.BreakGlassRequest;
 import com.chuctupk.dto.request.CreateRecordRequest;
 import com.chuctupk.dto.request.StaffCreatePatientRequest;
 import com.chuctupk.dto.request.StaffUpdatePatientRequest;
@@ -86,6 +87,11 @@ class V1StaffPatientAndRecordSliceTest {
             );
 
             return new StaffPatientDetailResponse(samplePatient, List.of(appt), List.of(rec));
+        }
+
+        @Override
+        public StaffPatientDetailResponse breakGlass(Long id, BreakGlassRequest request, User currentUser) {
+            return getPatientDetail(id);
         }
 
         @Override

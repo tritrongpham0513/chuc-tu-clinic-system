@@ -82,8 +82,9 @@ public class StaffController {
     @GetMapping("/appointments/{id}")
     @Operation(summary = "Xem chi tiết phiếu khám và hồ sơ bệnh án")
     public ResponseEntity<ApiResponse<StaffAppointmentDetailResponse>> getAppointmentDetail(
-            @PathVariable Long id) {
-        StaffAppointmentDetailResponse response = staffService.getAppointmentDetail(id);
+            @PathVariable Long id,
+            @AuthenticationPrincipal User currentUser) {
+        StaffAppointmentDetailResponse response = staffService.getAppointmentDetail(id, currentUser);
         return ResponseEntity.ok(ApiResponse.success(response, "Lấy chi tiết phiếu khám thành công"));
     }
 

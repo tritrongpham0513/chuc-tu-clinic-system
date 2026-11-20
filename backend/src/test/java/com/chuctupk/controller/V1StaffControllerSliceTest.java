@@ -96,6 +96,11 @@ class V1StaffControllerSliceTest {
         }
 
         @Override
+        public StaffAppointmentDetailResponse getAppointmentDetail(Long id, User currentUser) {
+            return getAppointmentDetail(id);
+        }
+
+        @Override
         public StaffAvailabilityResponse getAvailability(LocalDate date) {
             SlotAvailabilityDto s = new SlotAvailabilityDto("1", "08:00", "09:00", 2, 6, 4, true, null);
             return new StaffAvailabilityResponse("2026-11-14", List.of(s));

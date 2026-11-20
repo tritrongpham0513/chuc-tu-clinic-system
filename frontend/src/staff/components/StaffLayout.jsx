@@ -17,6 +17,7 @@ const ADMIN_NAV = [
   { to: '/noi-bo/quan-tri', label: 'Tổng quan', icon: 'dashboard', end: true },
   ...STAFF_NAV,
   { to: '/noi-bo/quan-tri/lich-truc', label: 'Lịch trực bác sĩ', icon: 'calendar' },
+  { to: '/noi-bo/quan-tri/bac-si', label: 'Hồ sơ bác sĩ', icon: 'users' },
   { to: '/noi-bo/quan-tri/bai-viet', label: 'Quản lý bài viết', icon: 'news' },
   { to: '/noi-bo/quan-tri/tai-khoan', label: 'Quản lý tài khoản', icon: 'userPlus' },
 ];

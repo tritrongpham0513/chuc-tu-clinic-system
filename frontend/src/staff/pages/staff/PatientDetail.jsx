@@ -26,6 +26,64 @@ function editErrors(form) {
 }
 
 /** Sửa thông tin hồ sơ: đủ các ô như lúc người dùng tạo hồ sơ (UC.9.5). Mã bệnh nhân không đổi. */
+function BreakGlassDialog({ patientId, onClose, onSuccess }) {
+  const [reason, setReason] = useState('');
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState(null);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!reason || reason.trim().length < 10) {
+      setError({ message: 'Vui lòng ghi rõ lý do (ít nhất 10 ký tự)' });
+      return;
+    }
+    setPending(true);
+    setError(null);
+    try {
+      const res = await api.post(`/staff/patients/${patientId}/break-glass`, { reason: reason.trim() });
+      onSuccess(res);
+    } catch (err) {
+      setError(err);
+      setPending(false);
+    }
+  };
+
+  return (
+    <TDialog title="Xem khẩn cấp (Break-glass)" width={600} onClose={onClose}>
+      <form className="t-dialog-body a-vars" style={{ padding: '24px 28px 28px', gap: 20 }} onSubmit={submit}>
+        <p className="t-text" style={{ fontSize: '18px', lineHeight: '28px' }}>
+          Hành động mở quyền xem khẩn cấp sẽ được ghi nhận vào nhật ký kiểm toán hệ thống. Vui lòng ghi rõ lý do y tế:
+        </p>
+        <div className="t-form-group">
+          <label htmlFor="bg-reason" className="t-label" style={{ fontSize: '18px' }}>
+            Lý do xem khẩn cấp <span className="t-req">*</span>
+          </label>
+          <textarea
+            id="bg-reason"
+            rows={4}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Ví dụ: Bệnh nhân đau đầu dữ dội tại quầy, cần xem tiền sử để cấp cứu..."
+            style={{ fontSize: '18px', width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--line-strong)' }}
+            disabled={pending}
+            autoFocus
+          />
+          <span className="t-muted" style={{ fontSize: '16px' }}>Tối thiểu 10 ký tự ({reason.trim().length}/10)</span>
+        </div>
+        {error && <ErrorAlert error={error} />}
+        <div className="t-actions" style={{ paddingTop: 12, borderTop: '1px solid var(--line-soft)' }}>
+          <button type="submit" className="t-btn t-btn-primary" style={{ fontSize: '18px', padding: '0 24px', minHeight: '48px' }} disabled={pending}>
+            {pending ? 'Đang kích hoạt...' : 'Xác nhận xem khẩn cấp'}
+          </button>
+          <button type="button" className="t-btn t-btn-ghost" style={{ fontSize: '18px', minHeight: '48px' }} onClick={onClose} disabled={pending}>
+            Huỷ bỏ
+          </button>
+        </div>
+      </form>
+    </TDialog>
+  );
+}
+
 function EditPatientDialog({ patient, onClose, onSaved }) {
   const [form, setForm] = useState(() => editForm(patient));
   const [version, setVersion] = useState(patient.updatedAt);
@@ -97,13 +155,62 @@ export default function PatientDetail() {
   const { id } = useParams();
   const { user } = useSession();
   const canEditRecord = isAdmin(user) || isDoctor(user);
+  const isReceptionist = !isAdmin(user) && !isDoctor(user);
   const { data, loading, error, setData } = useAsync(() => api.get(`/staff/patients/${id}`), [id]);
   const [dialog, setDialog] = useState(null);
   const [notice, setNotice] = useState(null);
   useDocumentTitle(data?.patient?.fullName || 'Hồ sơ bệnh nhân');
 
   if (loading) return <Loading />;
-  if (error) return <ErrorAlert error={error} />;
+  if (error) {
+    if (error.status === 403 && isDoctor(user)) {
+      return (
+        <>
+          <Link to="/noi-bo/benh-nhan" className="t-back">
+            <Icon name="arrowLeft" size={22} />
+            Quay lại danh sách hồ sơ
+          </Link>
+          <div className="t-panel" style={{ padding: '36px 32px', gap: 20, alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+              <span className="t-avatar" style={{ background: 'var(--amber-100)', color: 'var(--amber-800)' }}>
+                <Icon name="lock" size={32} />
+              </span>
+              <div>
+                <h1 className="t-h2" style={{ marginBottom: 4 }}>
+                  Chưa từng phụ trách bệnh nhân này
+                </h1>
+                <p className="t-text" style={{ fontSize: '18px', color: 'var(--ink-700)', lineHeight: '28px' }}>
+                  Theo quy định phân quyền, bác sĩ chỉ xem hồ sơ bệnh nhân trong phạm vi phiếu khám của mình. Trong trường hợp cấp cứu hoặc khám đột xuất, bác sĩ có thể kích hoạt quyền xem khẩn cấp (Break-glass).
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="t-btn t-btn-primary"
+              style={{ fontSize: '18px', padding: '12px 28px', minHeight: '48px', marginTop: 12 }}
+              onClick={() => setDialog({ type: 'breakGlass' })}
+            >
+              <Icon name="alertTriangle" size={22} />
+              Xem khẩn cấp
+            </button>
+          </div>
+          {dialog?.type === 'breakGlass' && (
+            <BreakGlassDialog
+              patientId={id}
+              onClose={() => setDialog(null)}
+              onSuccess={(fullData) => {
+                setData(fullData);
+                setDialog(null);
+                setNotice('Đã kích hoạt quyền xem khẩn cấp thành công. Lượt truy cập này đã được ghi nhận vào nhật ký kiểm toán.');
+              }}
+            />
+          )}
+          {notice && <NoticeDialog onClose={() => setNotice(null)}>{notice}</NoticeDialog>}
+        </>
+      );
+    }
+    return <ErrorAlert error={error} />;
+  }
 
   const p = data.patient;
   const today = todayVN();
@@ -280,8 +387,9 @@ export default function PatientDetail() {
           <HistoryTable
             records={data.records}
             locked={p.isLocked}
-            onView={(r) => setDialog({ type: 'view', record: r })}
-            onEdit={p.isLocked || !canEditRecord ? null : (r) => setDialog({ type: 'editRecord', record: r })}
+            isReceptionist={isReceptionist}
+            onView={isReceptionist ? null : (r) => setDialog({ type: 'view', record: r })}
+            onEdit={isReceptionist || p.isLocked || !canEditRecord ? null : (r) => setDialog({ type: 'editRecord', record: r })}
           />
         ) : (
           <p className="t-text">Hồ sơ này chưa có lượt khám nào.</p>
@@ -292,6 +400,17 @@ export default function PatientDetail() {
         </p>
       </section>
 
+      {dialog?.type === 'breakGlass' && (
+        <BreakGlassDialog
+          patientId={id}
+          onClose={() => setDialog(null)}
+          onSuccess={(fullData) => {
+            setData(fullData);
+            setDialog(null);
+            setNotice('Đã kích hoạt quyền xem khẩn cấp thành công. Lượt truy cập này đã được ghi nhận vào nhật ký kiểm toán.');
+          }}
+        />
+      )}
       {dialog?.type === 'edit' && (
         <EditPatientDialog
           patient={p}
@@ -303,7 +422,7 @@ export default function PatientDetail() {
           }}
         />
       )}
-      {dialog?.type === 'view' && (
+      {dialog?.type === 'view' && !isReceptionist && (
         <ResultDialog
           record={dialog.record}
           patient={p}
