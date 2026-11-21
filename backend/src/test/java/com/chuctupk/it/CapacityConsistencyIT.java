@@ -31,6 +31,12 @@ class CapacityConsistencyIT {
     private ClinicSettingService clinicSettingService;
 
     @Autowired
+    private com.chuctupk.service.CapacityResolver capacityResolver;
+
+    @Autowired
+    private com.chuctupk.repository.TimeSlotRepository timeSlotRepository;
+
+    @Autowired
     private PatientPortalService patientPortalService;
 
     @Autowired
@@ -131,7 +137,8 @@ class CapacityConsistencyIT {
             com.chuctupk.dto.response.SlotAvailabilityDto matching = availMap.get(String.valueOf(ts.getId()));
             assertThat(matching).isNotNull();
             assertThat(ts.getRemaining()).isEqualTo(matching.remaining());
-            assertThat(matching.capacity()).isEqualTo(clinicSettingService.getSlotCapacity());
+            com.chuctupk.entity.TimeSlot slot = timeSlotRepository.findById(ts.getId()).orElseThrow();
+            assertThat(matching.capacity()).isEqualTo(capacityResolver.effectiveCapacity(targetDate, slot));
         }
     }
 }

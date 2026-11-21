@@ -198,17 +198,20 @@ class DoctorAvailabilityCheckTest {
     }
 
     @Test
-    @DisplayName("StaffServiceImpl.getAvailability: gắn reason=NO_DOCTOR và dùng clinicSettingService.getSlotCapacity()")
+    @DisplayName("StaffServiceImpl.getAvailability: gắn reason=NO_DOCTOR và tính capacity qua CapacityResolver")
     void testStaffAvailability_noDoctorAndCapacity() {
         when(timeSlotRepository.findByIsActiveTrueOrderBySortOrderAsc())
                 .thenReturn(List.of(morningSlot, afternoonSlot));
 
         when(clinicSettingService.getSlotCapacity()).thenReturn(5);
+        when(clinicSettingService.getPatientsPerDoctor()).thenReturn(3);
         when(appointmentSeatRepository.countByAppointmentDateAndTimeSlotId(any(), any())).thenReturn(0L);
 
         DoctorAssignmentService mockDoctorAssignmentService = mock(DoctorAssignmentService.class);
         when(mockDoctorAssignmentService.hasDoctorOnDuty(nextMonday, morningSlot)).thenReturn(true);
         when(mockDoctorAssignmentService.hasDoctorOnDuty(nextMonday, afternoonSlot)).thenReturn(false);
+        when(mockDoctorAssignmentService.findOnDutyDoctorIds(nextMonday, Period.MORNING)).thenReturn(List.of(1L));
+        when(mockDoctorAssignmentService.findOnDutyDoctorIds(nextMonday, Period.AFTERNOON)).thenReturn(List.of());
 
         StaffServiceImpl staffService = new StaffServiceImpl(
                 appointmentRepository,
@@ -233,12 +236,12 @@ class DoctorAvailabilityCheckTest {
         assertEquals(2, response.slots().size());
 
         var morningDto = response.slots().get(0);
-        assertEquals(5, morningDto.capacity());
+        assertEquals(3, morningDto.capacity());
         assertTrue(morningDto.available());
         assertNull(morningDto.reason());
 
         var afternoonDto = response.slots().get(1);
-        assertEquals(5, afternoonDto.capacity());
+        assertEquals(0, afternoonDto.capacity());
         assertFalse(afternoonDto.available());
         assertEquals("NO_DOCTOR", afternoonDto.reason());
     }

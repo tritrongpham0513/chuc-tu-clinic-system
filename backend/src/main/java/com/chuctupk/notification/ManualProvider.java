@@ -75,7 +75,9 @@ public class ManualProvider implements NotificationProvider {
         }
 
         String time = null;
-        if (appointment.getTimeSlot() != null && appointment.getTimeSlot().getStartTime() != null) {
+        if (appointment.getSlotStartSnapshot() != null) {
+            time = ContractMapper.formatTime(appointment.getSlotStartSnapshot());
+        } else if (appointment.getTimeSlot() != null && appointment.getTimeSlot().getStartTime() != null) {
             time = ContractMapper.formatTime(appointment.getTimeSlot().getStartTime());
         } else if (appointment.getExpectedTime() != null) {
             time = ContractMapper.formatTime(appointment.getExpectedTime());

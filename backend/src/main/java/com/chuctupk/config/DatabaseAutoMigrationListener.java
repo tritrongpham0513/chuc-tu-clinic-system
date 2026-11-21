@@ -46,7 +46,7 @@ public class DatabaseAutoMigrationListener implements BeanPostProcessor, Priorit
         return bean;
     }
 
-    private void executeAutoMigration() {
+    public void executeAutoMigration() {
         try {
             DataSource dataSource = applicationContext.getBean(DataSource.class);
             try (Connection conn = dataSource.getConnection()) {
@@ -79,13 +79,6 @@ public class DatabaseAutoMigrationListener implements BeanPostProcessor, Priorit
                     } catch (Exception e) {
                         log.warn("[Auto-Migration] Lỗi khi thêm cột reschedule_count: {}", e.getMessage());
                     }
-                }
-
-                // 2. Đồng bộ slot_capacity = 5 và max_patients = 5
-                try (Statement stmt = conn.createStatement()) {
-                    stmt.execute("UPDATE `clinic_settings` SET `setting_value` = '5' WHERE `setting_key` = 'slot_capacity'");
-                    stmt.execute("UPDATE `time_slots` SET `max_patients` = 5 WHERE `max_patients` > 5");
-                } catch (Exception ignored) {
                 }
             }
         } catch (Exception e) {

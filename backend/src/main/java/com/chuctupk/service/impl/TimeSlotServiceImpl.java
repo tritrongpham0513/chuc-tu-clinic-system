@@ -30,6 +30,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     private final ClinicSettingService clinicSettingService;
     private final com.chuctupk.service.SlotPolicy slotPolicy;
     private final com.chuctupk.service.DoctorAssignmentService doctorAssignmentService;
+    private final com.chuctupk.service.CapacityResolver capacityResolver;
     private final Clock clock;
 
     @Override
@@ -66,7 +67,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
                     appointmentSeatRepository.countByAppointmentDateAndTimeSlotId(date, slot.getId()),
                     appointmentRepository.countBookedSlotsTotal(date, slot.getId(), AppointmentStatus.CANCELLED)
             );
-            int capacity = clinicSettingService.getSlotCapacity();
+            int capacity = capacityResolver.effectiveCapacity(date, slot);
             int remaining = Math.max(0, capacity - (int) totalBooked);
 
             // Đánh giá bằng SlotPolicy (Single Source of Truth)
@@ -93,7 +94,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
                 }
 
                 long doctorBooked = appointmentRepository.countBookedSlotsForDoctor(date, doctorId, slot.getId(), AppointmentStatus.CANCELLED);
-                int doctorCapacity = slot.getMaxPatients() != null && slot.getMaxPatients() > 0 ? slot.getMaxPatients() : capacity;
+                int doctorCapacity = capacityResolver.perDoctorCapacity(slot);
                 int doctorRemaining = doctorCapacity - (int) doctorBooked;
 
                 if (doctorRemaining <= 0) {

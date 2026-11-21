@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ClinicSettingServiceImpl implements ClinicSettingService {
 
     public static final String KEY_SLOT_CAPACITY = "slot_capacity";
+    public static final String KEY_PATIENTS_PER_DOCTOR = "patients_per_doctor";
     public static final String KEY_SEATS = "seats";
     public static final String KEY_USER_MAX_DAYS = "user_max_days";
     public static final String KEY_COUNTER_MAX_DAYS = "counter_max_days";
@@ -32,12 +33,13 @@ public class ClinicSettingServiceImpl implements ClinicSettingService {
     public static final String KEY_AUTO_INVITE = "auto_invite";
 
     public static final int DEFAULT_SLOT_CAPACITY = 6;
+    public static final int DEFAULT_PATIENTS_PER_DOCTOR = 3;
     public static final int DEFAULT_SEATS = 5;
     public static final int DEFAULT_USER_MAX_DAYS = 30;
     public static final int DEFAULT_COUNTER_MAX_DAYS = 7;
     public static final int DEFAULT_MAX_PROFILES = 10;
     public static final int DEFAULT_BOOKING_ADVANCE_DAYS = 14;
-    public static final int DEFAULT_BOOKING_MIN_HOURS = 2;
+    public static final int DEFAULT_BOOKING_MIN_HOURS = 1;
     public static final int DEFAULT_PRIORITY_EARLY_MINUTES = 15;
     public static final LocalTime DEFAULT_NO_SHOW_CANCEL_AT = LocalTime.of(17, 0);
     public static final LocalTime DEFAULT_RECEPTION_OPEN = LocalTime.of(8, 0);
@@ -54,6 +56,11 @@ public class ClinicSettingServiceImpl implements ClinicSettingService {
     @Override
     public int getSlotCapacity() {
         return getIntSetting(KEY_SLOT_CAPACITY, DEFAULT_SLOT_CAPACITY);
+    }
+
+    @Override
+    public int getPatientsPerDoctor() {
+        return getIntSetting(KEY_PATIENTS_PER_DOCTOR, DEFAULT_PATIENTS_PER_DOCTOR);
     }
 
     @Override
@@ -128,6 +135,26 @@ public class ClinicSettingServiceImpl implements ClinicSettingService {
     public boolean isAutoInvite() {
         String val = getSettingValue(KEY_AUTO_INVITE, "0");
         return "1".equals(val.trim()) || "true".equalsIgnoreCase(val.trim());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, String> getAllSettings() {
+        Map<String, String> result = new java.util.LinkedHashMap<>();
+        result.put(KEY_SLOT_CAPACITY, String.valueOf(getSlotCapacity()));
+        result.put(KEY_PATIENTS_PER_DOCTOR, String.valueOf(getPatientsPerDoctor()));
+        result.put(KEY_SEATS, String.valueOf(getSeats()));
+        result.put(KEY_USER_MAX_DAYS, String.valueOf(getUserMaxDays()));
+        result.put(KEY_COUNTER_MAX_DAYS, String.valueOf(getCounterMaxDays()));
+        result.put(KEY_MAX_PROFILES, String.valueOf(getMaxProfiles()));
+        result.put(KEY_BOOKING_ADVANCE_DAYS, String.valueOf(getBookingAdvanceDays()));
+        result.put(KEY_BOOKING_MIN_HOURS, String.valueOf(getBookingMinHours()));
+        result.put(KEY_PRIORITY_EARLY_MINUTES, String.valueOf(getPriorityEarlyMinutes()));
+        result.put(KEY_NO_SHOW_CANCEL_AT, getNoShowCancelAt().toString());
+        result.put(KEY_RECEPTION_OPEN, getReceptionOpen().toString());
+        result.put(KEY_RECEPTION_CLOSE, getReceptionClose().toString());
+        result.put(KEY_AUTO_INVITE, isAutoInvite() ? "1" : "0");
+        return result;
     }
 
     @Override

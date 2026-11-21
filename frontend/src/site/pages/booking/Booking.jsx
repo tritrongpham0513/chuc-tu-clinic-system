@@ -18,8 +18,8 @@ import { CalendarDialog } from './CalendarDialog.jsx';
 // Bước 4 (phiếu khám) là trang /phieu-kham/:id?moi=1.
 
 const SLOT_REASON_LABELS = {
-  PAST: 'Đã qua',
-  TOO_LATE: 'Sát giờ khám',
+  PAST: 'Đã qua giờ',
+  TOO_LATE: 'Hết giờ đặt',
   TOO_FAR: 'Chưa mở đặt',
   OUTSIDE_RECEPTION: 'Ngoài giờ khám',
   SLOT_FULL: 'Đã hết chỗ',
@@ -27,12 +27,25 @@ const SLOT_REASON_LABELS = {
   NO_DOCTOR: 'Chưa có ca trực',
 };
 
-function formatSlotReason(reason) {
+function formatSlotReason(reason, slotStart, isToday) {
   if (!reason) return 'Không chọn được';
+
+  // Nếu là hôm nay và khung giờ đã bắt đầu hoặc đã qua giờ hiện tại
+  if (isToday && slotStart) {
+    const now = new Date();
+    const curTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    if (slotStart <= curTime) {
+      return 'Đã qua giờ';
+    }
+    if (reason === 'TOO_LATE') {
+      return 'Hết giờ đặt';
+    }
+  }
+
   return SLOT_REASON_LABELS[reason] || 'Không chọn được';
 }
 
-function SlotGroup({ label, slots, value, onPick }) {
+function SlotGroup({ label, slots, value, onPick, isToday }) {
   if (!slots.length) return null;
   return (
     <div className="b-section">
@@ -48,7 +61,7 @@ function SlotGroup({ label, slots, value, onPick }) {
             onClick={() => s.available && onPick(s.start)}
           >
             {shortTime(s.start)}
-            {!s.available && <small>{formatSlotReason(s.reason)}</small>}
+            {!s.available && <small>{formatSlotReason(s.reason, s.start, isToday)}</small>}
           </button>
         ))}
       </div>
@@ -130,11 +143,13 @@ export default function Booking() {
   if (!meta || !user) return <Loading />;
 
   const today = meta.today;
+  const isToday = slotDate === today;
   const quickDays = [0, 1, 2].map((n) => addDays(today, n));
   const otherDay = slotDate && !quickDays.includes(slotDate) ? slotDate : null;
   const patient = profileList.find((p) => p.id === patientId);
   const service = meta.serviceTypes.find((s) => s.value === serviceType);
   const slots = availability.data?.slots || [];
+  const hasNoAvailableToday = isToday && slots.length > 0 && slots.every((s) => !s.available);
   const max = profiles.data?.max || meta.maxProfiles || 10;
 
   const go = (n) => {
@@ -241,14 +256,19 @@ export default function Booking() {
           {availability.loading && <Loading label="Đang xem các khung giờ còn chỗ…" />}
           {!availability.loading && (
             <>
-              <SlotGroup label="Buổi sáng" slots={slots.filter((s) => s.start < '12:00')} value={slotStart} onPick={setSlotStart} />
-              <SlotGroup label="Buổi chiều" slots={slots.filter((s) => s.start >= '12:00')} value={slotStart} onPick={setSlotStart} />
+              <SlotGroup label="Buổi sáng" slots={slots.filter((s) => s.start < '12:00')} value={slotStart} onPick={setSlotStart} isToday={isToday} />
+              <SlotGroup label="Buổi chiều" slots={slots.filter((s) => s.start >= '12:00')} value={slotStart} onPick={setSlotStart} isToday={isToday} />
+              {hasNoAvailableToday && (
+                <div style={{ background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 'var(--radius-md)', padding: '14px 18px', color: '#92400e', fontSize: 17, lineHeight: '25px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Icon name="infoSoft" size={24} />
+                  <span>Hôm nay phòng khám đã hết khung giờ nhận đặt. Cô chú vui lòng chọn <strong>ngày mai</strong> hoặc <strong>ngày tiếp theo</strong> ở trên.</span>
+                </div>
+              )}
             </>
           )}
           <FieldErr>{errors.slotStart}</FieldErr>
           <p className="b-warn">
-            Phòng khám nhận bệnh {CLINIC.hours}, giờ Việt Nam (GMT+7). Cô chú chọn giờ dự kiến mình sẽ đến. Khung màu xám là khung đã đủ chỗ hoặc đã bắt đầu, cô chú
-            vui lòng chọn khung khác.
+            Phòng khám nhận bệnh {CLINIC.hours}, giờ Việt Nam (GMT+7). Cô chú chọn giờ dự kiến mình sẽ đến. Khung màu xám là khung đã đủ chỗ hoặc đã qua giờ, cô chú vui lòng chọn khung khác.
           </p>
         </div>
 

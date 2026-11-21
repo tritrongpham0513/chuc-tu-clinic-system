@@ -160,9 +160,11 @@ public class NotificationServiceImpl implements NotificationService {
 
         String code = appointment.getBookingCode();
         String dateStr = ContractMapper.formatDate(appointment.getAppointmentDate());
-        String timeStr = appointment.getTimeSlot() != null && appointment.getTimeSlot().getStartTime() != null
-                ? ContractMapper.formatTime(appointment.getTimeSlot().getStartTime())
-                : "08:00";
+        String timeStr = appointment.getSlotStartSnapshot() != null
+                ? ContractMapper.formatTime(appointment.getSlotStartSnapshot())
+                : (appointment.getTimeSlot() != null && appointment.getTimeSlot().getStartTime() != null
+                        ? ContractMapper.formatTime(appointment.getTimeSlot().getStartTime())
+                        : "08:00");
 
         String message = String.format(
                 "Phong Kham Chuc Tu: Phieu hen %s ngay %s luc %s da tao thanh cong. Vui long den truoc 15 phut de duoc huong dan.",
@@ -214,7 +216,9 @@ public class NotificationServiceImpl implements NotificationService {
         for (Appointment a : upcoming) {
             if (a.getTimeSlot() == null || a.getTimeSlot().getStartTime() == null) continue;
 
-            LocalTime slotStart = a.getTimeSlot().getStartTime();
+            LocalTime slotStart = a.getSlotStartSnapshot() != null
+                    ? a.getSlotStartSnapshot()
+                    : a.getTimeSlot().getStartTime();
             LocalTime windowStart = now.plusMinutes(105);
             LocalTime windowEnd = now.plusMinutes(135);
 

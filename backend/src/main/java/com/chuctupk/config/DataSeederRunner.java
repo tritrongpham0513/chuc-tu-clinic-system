@@ -88,6 +88,8 @@ public class DataSeederRunner implements ApplicationRunner {
     }
 
     private void seedClinicSettings() {
+        saveSettingIfMissing("booking_advance_days", "14", "Cho phép đặt lịch trước tối đa bao nhiêu ngày");
+        saveSettingIfMissing("booking_min_hours", "1", "Phải đặt trước giờ khám tối thiểu bao nhiêu giờ");
         saveSettingIfMissing("slot_capacity", "5", "Số bệnh nhân tối đa trong 1 khung giờ");
         saveSettingIfMissing("seats", "5", "Số ghế khám thực tế trong phòng");
         saveSettingIfMissing("slot_minutes", "60", "Thời lượng mỗi khung giờ khám (phút)");

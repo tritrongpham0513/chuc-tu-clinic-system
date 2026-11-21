@@ -33,6 +33,9 @@ class AppointmentServiceTest {
     private AppointmentService appointmentService;
 
     @Autowired
+    private CapacityResolver capacityResolver;
+
+    @Autowired
     private AppointmentRepository appointmentRepository;
 
     @Autowired
@@ -170,7 +173,8 @@ class AppointmentServiceTest {
     @Test
     @DisplayName("Hết chỗ 409: Slot đã đủ max_patients của bác sĩ")
     void testCreateAppointment_SlotFull() {
-        for (int i = 1; i <= testSlotMorning.getMaxPatients(); i++) {
+        int limit = capacityResolver.perDoctorCapacity(testSlotMorning);
+        for (int i = 1; i <= limit; i++) {
             AppointmentCreateRequest req = AppointmentCreateRequest.builder()
                     .fullName("Bệnh nhân số " + i)
                     .phone("091234560" + i)
@@ -183,7 +187,7 @@ class AppointmentServiceTest {
             appointmentService.createAppointment(req);
         }
 
-        // Người thứ max_patients + 1 đặt tiếp -> 409 Conflict
+        // Người thứ limit + 1 đặt tiếp -> 409 Conflict
         AppointmentCreateRequest reqOver = AppointmentCreateRequest.builder()
                 .fullName("Bệnh nhân vượt quá")
                 .phone("0912345699")

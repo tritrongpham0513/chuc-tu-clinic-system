@@ -62,9 +62,11 @@ class SlotPolicyIT {
     private Patient patient;
     private String patientToken;
     private TimeSlot outsideSlot;
+    private int originalBookingMinHours;
 
     @BeforeEach
     void setUp() {
+        originalBookingMinHours = clinicSettingService.getBookingMinHours();
         String suffix = String.valueOf(System.currentTimeMillis());
         patientUser = userRepository.save(User.builder()
                 .username("patient_" + suffix)
@@ -100,7 +102,7 @@ class SlotPolicyIT {
 
     @AfterEach
     void tearDown() {
-        clinicSettingService.setSettingValue("booking_min_hours", "2");
+        clinicSettingService.setSettingValue("booking_min_hours", String.valueOf(originalBookingMinHours));
         clinicSettingService.invalidateCache();
         if (outsideSlot != null && outsideSlot.getId() != null) {
             timeSlotRepository.delete(outsideSlot);
