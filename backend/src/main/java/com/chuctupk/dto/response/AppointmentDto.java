@@ -32,8 +32,62 @@ public record AppointmentDto(
         Map<String, Object> checkin,
         Boolean doctorOnDuty,
         String doctorId,
-        String reminderSentAt
+        String reminderSentAt,
+        String serviceLabel
 ) {
+    public AppointmentDto(
+            String id,
+            String bookingCode,
+            String ticketCode,
+            PatientDto patient,
+            String doctor,
+            String serviceType,
+            String slotDate,
+            String slotStart,
+            String slotEnd,
+            String expectedTime,
+            String status,
+            String source,
+            String cancelReason,
+            String bookerName,
+            String bookerPhone,
+            String createdAt,
+            String updatedAt,
+            String checkInAt,
+            String enteredAt,
+            Map<String, Object> checkin,
+            Boolean doctorOnDuty,
+            String doctorId,
+            String reminderSentAt
+    ) {
+        this(
+                id,
+                bookingCode,
+                ticketCode,
+                patient,
+                doctor,
+                serviceType,
+                slotDate,
+                slotStart,
+                slotEnd,
+                expectedTime,
+                status,
+                source,
+                cancelReason,
+                bookerName,
+                bookerPhone,
+                createdAt,
+                updatedAt,
+                checkInAt,
+                enteredAt,
+                checkin,
+                doctorOnDuty,
+                doctorId,
+                reminderSentAt,
+                resolveServiceLabel(serviceType)
+        );
+    }
+
     public AppointmentDto(
             String id,
             String bookingCode,
@@ -79,7 +133,8 @@ public record AppointmentDto(
                 checkin,
                 null,
                 null,
-                null
+                null,
+                resolveServiceLabel(serviceType)
         );
     }
 
@@ -130,7 +185,8 @@ public record AppointmentDto(
                 checkin,
                 doctorOnDuty,
                 doctorId,
-                null
+                null,
+                resolveServiceLabel(serviceType)
         );
     }
 
@@ -171,18 +227,28 @@ public record AppointmentDto(
     private static AppointmentDto buildDto(Appointment a, Map<String, Object> checkinMap, Boolean doctorOnDuty, String reminderSentAt) {
         String slotStart = "08:00";
         String slotEnd = "09:00";
-        if (a.getTimeSlot() != null) {
-            if (a.getTimeSlot().getStartTime() != null) {
-                slotStart = a.getTimeSlot().getStartTime().toString().substring(0, 5);
-            }
-            if (a.getTimeSlot().getEndTime() != null) {
-                slotEnd = a.getTimeSlot().getEndTime().toString().substring(0, 5);
-            }
+        if (a.getSlotStartSnapshot() != null) {
+            slotStart = a.getSlotStartSnapshot().toString().substring(0, 5);
+        } else if (a.getTimeSlot() != null && a.getTimeSlot().getStartTime() != null) {
+            slotStart = a.getTimeSlot().getStartTime().toString().substring(0, 5);
+        }
+
+        if (a.getSlotEndSnapshot() != null) {
+            slotEnd = a.getSlotEndSnapshot().toString().substring(0, 5);
+        } else if (a.getTimeSlot() != null && a.getTimeSlot().getEndTime() != null) {
+            slotEnd = a.getTimeSlot().getEndTime().toString().substring(0, 5);
         }
 
         String serviceType = a.getServiceType() != null && !a.getServiceType().isBlank()
                 ? a.getServiceType()
                 : (a.getService() != null && a.getService().getSlug() != null ? a.getService().getSlug() : "KHAM_BENH");
+
+        String serviceLabel = null;
+        if (a.getService() != null && a.getService().getName() != null && !a.getService().getName().isBlank()) {
+            serviceLabel = a.getService().getName();
+        } else {
+            serviceLabel = resolveServiceLabel(serviceType);
+        }
 
         String code = a.getBookingCode() != null ? a.getBookingCode() : "";
 
@@ -209,7 +275,22 @@ public record AppointmentDto(
                 checkinMap,
                 doctorOnDuty,
                 a.getDoctor() != null ? String.valueOf(a.getDoctor().getId()) : null,
-                reminderSentAt
+                reminderSentAt,
+                serviceLabel
         );
+    }
+
+    public static String resolveServiceLabel(String serviceType) {
+        if (serviceType == null || serviceType.isBlank()) return "Khám Y học cổ truyền";
+        String normalized = serviceType.trim().replace("-", "_").toUpperCase();
+        return switch (normalized) {
+            case "CHAM_CUU" -> "Châm cứu";
+            case "XOA_BOP_BAM_HUYET", "BAM_HUYET_XOA_BOP" -> "Xoa bóp — bấm huyệt";
+            case "BOC_THUOC" -> "Bốc thuốc — thuốc Nam, thuốc Bắc";
+            case "VAT_LY_TRI_LIEU", "PHUC_HOI_CHUC_NANG" -> "Vật lý trị liệu — phục hồi chức năng";
+            case "CHUA_RO" -> "Chưa rõ — nhờ bác sĩ khám và chỉ định";
+            case "KHAM_BENH", "KHAM_Y_HOC_CO_TRUYEN" -> "Khám Y học cổ truyền";
+            default -> serviceType;
+        };
     }
 }

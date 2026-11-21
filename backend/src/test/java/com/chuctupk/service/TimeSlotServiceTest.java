@@ -34,6 +34,9 @@ class TimeSlotServiceTest {
     private TimeSlotService timeSlotService;
 
     @Autowired
+    private ClinicSettingService clinicSettingService;
+
+    @Autowired
     private AppointmentService appointmentService;
 
     @Autowired
@@ -173,6 +176,9 @@ class TimeSlotServiceTest {
     @Test
     @DisplayName("3. Đếm chỗ trộn lịch (có chọn BS và không chọn BS): Kiểm tra thỏa mãn cả điều kiện (a) và (b)")
     void testMixedCapacityCounting_ConditionA_And_ConditionB() {
+        morningSlot.setMaxPatients(5);
+        morningSlot = timeSlotRepository.save(morningSlot);
+
         DayOfWeek dow = DayOfWeek.from(testDate.getDayOfWeek());
         // Cho cả BS B cũng trực sáng -> Tổng sức chứa slot = 3 * 2 = 6
         doctorScheduleRepository.save(DoctorSchedule.builder()
@@ -243,12 +249,12 @@ class TimeSlotServiceTest {
                 .build());
 
         List<TimeSlotResponse> todaySlots = timeSlotService.getAvailableTimeSlots(today, doctorA.getId());
-        LocalTime cutoffTime = now.plusHours(2); // booking_min_hours = 2
+        LocalTime cutoffTime = now.plusHours(clinicSettingService.getBookingMinHours());
 
         for (TimeSlotResponse slot : todaySlots) {
             assertFalse(slot.getStartTime().isBefore(cutoffTime),
                     "Slot " + slot.getSlotLabel() + " có giờ bắt đầu " + slot.getStartTime()
-                    + " trước cutoff " + cutoffTime + " là vi phạm quy tắc đặt trước tối thiểu 2 giờ");
+                    + " trước cutoff " + cutoffTime + " là vi phạm quy tắc đặt trước tối thiểu");
         }
     }
 

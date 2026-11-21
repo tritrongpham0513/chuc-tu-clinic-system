@@ -51,6 +51,7 @@ export function AddAppointmentDialog({ patient: initialPatient, onClose, onBooke
   const [service, setService] = useState('');
   const [date, setDate] = useState(todayVN());
   const [start, setStart] = useState('');
+  const [chosenSlot, setChosenSlot] = useState(null);
   const [ticket, setTicket] = useState(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(null);
@@ -64,6 +65,7 @@ export function AddAppointmentDialog({ patient: initialPatient, onClose, onBooke
     setPatient(p);
     setIsNew(fresh);
     setStart('');
+    setChosenSlot(null);
     setCreating(false);
     setStep('lich');
   };
@@ -207,6 +209,7 @@ export function AddAppointmentDialog({ patient: initialPatient, onClose, onBooke
               onChange={(d) => {
                 setDate(d);
                 setStart('');
+                setChosenSlot(null);
               }}
             />
           </div>
@@ -214,10 +217,17 @@ export function AddAppointmentDialog({ patient: initialPatient, onClose, onBooke
             <span className="t-label">
               Giờ khám dự kiến <span className="t-req">*</span>
             </span>
-            <SlotChoices date={date} value={start} onChange={setStart} />
+            <SlotChoices
+              date={date}
+              value={start}
+              onChange={(val, s) => {
+                setStart(val);
+                setChosenSlot(s);
+              }}
+            />
             <p className="t-text" style={{ color: 'var(--gold-700)', fontWeight: 600 }}>
               Phòng khám nhận bệnh 8:00 – 16:30. Mỗi khung giờ tính cả tiếng (10:00 là từ 10:00 đến 11:00, khung cuối 16:00 là đến 16:30), khung đang diễn ra vẫn đặt được. Khung đã hết giờ trong hôm nay và
-              khung đã đủ 6 phiếu đặt trước hiện màu xám. Đặt hộ được từ hôm nay đến {maxDays} ngày sau.
+              khung đã đủ chỗ đặt trước hiện màu xám. Đặt hộ được từ hôm nay đến {maxDays} ngày sau.
             </p>
           </div>
           <ErrorAlert error={error} />
@@ -265,8 +275,8 @@ export function AddAppointmentDialog({ patient: initialPatient, onClose, onBooke
           </div>
           <p className="t-text">
             {running
-              ? 'Khung giờ đang diễn ra nên đây là lượt đến trực tiếp: không tính vào 6 phiếu đặt trước, xếp vào nhóm thường.'
-              : 'Đây là phiếu đặt trước: chiếm 1 trong 6 chỗ đặt trước của khung giờ này, được ưu tiên nếu check-in trước khi hết khung.'}
+              ? 'Khung giờ đang diễn ra nên đây là lượt đến trực tiếp: không tính vào các phiếu đặt trước, xếp vào nhóm thường.'
+              : `Đây là phiếu đặt trước: chiếm 1 trong ${chosenSlot?.capacity ?? chosenSlot?.maxPatients ?? meta?.slotCapacity ?? 5} chỗ đặt trước của khung giờ này, được ưu tiên nếu check-in trước khi hết khung.`}
           </p>
           <p className="t-text">
             Đưa phiếu khám hoặc đọc mã phiếu khám cho bệnh nhân.{' '}

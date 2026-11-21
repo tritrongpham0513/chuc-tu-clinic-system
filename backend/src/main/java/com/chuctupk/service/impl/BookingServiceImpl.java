@@ -159,6 +159,8 @@ public class BookingServiceImpl implements BookingService {
                 .service(clinicService)
                 .appointmentDate(request.getAppointmentDate())
                 .timeSlot(slot)
+                .slotStartSnapshot(slot != null ? slot.getStartTime() : null)
+                .slotEndSnapshot(slot != null ? slot.getEndTime() : null)
                 .symptoms(request.getSymptoms())
                 .bookerName(user.getFullName())
                 .bookerPhone(user.getPhone())

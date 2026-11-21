@@ -53,7 +53,7 @@ export function SlotChoices({ date, value, onChange, current }) {
         className={`t-choice ${isCurrent && value !== s.start ? 't-choice-current' : ''}`}
         aria-pressed={value === s.start}
         aria-disabled={off && !isCurrent ? 'true' : undefined}
-        onClick={() => !off && onChange(s.start)}
+        onClick={() => !off && onChange(s.start, s)}
       >
         {shortTime(s.start)}
         {isCurrent ? ' (hiện tại)' : ''}
@@ -133,7 +133,7 @@ export function RescheduleDialog({ appt, onClose, onDone }) {
           <SlotChoices date={date} value={start} onChange={setStart} current={date === appt.slotDate ? appt.slotStart : undefined} />
           <p className="t-text">
             Đổi giờ sẽ cấp phiếu khám mới với mã mới, mã cũ {appt.ticketCode} không còn dùng. Mỗi khung giờ tính cả tiếng (10:00 là từ 10:00 đến 11:00). Khung đã hết giờ hoặc đã
-            đủ 6 phiếu đặt trước hiện màu xám; khung đang diễn ra luôn chọn được. Đổi giờ được tính như một lần đặt mới vào khung mới.
+            đủ chỗ đặt trước hiện màu xám; khung đang diễn ra luôn chọn được. Đổi giờ được tính như một lần đặt mới vào khung mới.
           </p>
         </div>
         <ErrorAlert error={error} />

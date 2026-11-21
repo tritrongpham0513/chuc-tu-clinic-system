@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class PatientPortalServiceImpl implements PatientPortalService {
 
     private final UserRepository userRepository;
@@ -49,7 +48,65 @@ public class PatientPortalServiceImpl implements PatientPortalService {
     private final com.chuctupk.service.SlotPolicy slotPolicy;
     private final com.chuctupk.service.DoctorAssignmentService doctorAssignmentService;
     private final com.chuctupk.service.NotificationService notificationService;
+    private final com.chuctupk.service.CapacityResolver capacityResolver;
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public PatientPortalServiceImpl(
+            UserRepository userRepository,
+            PatientRepository patientRepository,
+            AppointmentRepository appointmentRepository,
+            AppointmentSeatRepository appointmentSeatRepository,
+            IdempotencyKeyRepository idempotencyKeyRepository,
+            MedicalRecordRepository medicalRecordRepository,
+            TimeSlotRepository timeSlotRepository,
+            SequenceGeneratorService sequenceGeneratorService,
+            Clock clock,
+            com.chuctupk.service.ClinicSettingService clinicSettingService,
+            com.chuctupk.service.SlotPolicy slotPolicy,
+            com.chuctupk.service.DoctorAssignmentService doctorAssignmentService,
+            com.chuctupk.service.NotificationService notificationService,
+            com.chuctupk.service.CapacityResolver capacityResolver
+    ) {
+        this.userRepository = userRepository;
+        this.patientRepository = patientRepository;
+        this.appointmentRepository = appointmentRepository;
+        this.appointmentSeatRepository = appointmentSeatRepository;
+        this.idempotencyKeyRepository = idempotencyKeyRepository;
+        this.medicalRecordRepository = medicalRecordRepository;
+        this.timeSlotRepository = timeSlotRepository;
+        this.sequenceGeneratorService = sequenceGeneratorService;
+        this.clock = clock;
+        this.clinicSettingService = clinicSettingService;
+        this.slotPolicy = slotPolicy;
+        this.doctorAssignmentService = doctorAssignmentService;
+        this.notificationService = notificationService;
+        this.capacityResolver = capacityResolver != null ? capacityResolver : new com.chuctupk.service.CapacityResolver(doctorAssignmentService, clinicSettingService);
+    }
+
+    public PatientPortalServiceImpl(
+            UserRepository userRepository,
+            PatientRepository patientRepository,
+            AppointmentRepository appointmentRepository,
+            AppointmentSeatRepository appointmentSeatRepository,
+            IdempotencyKeyRepository idempotencyKeyRepository,
+            MedicalRecordRepository medicalRecordRepository,
+            TimeSlotRepository timeSlotRepository,
+            SequenceGeneratorService sequenceGeneratorService,
+            Clock clock,
+            com.chuctupk.service.ClinicSettingService clinicSettingService,
+            com.chuctupk.service.SlotPolicy slotPolicy,
+            com.chuctupk.service.DoctorAssignmentService doctorAssignmentService,
+            com.chuctupk.service.NotificationService notificationService
+    ) {
+        this(
+                userRepository, patientRepository, appointmentRepository,
+                appointmentSeatRepository, idempotencyKeyRepository,
+                medicalRecordRepository, timeSlotRepository, sequenceGeneratorService,
+                clock, clinicSettingService, slotPolicy, doctorAssignmentService,
+                notificationService, null
+        );
+    }
 
     // =========================================================================
     // 1. TÀI KHOẢN & THÔNG TIN CÁ NHÂN (/me)
@@ -289,7 +346,7 @@ public class PatientPortalServiceImpl implements PatientPortalService {
 
         for (TimeSlot slot : slots) {
             long booked = appointmentSeatRepository.countByAppointmentDateAndTimeSlotId(date, slot.getId());
-            int capacity = clinicSettingService.getSlotCapacity();
+            int capacity = capacityResolver.effectiveCapacity(date, slot);
             int remaining = Math.max(0, capacity - (int) booked);
 
             com.chuctupk.service.SlotPolicy.SlotStatus status = slotPolicy.evaluate(
@@ -407,7 +464,7 @@ public class PatientPortalServiceImpl implements PatientPortalService {
                     .map(AppointmentSeat::getSeatNo)
                     .collect(Collectors.toSet());
 
-            int capacity = clinicSettingService.getSlotCapacity();
+            int capacity = capacityResolver.effectiveCapacity(slotDate, chosenSlot);
             if (takenSeats.size() >= capacity) {
                 throw new AppException(ErrorCode.SLOT_FULL,
                         "Khung giờ này đã đủ bệnh nhân. Cô chú chọn khung khác giúp phòng khám nhé");
@@ -443,6 +500,8 @@ public class PatientPortalServiceImpl implements PatientPortalService {
                             .serviceType(ContractMapper.toDbServiceType(request.getServiceType()))
                             .appointmentDate(slotDate)
                             .timeSlot(chosenSlot)
+                            .slotStartSnapshot(chosenSlot.getStartTime())
+                            .slotEndSnapshot(chosenSlot.getEndTime())
                             .expectedTime(chosenSlot.getStartTime())
                             .source(AppointmentSource.WEB)
                             .status(AppointmentStatus.PENDING)
@@ -640,7 +699,7 @@ public class PatientPortalServiceImpl implements PatientPortalService {
 
         // Đánh giá SlotPolicy trên khung giờ mới
         long totalBookedNew = appointmentSeatRepository.countByAppointmentDateAndTimeSlotId(targetDate, chosenSlot.getId());
-        int capacity = clinicSettingService.getSlotCapacity();
+        int capacity = capacityResolver.effectiveCapacity(targetDate, chosenSlot);
         int remaining = Math.max(0, capacity - (int) totalBookedNew);
 
         com.chuctupk.service.SlotPolicy.SlotStatus slotStatus = slotPolicy.evaluate(
@@ -686,6 +745,8 @@ public class PatientPortalServiceImpl implements PatientPortalService {
 
         appt.setAppointmentDate(targetDate);
         appt.setTimeSlot(chosenSlot);
+        appt.setSlotStartSnapshot(chosenSlot.getStartTime());
+        appt.setSlotEndSnapshot(chosenSlot.getEndTime());
         appt.setExpectedTime(chosenSlot.getStartTime());
         appt.setDoctor(newDoctor);
         appt.setRescheduleCount(appt.getRescheduleCount() != null ? appt.getRescheduleCount() + 1 : 1);

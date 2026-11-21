@@ -50,6 +50,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final ClinicSettingRepository clinicSettingRepository;
     private final ClinicSettingService clinicSettingService;
     private final com.chuctupk.service.SlotPolicy slotPolicy;
+    private final com.chuctupk.service.CapacityResolver capacityResolver;
     private final Clock clock;
 
     @Override
@@ -128,16 +129,17 @@ public class AppointmentServiceImpl implements AppointmentService {
                 throw AppException.unprocessable("Bác sĩ không có lịch khám trong khung giờ này");
             }
 
-            // Kiểm tra điều kiện (b): lịch chưa hủy của riêng bác sĩ đó <= max_patients
+            // Kiểm tra điều kiện (b): lịch chưa hủy của riêng bác sĩ đó <= perDoctorCapacity
             long doctorBooked = appointmentRepository.countBookedSlotsForDoctor(
                     appointmentDate, selectedDoctor.getId(), slot.getId(), AppointmentStatus.CANCELLED);
-            if (doctorBooked >= slot.getMaxPatients()) {
+            int doctorCapacity = capacityResolver.perDoctorCapacity(slot);
+            if (doctorBooked >= doctorCapacity) {
                 throw AppException.conflict("Khung giờ này của bác sĩ đã đầy, vui lòng chọn giờ hoặc bác sĩ khác");
             }
         }
 
-        // Kiểm tra điều kiện (a): tổng lịch chưa hủy của slot trong ngày <= slot_capacity
-        int totalCapacity = clinicSettingService.getSlotCapacity();
+        // Kiểm tra điều kiện (a): tổng lịch chưa hủy của slot trong ngày <= effectiveCapacity
+        int totalCapacity = capacityResolver.effectiveCapacity(appointmentDate, slot);
         long totalBooked = appointmentRepository.countBookedSlotsTotal(
                 appointmentDate, slot.getId(), AppointmentStatus.CANCELLED);
         if (totalBooked >= totalCapacity) {
@@ -175,6 +177,8 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .service(selectedService)
                 .appointmentDate(appointmentDate)
                 .timeSlot(slot)
+                .slotStartSnapshot(slot != null ? slot.getStartTime() : null)
+                .slotEndSnapshot(slot != null ? slot.getEndTime() : null)
                 .symptoms(request.getSymptoms())
                 .bookerName(request.getBookerName())
                 .bookerPhone(cleanPhone(request.getBookerPhone()))

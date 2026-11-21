@@ -60,6 +60,7 @@ public class StaffServiceImpl implements StaffService {
     private final Clock clock;
     private final NotificationLogRepository notificationLogRepository;
     private final ManualProvider manualProvider;
+    private final com.chuctupk.service.CapacityResolver capacityResolver;
 
     @Autowired
     public StaffServiceImpl(
@@ -79,7 +80,8 @@ public class StaffServiceImpl implements StaffService {
             SequenceGeneratorService sequenceGeneratorService,
             Clock clock,
             NotificationLogRepository notificationLogRepository,
-            ManualProvider manualProvider
+            ManualProvider manualProvider,
+            com.chuctupk.service.CapacityResolver capacityResolver
     ) {
         this.appointmentRepository = appointmentRepository;
         this.checkinRepository = checkinRepository;
@@ -98,6 +100,48 @@ public class StaffServiceImpl implements StaffService {
         this.clock = clock;
         this.notificationLogRepository = notificationLogRepository;
         this.manualProvider = manualProvider;
+        this.capacityResolver = capacityResolver != null ? capacityResolver : new com.chuctupk.service.CapacityResolver(doctorAssignmentService, clinicSettingService);
+    }
+
+    public StaffServiceImpl(
+            AppointmentRepository appointmentRepository,
+            CheckinRepository checkinRepository,
+            PatientRepository patientRepository,
+            TimeSlotRepository timeSlotRepository,
+            MedicalRecordRepository medicalRecordRepository,
+            AppointmentSeatRepository appointmentSeatRepository,
+            ClinicSettingService clinicSettingService,
+            com.chuctupk.service.SlotPolicy slotPolicy,
+            com.chuctupk.service.DoctorAssignmentService doctorAssignmentService,
+            com.chuctupk.repository.DoctorRepository doctorRepository,
+            DoctorScheduleAdminService doctorScheduleAdminService,
+            DoctorDayOffRepository doctorDayOffRepository,
+            com.chuctupk.service.NotificationService notificationService,
+            SequenceGeneratorService sequenceGeneratorService,
+            Clock clock,
+            NotificationLogRepository notificationLogRepository,
+            ManualProvider manualProvider
+    ) {
+        this(
+                appointmentRepository,
+                checkinRepository,
+                patientRepository,
+                timeSlotRepository,
+                medicalRecordRepository,
+                appointmentSeatRepository,
+                clinicSettingService,
+                slotPolicy,
+                doctorAssignmentService,
+                doctorRepository,
+                doctorScheduleAdminService,
+                doctorDayOffRepository,
+                notificationService,
+                sequenceGeneratorService,
+                clock,
+                notificationLogRepository,
+                manualProvider,
+                null
+        );
     }
 
     public StaffServiceImpl(
@@ -133,6 +177,7 @@ public class StaffServiceImpl implements StaffService {
                 notificationService,
                 sequenceGeneratorService,
                 clock,
+                null,
                 null,
                 null
         );
@@ -306,7 +351,7 @@ public class StaffServiceImpl implements StaffService {
 
         for (TimeSlot slot : slots) {
             long booked = appointmentSeatRepository.countByAppointmentDateAndTimeSlotId(queryDate, slot.getId());
-            int capacity = clinicSettingService.getSlotCapacity();
+            int capacity = capacityResolver.effectiveCapacity(queryDate, slot);
             int remaining = Math.max(0, capacity - (int) booked);
 
             boolean isPast = queryDate.isBefore(today) || (queryDate.equals(today) && slot.getEndTime().isBefore(nowTime));
@@ -399,7 +444,7 @@ public class StaffServiceImpl implements StaffService {
         }
 
         // Allocate seat
-        int capacity = clinicSettingService.getSlotCapacity();
+        int capacity = capacityResolver.effectiveCapacity(slotDate, chosenSlot);
         int maxRetries = 6;
         AppointmentSeat allocatedSeat = null;
         Appointment savedAppointment = null;
@@ -442,6 +487,8 @@ public class StaffServiceImpl implements StaffService {
                             .serviceType(ContractMapper.toDbServiceType(request.serviceType()))
                             .appointmentDate(slotDate)
                             .timeSlot(chosenSlot)
+                            .slotStartSnapshot(chosenSlot.getStartTime())
+                            .slotEndSnapshot(chosenSlot.getEndTime())
                             .source(AppointmentSource.WALK_IN)
                             .status(checkInNow ? AppointmentStatus.CONFIRMED : AppointmentStatus.PENDING)
                             .bookerName(staff != null ? staff.getFullName() : "Tiếp tân")
@@ -556,6 +603,8 @@ public class StaffServiceImpl implements StaffService {
                             .serviceType(oldAppt.getServiceType())
                             .appointmentDate(newDate)
                             .timeSlot(newSlot)
+                            .slotStartSnapshot(newSlot.getStartTime())
+                            .slotEndSnapshot(newSlot.getEndTime())
                             .source(oldAppt.getSource())
                             .status(AppointmentStatus.PENDING)
                             .rescheduledFrom(oldAppt)
@@ -813,8 +862,10 @@ public class StaffServiceImpl implements StaffService {
             Checkin c = seatMap.get(s);
             if (c != null && c.getAppointment() != null) {
                 Appointment a = c.getAppointment();
-                String slotStart = a.getTimeSlot() != null && a.getTimeSlot().getStartTime() != null
-                        ? a.getTimeSlot().getStartTime().toString().substring(0, 5) : "08:00";
+                String slotStart = a.getSlotStartSnapshot() != null
+                        ? a.getSlotStartSnapshot().toString().substring(0, 5)
+                        : (a.getTimeSlot() != null && a.getTimeSlot().getStartTime() != null
+                                ? a.getTimeSlot().getStartTime().toString().substring(0, 5) : "08:00");
 
                 PatientDto pDto = isStaff ? PatientDto.from(a.getPatient()) : PatientDto.masked(a.getPatient());
                 String docName = a.getDoctor() != null ? a.getDoctor().getFullName() : "Chưa phân bác sĩ";
@@ -858,8 +909,10 @@ public class StaffServiceImpl implements StaffService {
             Appointment a = c.getAppointment();
             if (a == null) continue;
 
-            String slotStart = a.getTimeSlot() != null && a.getTimeSlot().getStartTime() != null
-                    ? a.getTimeSlot().getStartTime().toString().substring(0, 5) : "08:00";
+            String slotStart = a.getSlotStartSnapshot() != null
+                    ? a.getSlotStartSnapshot().toString().substring(0, 5)
+                    : (a.getTimeSlot() != null && a.getTimeSlot().getStartTime() != null
+                            ? a.getTimeSlot().getStartTime().toString().substring(0, 5) : "08:00");
             slotMap.merge(slotStart, 1, Integer::sum);
 
             long waited = c.getCheckInTime() != null

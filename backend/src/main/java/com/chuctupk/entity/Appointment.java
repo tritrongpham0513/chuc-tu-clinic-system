@@ -47,6 +47,12 @@ public class Appointment {
     @JoinColumn(name = "time_slot_id", nullable = false)
     private TimeSlot timeSlot;
 
+    @Column(name = "slot_start_snapshot")
+    private LocalTime slotStartSnapshot;
+
+    @Column(name = "slot_end_snapshot")
+    private LocalTime slotEndSnapshot;
+
     @Column(name = "expected_time")
     private LocalTime expectedTime;
 
