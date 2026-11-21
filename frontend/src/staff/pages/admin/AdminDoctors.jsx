@@ -31,7 +31,7 @@ export default function AdminDoctors() {
     setError(null);
     try {
       const res = await api.get('/admin/doctors');
-      setDoctors(res?.data || []);
+      setDoctors(Array.isArray(res) ? res : (res?.data || []));
     } catch (err) {
       setError(err);
     } finally {
@@ -509,7 +509,7 @@ function DoctorFormDialog({ mode, doctor, onClose, onSaved }) {
       api
         .get(`/admin/doctors/${doctor.id}`)
         .then((res) => {
-          const d = res?.data;
+          const d = res?.data || res;
           if (d) {
             setForm({
               fullName: d.fullName || '',
@@ -539,12 +539,13 @@ function DoctorFormDialog({ mode, doctor, onClose, onSaved }) {
     api
       .get(`/admin/doctors/unassigned-accounts${param}`)
       .then((res) => {
-        setAccounts(res?.data || []);
+        setAccounts(Array.isArray(res) ? res : (res?.data || []));
       })
       .catch(() => {
         // Fallback: nếu endpoint chưa nạp thì lấy từ danh sách tài khoản
         api.get('/admin/accounts?role=DOCTOR&limit=100').then((res) => {
-          const list = (res?.data?.items || []).map((u) => ({
+          const items = res?.items || res?.data?.items || [];
+          const list = items.map((u) => ({
             id: u.id,
             username: u.username,
             fullName: u.fullName,
@@ -604,7 +605,7 @@ function DoctorFormDialog({ mode, doctor, onClose, onSaved }) {
         res = await api.patch(`/admin/doctors/${doctor.id}`, payload);
       }
 
-      onSaved(res?.data, isCreate);
+      onSaved(res?.data || res, isCreate);
     } catch (err) {
       if (err.code === 'STALE') {
         setServerError('Dữ liệu bác sĩ đã được người khác cập nhật trước đó. Vui lòng đóng hộp thoại và tải lại.');

@@ -20,6 +20,10 @@ import AccountInfo from './pages/staff/AccountInfo.jsx';
 import Dashboard from './pages/admin/Dashboard.jsx';
 import DoctorSchedules from './pages/admin/DoctorSchedules.jsx';
 import AdminDoctors from './pages/admin/AdminDoctors.jsx';
+import AdminTimeSlots from './pages/admin/AdminTimeSlots.jsx';
+import AdminHolidays from './pages/admin/AdminHolidays.jsx';
+import AdminServices from './pages/admin/AdminServices.jsx';
+import AdminSettings from './pages/admin/AdminSettings.jsx';
 import Accounts from './pages/admin/Accounts.jsx';
 import Posts from './pages/admin/Posts.jsx';
 import PostEditor from './pages/admin/PostEditor.jsx';
@@ -106,6 +110,10 @@ export default function StaffApp() {
         <Route path="quan-tri" element={<Dashboard />} />
         <Route path="quan-tri/lich-truc" element={<DoctorSchedules />} />
         <Route path="quan-tri/bac-si" element={<AdminDoctors />} />
+        <Route path="quan-tri/khung-gio" element={<AdminTimeSlots />} />
+        <Route path="quan-tri/dich-vu" element={<AdminServices />} />
+        <Route path="quan-tri/ngay-nghi" element={<AdminHolidays />} />
+        <Route path="quan-tri/cau-hinh" element={<AdminSettings />} />
         <Route path="quan-tri/tai-khoan" element={<Accounts />} />
         <Route path="quan-tri/bai-viet" element={<Posts />} />
         <Route path="quan-tri/bai-viet/moi" element={<PostEditor />} />

@@ -107,4 +107,42 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             @Param("today") LocalDate today,
             @Param("excludeStatuses") java.util.Collection<AppointmentStatus> excludeStatuses
     );
+
+    @Query("SELECT COUNT(a) FROM Appointment a " +
+           "WHERE a.appointmentDate >= :today AND a.status != com.chuctupk.entity.enums.AppointmentStatus.CANCELLED " +
+           "GROUP BY a.appointmentDate, a.timeSlot.id " +
+           "ORDER BY COUNT(a) DESC")
+    List<Long> findFutureSlotBookingCounts(
+            @Param("today") LocalDate today,
+            org.springframework.data.domain.Pageable pageable
+    );
+
+    @Query("SELECT COUNT(a) FROM Appointment a WHERE a.timeSlot.id = :timeSlotId AND a.appointmentDate >= :today AND a.status NOT IN :excludeStatuses")
+    long countUpcomingAppointmentsForSlot(
+            @Param("timeSlotId") Long timeSlotId,
+            @Param("today") LocalDate today,
+            @Param("excludeStatuses") java.util.Collection<AppointmentStatus> excludeStatuses
+    );
+
+    @Query("SELECT a.timeSlot.id, COUNT(a.id) FROM Appointment a WHERE a.appointmentDate >= :today AND a.status NOT IN :excludeStatuses GROUP BY a.timeSlot.id")
+    List<Object[]> countUpcomingAppointmentsGroupedBySlot(
+            @Param("today") LocalDate today,
+            @Param("excludeStatuses") java.util.Collection<AppointmentStatus> excludeStatuses
+    );
+
+    long countByAppointmentDateAndStatusNot(LocalDate appointmentDate, AppointmentStatus excludeStatus);
+
+    @Query("SELECT COUNT(a) > 0 FROM Appointment a WHERE (a.service IS NOT NULL AND a.service.id = :serviceId) OR (a.serviceType IS NOT NULL AND (UPPER(a.serviceType) = UPPER(:slug) OR UPPER(a.serviceType) = UPPER(:slugUnderscore)))")
+    boolean isServiceUsed(
+            @Param("serviceId") Long serviceId,
+            @Param("slug") String slug,
+            @Param("slugUnderscore") String slugUnderscore
+    );
+
+    @Query("SELECT COUNT(a) FROM Appointment a WHERE (a.service IS NOT NULL AND a.service.id = :serviceId) OR (a.serviceType IS NOT NULL AND (UPPER(a.serviceType) = UPPER(:slug) OR UPPER(a.serviceType) = UPPER(:slugUnderscore)))")
+    long countAppointmentsForService(
+            @Param("serviceId") Long serviceId,
+            @Param("slug") String slug,
+            @Param("slugUnderscore") String slugUnderscore
+    );
 }

@@ -108,6 +108,9 @@ class ClinicScheduledTasksTest {
         @Override public boolean hasActiveAppointmentOnDate(Long patientId, LocalDate date) { return false; }
         @Override public List<Appointment> findByPatientId(Long patientId) { return Collections.emptyList(); }
         @Override public boolean existsByPatientIdAndAppointmentDateAndStatusNot(Long patientId, LocalDate appointmentDate, AppointmentStatus excludeStatus) { return false; }
+        @Override public long countByAppointmentDateAndStatusNot(LocalDate appointmentDate, AppointmentStatus excludeStatus) { return 0; }
+        @Override public boolean isServiceUsed(Long serviceId, String slug, String slugUnderscore) { return false; }
+        @Override public long countAppointmentsForService(Long serviceId, String slug, String slugUnderscore) { return 0; }
         @Override public List<Appointment> findByPatient_UserIdOrderByAppointmentDateDesc(Long userId) { return Collections.emptyList(); }
         @Override public List<Appointment> findByPatient_UserIdAndStatusNotOrderByAppointmentDateDesc(Long userId, AppointmentStatus status) { return Collections.emptyList(); }
         @Override public List<Appointment> findByPatient_UserIdOrderByAppointmentDateDescCreatedAtDesc(Long userId) { return Collections.emptyList(); }
@@ -119,6 +122,9 @@ class ClinicScheduledTasksTest {
         @Override public boolean existsByPatientIdAndDoctorUserId(Long patientId, Long userId) { return false; }
         @Override public boolean existsByPatientIdAndDoctorId(Long patientId, Long doctorId) { return false; }
         @Override public long countFutureAppointmentsForDoctor(Long doctorId, LocalDate today, java.util.Collection<AppointmentStatus> excludeStatuses) { return 0; }
+        @Override public List<Long> findFutureSlotBookingCounts(LocalDate today, Pageable pageable) { return Collections.emptyList(); }
+        @Override public long countUpcomingAppointmentsForSlot(Long timeSlotId, LocalDate today, java.util.Collection<AppointmentStatus> excludeStatuses) { return 0; }
+        @Override public List<Object[]> countUpcomingAppointmentsGroupedBySlot(LocalDate today, java.util.Collection<AppointmentStatus> excludeStatuses) { return Collections.emptyList(); }
         @Override public void flush() {}
         @Override public <S extends Appointment> S saveAndFlush(S entity) { return null; }
         @Override public <S extends Appointment> List<S> saveAllAndFlush(Iterable<S> entities) { return null; }

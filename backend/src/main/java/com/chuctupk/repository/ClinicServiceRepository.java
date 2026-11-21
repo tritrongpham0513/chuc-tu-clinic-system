@@ -11,5 +11,6 @@ import java.util.Optional;
 public interface ClinicServiceRepository extends JpaRepository<ClinicService, Long> {
     Optional<ClinicService> findBySlug(String slug);
     List<ClinicService> findByIsActiveTrueOrderBySortOrderAsc();
+    List<ClinicService> findAllByOrderBySortOrderAscIdAsc();
 }
 

@@ -29,6 +29,7 @@ public class MetaController {
     private final ClinicSettingRepository settingRepository;
     private final TimeSlotRepository timeSlotRepository;
     private final ArticleCategoryRepository categoryRepository;
+    private final com.chuctupk.repository.ClinicServiceRepository clinicServiceRepository;
     private final ClinicProperties clinicProperties;
     private final Clock clock;
 
@@ -44,14 +45,33 @@ public class MetaController {
 
         LocalDate today = LocalDate.now(clock);
 
-        // 1. Dịch vụ khám
-        List<Map<String, String>> serviceTypes = List.of(
-                Map.of("value", "CHAM_CUU", "label", "Châm cứu"),
-                Map.of("value", "XOA_BOP_BAM_HUYET", "label", "Xoa bóp — bấm huyệt"),
-                Map.of("value", "BOC_THUOC", "label", "Bốc thuốc — thuốc Nam, thuốc Bắc"),
-                Map.of("value", "VAT_LY_TRI_LIEU", "label", "Vật lý trị liệu — phục hồi chức năng"),
-                Map.of("value", "CHUA_RO", "label", "Chưa rõ — nhờ bác sĩ khám và chỉ định")
-        );
+        // 1. Dịch vụ khám: chỉ nạp các dịch vụ đang hoạt động (isActive = true)
+        List<Map<String, String>> serviceTypes = new ArrayList<>();
+        if (clinicServiceRepository != null) {
+            List<com.chuctupk.entity.ClinicService> activeServices = clinicServiceRepository.findByIsActiveTrueOrderBySortOrderAsc();
+            for (com.chuctupk.entity.ClinicService cs : activeServices) {
+                String val = cs.getSlug() != null ? cs.getSlug().replace("-", "_").toUpperCase() : "";
+                serviceTypes.add(Map.of(
+                        "value", val,
+                        "label", cs.getName(),
+                        "slug", cs.getSlug() != null ? cs.getSlug() : ""
+                ));
+            }
+        }
+        if (serviceTypes.isEmpty()) {
+            serviceTypes.addAll(List.of(
+                    Map.of("value", "CHAM_CUU", "label", "Châm cứu"),
+                    Map.of("value", "XOA_BOP_BAM_HUYET", "label", "Xoa bóp — bấm huyệt"),
+                    Map.of("value", "BOC_THUOC", "label", "Bốc thuốc — thuốc Nam, thuốc Bắc"),
+                    Map.of("value", "VAT_LY_TRI_LIEU", "label", "Vật lý trị liệu — phục hồi chức năng"),
+                    Map.of("value", "CHUA_RO", "label", "Chưa rõ — nhờ bác sĩ khám và chỉ định")
+            ));
+        } else {
+            boolean hasChuaRo = serviceTypes.stream().anyMatch(s -> "CHUA_RO".equals(s.get("value")));
+            if (!hasChuaRo) {
+                serviceTypes.add(Map.of("value", "CHUA_RO", "label", "Chưa rõ — nhờ bác sĩ khám và chỉ định"));
+            }
+        }
 
         // 2. Khung giờ khám đang hoạt động
         List<TimeSlot> dbSlots = timeSlotRepository.findByIsActiveTrueOrderBySortOrderAsc();

@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { api } from '../../../shared/lib/api.js';
 import { Icon } from '../../../shared/ui/Icon.jsx';
 import { PageHero, usePageMeta } from './infoParts.jsx';
 
@@ -109,17 +110,61 @@ export default function DichVu() {
       'Phòng khám chuyên điều trị và phục hồi chức năng bằng y học cổ truyền: bệnh cơ xương khớp, đau nhức, tai biến, mất ngủ, đau đầu. Bác sĩ xem mạch và chẩn đoán trước, rồi mới chọn phương pháp. Tất cả đều không thu phí.',
   });
   const { hash } = useLocation();
+  const [activeServices, setActiveServices] = useState(null);
+
+  useEffect(() => {
+    let unmounted = false;
+    api
+      .get('/services')
+      .then((res) => {
+        if (unmounted) return;
+        const list = Array.isArray(res) ? res : res?.data || [];
+        setActiveServices(list);
+      })
+      .catch(() => {
+        // Fallback về danh sách tĩnh nếu lỗi kết nối
+      });
+    return () => {
+      unmounted = true;
+    };
+  }, []);
 
   // Mở /dich-vu#cham-cuu từ thẻ dịch vụ ở trang chủ thì cuộn tới đúng mục
   useEffect(() => {
     if (hash) document.getElementById(hash.slice(1))?.scrollIntoView();
-  }, [hash]);
+  }, [hash, activeServices]);
+
+  // Khi đã nạp từ API: chỉ hiển thị những dịch vụ đang hoạt động (isActive = true)
+  const displayServices = activeServices
+    ? activeServices.map((apiItem) => {
+        const found = SERVICES.find((s) => s.id === apiItem.slug);
+        if (found) {
+          return {
+            ...found,
+            title: apiItem.name || found.title,
+            text: apiItem.description || found.text,
+            duration: apiItem.durationMin ? `${apiItem.durationMin} phút/buổi` : found.duration,
+          };
+        }
+        return {
+          id: apiItem.slug,
+          icon: 'leafSoft',
+          chip: apiItem.name,
+          title: apiItem.name,
+          text: apiItem.description || 'Dịch vụ khám và điều trị đông y tại Phòng khám Chúc Từ.',
+          uses: ['Khám và điều trị theo chỉ định của bác sĩ'],
+          duration: apiItem.durationMin ? `${apiItem.durationMin} phút/buổi` : '30 phút/buổi',
+          course: 'Theo chỉ định',
+          alt: apiItem.name,
+        };
+      })
+    : SERVICES;
 
   return (
     <div className="info-page">
       <PageHero crumb="Dịch vụ" title={meta.title} lead={meta.summary} />
 
-      {SERVICES.map((s, i) => (
+      {displayServices.map((s, i) => (
         <ServiceBlock key={s.id} s={s} index={i} />
       ))}
 
