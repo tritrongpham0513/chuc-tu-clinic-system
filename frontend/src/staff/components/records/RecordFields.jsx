@@ -127,6 +127,34 @@ export function RecordFields({ form, setForm, errors, visitDate }) {
           </label>
           <textarea autoComplete="off" id={id('kh')} rows={2} className="t-textarea" placeholder="Thuốc Nam, xông, dặn dò tại nhà…" value={form.other} onChange={set('other')} />
         </div>
+        <div className="t-field">
+          <label htmlFor={id('dt')} className="t-label">
+            3. Đơn thuốc / Toa thuốc thảo mộc
+          </label>
+          <textarea
+            autoComplete="off"
+            id={id('dt')}
+            rows={4}
+            className="t-textarea"
+            placeholder="Tên bài thuốc, thành phần thang thuốc, số lượng..."
+            value={form.prescription || ''}
+            onChange={set('prescription')}
+          />
+        </div>
+        <div className="t-field">
+          <label htmlFor={id('ld')} className="t-label">
+            4. Lời dặn của bác sĩ
+          </label>
+          <textarea
+            autoComplete="off"
+            id={id('ld')}
+            rows={2}
+            className="t-textarea"
+            placeholder="Dặn dò cách sắc thuốc, kiêng cữ dinh dưỡng, sinh hoạt..."
+            value={form.advice || ''}
+            onChange={set('advice')}
+          />
+        </div>
         <p className="t-iconrow" style={{ gap: 10, color: 'var(--gold-700)', fontWeight: 600 }}>
           <Icon name="info" size={22} />
           Tiếp tân không tự nhận xét chuyên môn. Chỉ ghi lại nội dung đã được bác sĩ hoặc người có chuyên môn của phòng khám xác nhận.

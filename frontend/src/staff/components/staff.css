@@ -579,8 +579,8 @@ button.t-check { cursor: pointer; }
 .t-datebar-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .t-datebtn { flex: 1 1 220px; justify-content: flex-start; gap: 12px; padding: 0 18px; background: var(--t-white); color: var(--ink-900); font-weight: 700; }
 .t-datebtn svg { color: var(--green-700); }
-.t-sched .t-tr { grid-template-columns: 48px 210px minmax(0, 1.4fr) 110px 160px minmax(0, 1.2fr) 180px; }
-.t-sched.with-no .t-tr { grid-template-columns: 48px 90px 210px minmax(0, 1.4fr) 110px 160px minmax(0, 1.2fr) 180px; }
+.t-sched .t-tr { grid-template-columns: 48px 190px minmax(0, 1.3fr) 100px 150px minmax(0, 1.1fr) 240px; }
+.t-sched.with-no .t-tr { grid-template-columns: 48px 80px 180px minmax(0, 1.3fr) 100px 150px minmax(0, 1.1fr) 240px; }
 .t-sched .t-tr.prio { background: var(--t-blue-100); }
 .t-sched .t-tr.cancel { background: var(--t-cancel-bg); }
 .t-sched .t-td-act { padding: 10px 12px; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }

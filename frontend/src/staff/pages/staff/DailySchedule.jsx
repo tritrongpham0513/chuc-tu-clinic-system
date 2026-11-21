@@ -15,6 +15,7 @@ import { ChangeDoctorDialog } from '../../components/appointments/ChangeDoctorDi
 import { ReminderDialog, BulkReminderDialog } from '../../components/appointments/ReminderDialog.jsx';
 import { StatusChip, stateNote, RowMenu } from './scheduleParts.jsx';
 import { useSession, isDoctor } from '../../../shared/lib/session.jsx';
+import { usePrint } from '../../components/print/PrintProvider.jsx';
 
 const PER_PAGE = 10;
 
@@ -47,6 +48,7 @@ const norm = (t) =>
 export default function DailySchedule() {
   useDocumentTitle('Lịch trong ngày');
   const { user } = useSession();
+  const { printTicket } = usePrint();
   const doctorView = isDoctor(user);
   const [mine, setMine] = useState(() => isDoctor(user));
   const [params, setParams] = useSearchParams();
@@ -205,6 +207,7 @@ export default function DailySchedule() {
   const act = (key, a) => {
     setMenu(null);
     setError(null);
+    if (key === 'print') return printTicket(a);
     if (key === 'checkin') return setDialog({ type: 'checkin', appt: a });
     if (key === 'undo-checkin') return setDialog({ type: 'undo', appt: a });
     if (key === 'reschedule') return setDialog({ type: 'reschedule', appt: a });
@@ -503,6 +506,18 @@ export default function DailySchedule() {
                         )}
                       </div>
                       <div role="cell" className="t-td t-td-act">
+                        {a.status !== 'CANCELLED' && (
+                          <button
+                            type="button"
+                            className="t-btn-print"
+                            aria-label={`In phiếu khám cho ${a.patient?.fullName || a.ticketCode}`}
+                            onClick={() => printTicket(a)}
+                            title="In phiếu khám bệnh"
+                          >
+                            <Icon name="printer" size={18} strokeWidth={2} />
+                            <span>In phiếu</span>
+                          </button>
+                        )}
                         {a.status !== 'CANCELLED' && a.status !== 'COMPLETED' && (
                           <button
                             type="button"

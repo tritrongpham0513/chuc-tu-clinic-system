@@ -4,7 +4,7 @@ import { fmtStamp } from '../../lib/format.js';
 import { editState } from './recordForm.js';
 
 /** Lịch sử khám: ngày, chẩn đoán, người ghi nhận, xem / sửa phiếu. */
-export function HistoryTable({ records, locked, onView, onEdit, withVitals, isReceptionist }) {
+export function HistoryTable({ records, locked, onView, onEdit, onPrint, withVitals, isReceptionist }) {
   if (isReceptionist) {
     const gridRec = { gridTemplateColumns: '200px minmax(0, 1fr) 200px 140px', alignItems: 'center' };
     return (
@@ -99,10 +99,24 @@ export function HistoryTable({ records, locked, onView, onEdit, withVitals, isRe
                   {r.recordedByName || '—'}
                 </div>
                 <div role="cell" className="t-td" style={{ padding: '10px 16px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
-                  <button type="button" className="t-btn t-btn-ghost t-btn-sm" aria-haspopup="dialog" onClick={() => onView(r)}>
-                    <Icon name="eye" size={20} />
-                    {withVitals ? 'Xem' : 'Xem phiếu'}
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <button type="button" className="t-btn t-btn-ghost t-btn-sm" aria-haspopup="dialog" onClick={() => onView(r)}>
+                      <Icon name="eye" size={20} />
+                      {withVitals ? 'Xem' : 'Xem phiếu'}
+                    </button>
+                    {onPrint && (
+                      <button
+                        type="button"
+                        className="t-btn t-btn-ghost t-btn-sm"
+                        title="In phiếu kết quả khám"
+                        aria-label={`In kết quả khám ngày ${fmtDate(r.visitDate)}`}
+                        onClick={() => onPrint(r)}
+                      >
+                        <Icon name="printer" size={18} strokeWidth={2} />
+                        In
+                      </button>
+                    )}
+                  </div>
                   {st.editable && onEdit && (
                     <>
                       <button type="button" className="t-btn t-btn-gold t-btn-sm" aria-haspopup="dialog" onClick={() => onEdit(r)}>

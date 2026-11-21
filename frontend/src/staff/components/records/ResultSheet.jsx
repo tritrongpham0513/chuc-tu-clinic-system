@@ -5,6 +5,7 @@ import { HISTORY_ITEMS, parseHistory } from '../../../shared/domain/medicalHisto
 import { TSheet } from '../dialogs.jsx';
 import { fmtLeft, fmtStamp } from '../../lib/format.js';
 import { editState } from './recordForm.js';
+import { usePrint } from '../print/PrintProvider.jsx';
 
 const NOT_DONE = 'Không thực hiện.';
 
@@ -111,6 +112,22 @@ export function ResultSheet({ r, patient, preview }) {
             </p>
           )}
         </section>
+        {r.prescription && (
+          <section>
+            <h4>Đơn thuốc / Toa thuốc thảo mộc</h4>
+            <p className="t-text" style={{ whiteSpace: 'pre-wrap', lineHeight: '28px', color: 'var(--ink-900)' }}>
+              {r.prescription}
+            </p>
+          </section>
+        )}
+        {r.advice && (
+          <section>
+            <h4>Lời dặn của bác sĩ</h4>
+            <p className="t-text" style={{ whiteSpace: 'pre-wrap', lineHeight: '28px', color: 'var(--ink-900)' }}>
+              {r.advice}
+            </p>
+          </section>
+        )}
         <section aria-label="Lưu ý" className="t-note">
           <Icon name="info" size={26} />
           <div>
@@ -143,6 +160,7 @@ export function ResultSheet({ r, patient, preview }) {
  */
 export function ResultDialog({ record, patient, locked, draft, onEdit, onClose, onConfirm, pending }) {
   const titleId = useId();
+  const { printRecord } = usePrint();
   const confirm = Boolean(draft);
   const r = draft || record;
   const st = record && !confirm ? editState(record, locked) : null;
@@ -160,6 +178,16 @@ export function ResultDialog({ record, patient, locked, draft, onEdit, onClose, 
           </div>
           {!confirm && (
             <div className="t-actions" style={{ gap: 12 }}>
+              <button
+                type="button"
+                className="t-btn t-btn-primary"
+                style={{ padding: '0 20px', minHeight: '48px' }}
+                onClick={() => printRecord(r, patient)}
+                aria-label={`In kết quả khám cho ${patient?.fullName || ''}`}
+              >
+                <Icon name="printer" size={20} />
+                In kết quả
+              </button>
               {st?.editable && onEdit && (
                 <button type="button" className="t-btn t-btn-ghost" style={{ padding: '0 20px' }} onClick={onEdit}>
                   <Icon name="edit" size={20} />

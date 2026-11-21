@@ -4,6 +4,8 @@ import { useDismiss } from '../../shared/lib/hooks.js';
 import { isAdmin, isDoctor, useSession } from '../../shared/lib/session.jsx';
 import { ROLE_LABELS } from '../../shared/lib/format.js';
 import { Icon } from '../../shared/ui/Icon.jsx';
+import { PrintProvider } from './print/PrintProvider.jsx';
+import './print/print.css';
 import './staff.css';
 
 const MY_SCHEDULE_NAV = { to: '/noi-bo/lich-cua-toi', label: 'Lịch trực của tôi', icon: 'calendar' };
@@ -18,6 +20,10 @@ const ADMIN_NAV = [
   ...STAFF_NAV,
   { to: '/noi-bo/quan-tri/lich-truc', label: 'Lịch trực bác sĩ', icon: 'calendar' },
   { to: '/noi-bo/quan-tri/bac-si', label: 'Hồ sơ bác sĩ', icon: 'users' },
+  { to: '/noi-bo/quan-tri/khung-gio', label: 'Khung giờ khám', icon: 'clock' },
+  { to: '/noi-bo/quan-tri/dich-vu', label: 'Dịch vụ khám', icon: 'clipboard' },
+  { to: '/noi-bo/quan-tri/ngay-nghi', label: 'Ngày nghỉ', icon: 'calendarPlus' },
+  { to: '/noi-bo/quan-tri/cau-hinh', label: 'Cấu hình phòng khám', icon: 'settings' },
   { to: '/noi-bo/quan-tri/bai-viet', label: 'Quản lý bài viết', icon: 'news' },
   { to: '/noi-bo/quan-tri/tai-khoan', label: 'Quản lý tài khoản', icon: 'userPlus' },
 ];
@@ -48,55 +54,57 @@ export function StaffLayout() {
   };
 
   return (
-    <div className="t-app t-vars">
-      <a className="skip-link" href="#noi-dung">
-        Bỏ qua, tới nội dung chính
-      </a>
-      <header className="t-header">
-        <div className="t-header-row">
-          <Link to={admin ? '/noi-bo/quan-tri' : '/noi-bo/lich-trong-ngay'} className="t-logo" aria-label="Khu nội bộ Phòng khám Chúc Từ">
-            <img src={`${import.meta.env.BASE_URL}logo-192.png`} alt="" />
-            <span>Chúc Từ</span>
-          </Link>
-          <span className={`t-role ${admin ? 't-role-admin' : ''}`}>
-            <Icon name={admin ? 'shield' : 'user'} size={20} strokeWidth={1.75} />
-            {ROLE_LABELS[user?.role] || (admin ? 'Quản trị viên' : 'Tiếp tân')}
-          </span>
-          {!wide && (
-            <button type="button" className="t-burger" aria-expanded={menuOpen} aria-controls="t-side" onClick={() => setMenuOpen((v) => !v)}>
-              <Icon name={menuOpen ? 'x' : 'menu'} />
-              <span className="t-burger-label">Menu</span>
-            </button>
-          )}
-          <div className="t-user">
-            <UserMenu user={user} onLogout={handleLogout} />
-          </div>
-        </div>
-      </header>
-      <section className="t-page">
-        {wide ? (
-          <main id="noi-dung" className="t-shell-narrow" style={extraWide ? { maxWidth: 1160 } : undefined}>
-            <Outlet />
-          </main>
-        ) : (
-          <div className="t-shell">
-            <div className="t-aside">
-              <nav id="t-side" className={`t-side ${menuOpen ? 'open' : ''}`} aria-label={admin ? 'Chức năng quản trị' : 'Chức năng tiếp tân'}>
-                {nav.map((n) => (
-                  <NavLink key={n.to} to={n.to} end={n.end}>
-                    <Icon name={n.icon} strokeWidth={1.75} />
-                    {n.label}
-                  </NavLink>
-                ))}
-              </nav>
+    <PrintProvider>
+      <div className="t-app t-vars">
+        <a className="skip-link" href="#noi-dung">
+          Bỏ qua, tới nội dung chính
+        </a>
+        <header className="t-header">
+          <div className="t-header-row">
+            <Link to={admin ? '/noi-bo/quan-tri' : '/noi-bo/lich-trong-ngay'} className="t-logo" aria-label="Khu nội bộ Phòng khám Chúc Từ">
+              <img src={`${import.meta.env.BASE_URL}logo-192.png`} alt="" />
+              <span>Chúc Từ</span>
+            </Link>
+            <span className={`t-role ${admin ? 't-role-admin' : ''}`}>
+              <Icon name={admin ? 'shield' : 'user'} size={20} strokeWidth={1.75} />
+              {ROLE_LABELS[user?.role] || (admin ? 'Quản trị viên' : 'Tiếp tân')}
+            </span>
+            {!wide && (
+              <button type="button" className="t-burger" aria-expanded={menuOpen} aria-controls="t-side" onClick={() => setMenuOpen((v) => !v)}>
+                <Icon name={menuOpen ? 'x' : 'menu'} />
+                <span className="t-burger-label">Menu</span>
+              </button>
+            )}
+            <div className="t-user">
+              <UserMenu user={user} onLogout={handleLogout} />
             </div>
-            <main id="noi-dung" className="t-main">
+          </div>
+        </header>
+        <section className="t-page">
+          {wide ? (
+            <main id="noi-dung" className="t-shell-narrow" style={extraWide ? { maxWidth: 1160 } : undefined}>
               <Outlet />
             </main>
-          </div>
-        )}
-      </section>
-    </div>
+          ) : (
+            <div className="t-shell">
+              <div className="t-aside">
+                <nav id="t-side" className={`t-side ${menuOpen ? 'open' : ''}`} aria-label={admin ? 'Chức năng quản trị' : 'Chức năng tiếp tân'}>
+                  {nav.map((n) => (
+                    <NavLink key={n.to} to={n.to} end={n.end}>
+                      <Icon name={n.icon} strokeWidth={1.75} />
+                      {n.label}
+                    </NavLink>
+                  ))}
+                </nav>
+              </div>
+              <main id="noi-dung" className="t-main">
+                <Outlet />
+              </main>
+            </div>
+          )}
+        </section>
+      </div>
+    </PrintProvider>
   );
 }
 

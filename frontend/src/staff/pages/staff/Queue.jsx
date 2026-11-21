@@ -7,6 +7,7 @@ import { fmtTime, shortTime, todayVN } from '../../../shared/lib/format.js';
 import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { NoticeDialog, Summary, TDialog } from '../../components/dialogs.jsx';
 import { longDay } from '../../components/appointments/time.js';
+import { usePrint } from '../../components/print/PrintProvider.jsx';
 
 const clock = (value) => fmtTime(value).replace(/^0/, '');
 const minutesOf = (hhmm) => {
@@ -24,6 +25,7 @@ function waitNote(w) {
 /** Hàng đợi khám: 5 ghế, hàng chờ Ưu tiên / Thường, hoàn tác vào khám (UC.10.1 – UC.10.5). */
 export default function Queue() {
   useDocumentTitle('Hàng đợi khám');
+  const { printTicket } = usePrint();
   const { data, loading, error, reload, setData } = useAsync(() => api.get('/staff/queue'), []);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState(null);
@@ -160,6 +162,24 @@ export default function Queue() {
                       <p className="t-seat-sub">Vào khám lúc {clock(s.enteredAt)}</p>
                     </div>
                     <div className="t-seat-acts">
+                      <button
+                        type="button"
+                        className="t-btn-print"
+                        aria-label={`In phiếu khám cho ${s.patient?.fullName || s.ticketCode}`}
+                        title="In phiếu khám"
+                        onClick={() =>
+                          printTicket({
+                            id: s.appointmentId,
+                            ticketCode: s.ticketCode,
+                            slotDate: todayVN(),
+                            patient: s.patient,
+                            doctor: s.doctor,
+                          })
+                        }
+                      >
+                        <Icon name="printer" size={18} strokeWidth={2} />
+                        <span>In phiếu</span>
+                      </button>
                       <Link to={`/noi-bo/phieu-kham/${s.appointmentId}/ket-qua`} state={{ back: '/noi-bo/hang-doi' }} className="t-btn t-btn-primary t-btn-bold">
                         Kết quả khám
                       </Link>
@@ -211,6 +231,27 @@ export default function Queue() {
                         </p>
                       </div>
                       <p className="t-wait-note">{waitNote(w)}</p>
+                      <button
+                        type="button"
+                        className="t-btn-print"
+                        aria-label={`In phiếu khám cho ${w.patient?.fullName || w.ticketCode}`}
+                        title="In phiếu khám"
+                        onClick={() =>
+                          printTicket({
+                            id: w.appointmentId,
+                            ticketCode: w.ticketCode,
+                            slotDate: w.slotDate || todayVN(),
+                            slotStart: w.slotStart,
+                            slotEnd: w.slotEnd,
+                            patient: w.patient,
+                            serviceLabel: w.serviceLabel,
+                            doctor: w.doctor,
+                          })
+                        }
+                      >
+                        <Icon name="printer" size={18} strokeWidth={2} />
+                        <span>In</span>
+                      </button>
                       {i > 0 && freeSeats > 0 && (
                         <button
                           type="button"

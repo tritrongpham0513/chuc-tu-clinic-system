@@ -12,6 +12,7 @@ import { EditRecordDialog } from '../../components/records/EditRecordDialog.jsx'
 import { HistoryTable } from '../../components/records/HistoryTable.jsx';
 import { RecordFields } from '../../components/records/RecordFields.jsx';
 import { ResultDialog } from '../../components/records/ResultSheet.jsx';
+import { usePrint } from '../../components/print/PrintProvider.jsx';
 
 /** Lập và sửa phiếu kết quả khám (UC.9.7, UC.9.9, UC.10.4), theo prototype "TiepTan-HoSoChiTiet". */
 /** Chỉ nhận đường dẫn trong khu nội bộ. */
@@ -20,6 +21,7 @@ const backTo = (back, fallback) => (typeof back === 'string' && back.startsWith(
 export default function RecordForm() {
   const { appointmentId } = useParams();
   useDocumentTitle('Phiếu kết quả khám');
+  const { printRecord } = usePrint();
   const appt = useAsync(() => api.get(`/staff/appointments/${appointmentId}`), [appointmentId]);
   const patientId = appt.data?.appointment.patient.id;
   const detail = useAsync(() => (patientId ? api.get(`/staff/patients/${patientId}`) : Promise.resolve(null)), [patientId]);
@@ -113,6 +115,16 @@ export default function RecordForm() {
               Tiếp tân còn sửa được phiếu này đến <strong className="t-strong">{fmtStamp(savedState.until)}</strong> (24 giờ kể từ lúc xác nhận).
             </p>
           </div>
+          <button
+            type="button"
+            className="t-btn t-btn-primary"
+            style={{ padding: '0 20px', minHeight: '48px' }}
+            onClick={() => printRecord(saved.record, p)}
+            aria-label={`In kết quả khám cho ${p.fullName}`}
+          >
+            <Icon name="printer" size={20} />
+            In kết quả
+          </button>
           <button type="button" className="t-btn t-btn-ghost" style={{ padding: '0 20px' }} onClick={() => setDialog({ type: 'view', record: saved.record })}>
             Xem phiếu kết quả
           </button>
@@ -193,6 +205,16 @@ export default function RecordForm() {
             </span>
           </p>
           <div className="t-actions" style={{ gap: 12 }}>
+            <button
+              type="button"
+              className="t-btn t-btn-primary"
+              style={{ padding: '0 20px', minHeight: '48px' }}
+              onClick={() => printRecord(record, p)}
+              aria-label={`In kết quả khám cho ${p.fullName}`}
+            >
+              <Icon name="printer" size={20} />
+              In kết quả
+            </button>
             <button type="button" className="t-btn t-btn-ghost" style={{ padding: '0 20px' }} onClick={() => setDialog({ type: 'view', record })}>
               <Icon name="eye" size={20} />
               Xem phiếu kết quả
@@ -282,6 +304,7 @@ export default function RecordForm() {
             records={records}
             locked={p.isLocked}
             onView={(r) => setDialog({ type: 'view', record: r })}
+            onPrint={(r) => printRecord(r, p)}
             onEdit={(r) => (r.id === record?.id ? startEdit() : setDialog({ type: 'editOther', record: r }))}
           />
         ) : (

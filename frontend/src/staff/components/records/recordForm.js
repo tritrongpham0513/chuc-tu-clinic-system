@@ -11,6 +11,8 @@ export const EMPTY_FORM = {
   acupressure: '',
   other: '',
   history: { lines: HISTORY_ITEMS.map(() => null), extra: [] },
+  prescription: '',
+  advice: '',
   followUpDate: '',
   doctorName: '',
 };
@@ -28,6 +30,8 @@ export function fromRecord(r) {
     acupressure: r.treatmentNotes?.acupressure || '',
     other: r.treatmentNotes?.other || '',
     history: parseHistory(r.medicalHistory),
+    prescription: r.prescription || '',
+    advice: r.advice || '',
     followUpDate: r.followUpDate || '',
     doctorName: r.doctorName || '',
   };
@@ -41,6 +45,8 @@ export function toPayload(f) {
     bloodPressure: f.bpTop && f.bpBottom ? `${f.bpTop}/${f.bpBottom}` : null,
     treatmentNotes: { acupuncture: v(f.acupuncture), acupressure: v(f.acupressure), other: v(f.other) },
     medicalHistory: buildHistory(f.history),
+    prescription: v(f.prescription),
+    advice: v(f.advice),
     followUpDate: f.followUpDate || null,
     doctorName: v(f.doctorName),
   };

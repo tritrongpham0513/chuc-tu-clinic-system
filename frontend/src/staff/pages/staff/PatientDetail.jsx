@@ -11,6 +11,7 @@ import { NoticeDialog, TDialog } from '../../components/dialogs.jsx';
 import { EditRecordDialog } from '../../components/records/EditRecordDialog.jsx';
 import { HistoryTable } from '../../components/records/HistoryTable.jsx';
 import { ResultDialog } from '../../components/records/ResultSheet.jsx';
+import { usePrint } from '../../components/print/PrintProvider.jsx';
 
 /** Hồ sơ chưa có ngày sinh đủ (tạo tại quầy chỉ có năm sinh): điền sẵn năm để tiếp tân chọn thêm ngày, tháng. */
 function editForm(patient) {
@@ -154,6 +155,7 @@ function EditPatientDialog({ patient, onClose, onSaved }) {
 export default function PatientDetail() {
   const { id } = useParams();
   const { user } = useSession();
+  const { printTicket, printRecord } = usePrint();
   const canEditRecord = isAdmin(user) || isDoctor(user);
   const isReceptionist = !isAdmin(user) && !isDoctor(user);
   const { data, loading, error, setData } = useAsync(() => api.get(`/staff/patients/${id}`), [id]);
@@ -321,7 +323,7 @@ export default function PatientDetail() {
           {upcoming.length > 0 ? (
             <div className="t-boxed t-scroll">
               <div role="table" aria-label="Phiếu khám chưa hoàn thành" className="t-table">
-                <div role="row" className="t-tr t-thead" style={{ gridTemplateColumns: 'minmax(0, 1fr) 170px 210px' }}>
+                <div role="row" className="t-tr t-thead" style={{ gridTemplateColumns: 'minmax(0, 1fr) 150px 280px' }}>
                   <div role="columnheader" className="t-th">
                     Mã phiếu khám
                   </div>
@@ -334,7 +336,7 @@ export default function PatientDetail() {
                 </div>
                 <div role="rowgroup" className="t-tbody">
                   {upcoming.map((a) => (
-                    <div key={a.id} role="row" className="t-tr" style={{ gridTemplateColumns: 'minmax(0, 1fr) 170px 210px' }}>
+                    <div key={a.id} role="row" className="t-tr" style={{ gridTemplateColumns: 'minmax(0, 1fr) 150px 280px' }}>
                       <div role="cell" className="t-td">
                         <span className="t-td-code">{a.ticketCode}</span>
                         <span className="t-td-sub">
@@ -355,13 +357,23 @@ export default function PatientDetail() {
                           </span>
                         )}
                       </div>
-                      <div role="cell" className="t-td" style={{ padding: '10px 16px' }}>
+                      <div role="cell" className="t-td" style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'flex-end' }}>
+                        <button
+                          type="button"
+                          className="t-btn-print"
+                          aria-label={`In phiếu khám cho ${p.fullName} ngày ${fmtDate(a.slotDate)}`}
+                          onClick={() => printTicket({ ...a, patient: p })}
+                          title="In phiếu khám bệnh"
+                        >
+                          <Icon name="printer" size={18} strokeWidth={2} />
+                          <span>In phiếu</span>
+                        </button>
                         {a.status === 'IN_PROGRESS' ? (
                           <Link to={`/noi-bo/phieu-kham/${a.id}/ket-qua`} state={{ back: `/noi-bo/benh-nhan/${p.id}` }} className="t-btn t-btn-primary" style={{ padding: '0 14px' }}>
                             Ghi nhận lượt khám
                           </Link>
                         ) : (
-                          <span className="t-muted">{a.status === 'CHECKED_IN' ? 'Đang chờ vào khám' : 'Chờ bệnh nhân đến'}</span>
+                          <span className="t-muted" style={{ fontSize: '15px' }}>{a.status === 'CHECKED_IN' ? 'Chờ vào khám' : 'Chờ đến'}</span>
                         )}
                       </div>
                     </div>
@@ -389,6 +401,7 @@ export default function PatientDetail() {
             locked={p.isLocked}
             isReceptionist={isReceptionist}
             onView={isReceptionist ? null : (r) => setDialog({ type: 'view', record: r })}
+            onPrint={isReceptionist ? null : (r) => printRecord(r, p)}
             onEdit={isReceptionist || p.isLocked || !canEditRecord ? null : (r) => setDialog({ type: 'editRecord', record: r })}
           />
         ) : (
