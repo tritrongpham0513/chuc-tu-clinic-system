@@ -56,11 +56,12 @@ export function stateNote(a, isToday) {
   }
   // Đã đóng cửa: không check-in được nữa, phiếu sẽ tự huỷ lúc 17:00
   if (a.status === 'BOOKED' && isToday && nowMinutesVN() >= minutesOf(RECEIVING_HOURS.close)) return `Ngoài giờ nhận bệnh, tự huỷ lúc ${RECEIVING_HOURS.noShowCancel.replace(/^0/, '')} nếu không đến`;
+  if (a.doctorChangeRequestedAt) return `Bác sĩ đã báo cần đổi${a.doctorChangeNote ? `: ${a.doctorChangeNote}` : ''}`;
   if (a.status === 'BOOKED' && isToday && minutesOf(a.slotStart) + 60 <= nowMinutesVN()) return 'Đã qua khung giờ khám';
   return '';
 }
 
-export function RowMenu({ a, isToday, isPast, open, onToggle, act, canChangeDoctor = true }) {
+export function RowMenu({ a, isToday, isPast, open, onToggle, act, canChangeDoctor = true, isDoctorUser = false }) {
   const location = useLocation();
   const ref = useDismiss(open, onToggle);
   const { menuRef, up } = useMenuPlacement(open, ref);
@@ -75,6 +76,9 @@ export function RowMenu({ a, isToday, isPast, open, onToggle, act, canChangeDoct
   if (a.status === 'BOOKED' && !isPast) items.push(['reschedule', 'clock', 'Đổi giờ khám']);
   if (canChangeDoctor && (a.status === 'BOOKED' || a.status === 'CHECKED_IN') && !isPast) {
     items.push(['change-doctor', 'userPlus', 'Đổi bác sĩ']);
+  }
+  if (isDoctorUser && (a.status === 'BOOKED' || a.status === 'CHECKED_IN') && !isPast) {
+    items.push(['request-doctor-change', 'userPlus', 'Báo lễ tân đổi bác sĩ']);
   }
   if (a.status === 'IN_PROGRESS') items.push(['record', 'file', 'Ghi nhận lượt khám']);
   if (a.status === 'COMPLETED') items.push(['record', 'file', 'Xem lượt khám']);

@@ -8,6 +8,7 @@ import { useAsync, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { NoticeDialog, Summary, TDialog } from '../../components/dialogs.jsx';
 import { longDay } from '../../components/appointments/time.js';
 import { usePrint } from '../../components/print/PrintProvider.jsx';
+import { useSession, isDoctor } from '../../../shared/lib/session.jsx';
 
 const clock = (value) => fmtTime(value).replace(/^0/, '');
 const minutesOf = (hhmm) => {
@@ -25,8 +26,14 @@ function waitNote(w) {
 /** Hàng đợi khám: 5 ghế, hàng chờ Ưu tiên / Thường, hoàn tác vào khám (UC.10.1 – UC.10.5). */
 export default function Queue() {
   useDocumentTitle('Hàng đợi khám');
+  const { user } = useSession();
+  const doctorView = isDoctor(user);
+  const [mineOnly, setMineOnly] = useState(() => isDoctor(user));
   const { printTicket } = usePrint();
-  const { data, loading, error, reload, setData } = useAsync(() => api.get('/staff/queue'), []);
+  const { data, loading, error, reload, setData } = useAsync(
+    () => api.get(`/staff/queue${doctorView ? (mineOnly ? '?mine=1' : '?mine=0') : ''}`),
+    [doctorView, mineOnly]
+  );
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState(null);
   const [undoTarget, setUndoTarget] = useState(null);
@@ -124,6 +131,37 @@ export default function Queue() {
           </Link>
         </div>
       </div>
+
+      {doctorView && (
+        <div className="t-card" style={{ padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, borderLeft: '4px solid #D97706' }}>
+          <div>
+            <strong style={{ fontSize: 18, color: '#1F1610', display: 'block' }}>Phạm vi hiển thị hàng đợi:</strong>
+            <span style={{ fontSize: 15, color: '#78350F' }}>
+              {mineOnly ? 'Đang hiển thị bệnh nhân phân công cho riêng bạn' : 'Đang hiển thị toàn bộ bệnh nhân trong phòng khám'}
+            </span>
+          </div>
+          <div role="group" aria-label="Phạm vi hàng đợi bác sĩ" style={{ display: 'inline-flex', gap: 8 }}>
+            <button
+              type="button"
+              className={`t-btn ${mineOnly ? 't-btn-primary' : 't-btn-ghost'}`}
+              style={{ minHeight: 48, padding: '0 20px', fontWeight: 600, fontSize: 16 }}
+              onClick={() => setMineOnly(true)}
+            >
+              <Icon name="user" size={20} strokeWidth={2} />
+              Hàng đợi của tôi
+            </button>
+            <button
+              type="button"
+              className={`t-btn ${!mineOnly ? 't-btn-primary' : 't-btn-ghost'}`}
+              style={{ minHeight: 48, padding: '0 20px', fontWeight: 600, fontSize: 16 }}
+              onClick={() => setMineOnly(false)}
+            >
+              <Icon name="users" size={20} strokeWidth={2} />
+              Xem cả phòng khám
+            </button>
+          </div>
+        </div>
+      )}
 
       {notice && <NoticeDialog onClose={() => setNotice(null)}>{notice}</NoticeDialog>}
       <ErrorAlert error={error || actionError} />

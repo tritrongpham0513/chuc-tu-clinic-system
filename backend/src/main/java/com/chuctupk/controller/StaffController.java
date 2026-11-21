@@ -17,6 +17,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -61,6 +62,14 @@ public class StaffController {
                 ? staffService.getMyAppointments(date, currentUser)
                 : staffService.getAppointments(date);
         return ResponseEntity.ok(ApiResponse.success(response, "Lấy danh sách lịch hẹn thành công"));
+    }
+
+    @GetMapping("/appointments/no-show-preview")
+    @Operation(summary = "Xem trước danh sách các phiếu khám sắp bị huỷ do không đến (no-show)")
+    public ResponseEntity<ApiResponse<List<NoShowPreviewItemDto>>> getNoShowPreview(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        List<NoShowPreviewItemDto> items = staffService.getNoShowPreview(date);
+        return ResponseEntity.ok(ApiResponse.success(items, "Lấy danh sách sắp bị huỷ do không đến thành công"));
     }
 
     @GetMapping("/appointments/dates")
@@ -142,6 +151,18 @@ public class StaffController {
                 "Phân công bác sĩ thành công"));
     }
 
+    @PostMapping("/appointments/{id}/doctor-change-request")
+    @Operation(summary = "Bác sĩ báo lễ tân yêu cầu đổi bác sĩ cho phiếu khám")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> requestDoctorChange(
+            @PathVariable Long id,
+            @Valid @RequestBody(required = false) DoctorChangeRequest request,
+            @AuthenticationPrincipal User currentUser) {
+        staffService.requestDoctorChange(id, request != null ? request.note() : null, currentUser);
+        return ResponseEntity.ok(ApiResponse.success(
+                Map.of("appointmentId", id, "status", "REQUESTED"),
+                "Đã gửi yêu cầu đổi bác sĩ tới tiếp tân thành công"));
+    }
+
     // =========================================================================
     // 2. CHECK-IN & TIẾP NHẬN BỆNH NHÂN
     // =========================================================================
@@ -181,8 +202,8 @@ public class StaffController {
     @Operation(summary = "Lấy trạng thái hàng đợi 5 ghế khám và danh sách hàng chờ")
     public ResponseEntity<ApiResponse<QueueStateDto>> getQueueState(
             @AuthenticationPrincipal User currentUser,
-            @RequestParam(required = false) Long doctorId) {
-        QueueStateDto response = staffService.getQueueState(currentUser, doctorId);
+            @RequestParam(required = false, defaultValue = "0") Integer mine) {
+        QueueStateDto response = staffService.getQueueState(currentUser, mine);
         return ResponseEntity.ok(ApiResponse.success(response, "Lấy trạng thái hàng đợi thành công"));
     }
 

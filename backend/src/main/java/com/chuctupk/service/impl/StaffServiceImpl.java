@@ -10,6 +10,7 @@ import com.chuctupk.entity.enums.AppointmentStatus;
 import com.chuctupk.entity.enums.CheckinStatus;
 import com.chuctupk.entity.enums.Period;
 import com.chuctupk.entity.enums.PriorityGroup;
+import com.chuctupk.entity.enums.Role;
 import com.chuctupk.exception.AppException;
 import com.chuctupk.exception.ErrorCode;
 import com.chuctupk.notification.DeliveryResult;
@@ -81,8 +82,7 @@ public class StaffServiceImpl implements StaffService {
             Clock clock,
             NotificationLogRepository notificationLogRepository,
             ManualProvider manualProvider,
-            com.chuctupk.service.CapacityResolver capacityResolver
-    ) {
+            com.chuctupk.service.CapacityResolver capacityResolver) {
         this.appointmentRepository = appointmentRepository;
         this.checkinRepository = checkinRepository;
         this.patientRepository = patientRepository;
@@ -100,7 +100,8 @@ public class StaffServiceImpl implements StaffService {
         this.clock = clock;
         this.notificationLogRepository = notificationLogRepository;
         this.manualProvider = manualProvider;
-        this.capacityResolver = capacityResolver != null ? capacityResolver : new com.chuctupk.service.CapacityResolver(doctorAssignmentService, clinicSettingService);
+        this.capacityResolver = capacityResolver != null ? capacityResolver
+                : new com.chuctupk.service.CapacityResolver(doctorAssignmentService, clinicSettingService);
     }
 
     public StaffServiceImpl(
@@ -120,8 +121,7 @@ public class StaffServiceImpl implements StaffService {
             SequenceGeneratorService sequenceGeneratorService,
             Clock clock,
             NotificationLogRepository notificationLogRepository,
-            ManualProvider manualProvider
-    ) {
+            ManualProvider manualProvider) {
         this(
                 appointmentRepository,
                 checkinRepository,
@@ -140,8 +140,7 @@ public class StaffServiceImpl implements StaffService {
                 clock,
                 notificationLogRepository,
                 manualProvider,
-                null
-        );
+                null);
     }
 
     public StaffServiceImpl(
@@ -159,8 +158,7 @@ public class StaffServiceImpl implements StaffService {
             DoctorDayOffRepository doctorDayOffRepository,
             com.chuctupk.service.NotificationService notificationService,
             SequenceGeneratorService sequenceGeneratorService,
-            Clock clock
-    ) {
+            Clock clock) {
         this(
                 appointmentRepository,
                 checkinRepository,
@@ -179,8 +177,7 @@ public class StaffServiceImpl implements StaffService {
                 clock,
                 null,
                 null,
-                null
-        );
+                null);
     }
 
     @Override
@@ -224,10 +221,11 @@ public class StaffServiceImpl implements StaffService {
         List<Long> apptIds = appts.stream().map(Appointment::getId).toList();
         Map<Long, Checkin> checkinMap = apptIds.isEmpty() ? Map.of()
                 : checkinRepository.findByAppointmentIdIn(apptIds).stream()
-                    .filter(c -> c.getAppointment() != null)
-                    .collect(toMap(c -> c.getAppointment().getId(), c -> c, (a, b) -> a));
+                        .filter(c -> c.getAppointment() != null)
+                        .collect(toMap(c -> c.getAppointment().getId(), c -> c, (a, b) -> a));
 
-        // Ticket 6: Lấy thời điểm nhắc lịch gần nhất cho toàn bộ danh sách phiếu qua 1 query tổng hợp (tránh N+1)
+        // Ticket 6: Lấy thời điểm nhắc lịch gần nhất cho toàn bộ danh sách phiếu qua 1
+        // query tổng hợp (tránh N+1)
         Map<Long, LocalDateTime> reminderSentAtMap = new HashMap<>();
         if (!apptIds.isEmpty() && notificationLogRepository != null) {
             List<Object[]> reminderRows = notificationLogRepository.findLatestReminderSentAtByAppointmentIds(apptIds);
@@ -242,7 +240,8 @@ public class StaffServiceImpl implements StaffService {
                 .map(a -> {
                     LocalDateTime sentAt = reminderSentAtMap.get(a.getId());
                     String reminderSentAt = ContractMapper.formatIso(sentAt);
-                    return AppointmentDto.from(a, checkinMap.get(a.getId()), isDoctorOnDuty(a, onDutyByPeriod), reminderSentAt);
+                    return AppointmentDto.from(a, checkinMap.get(a.getId()), isDoctorOnDuty(a, onDutyByPeriod),
+                            reminderSentAt);
                 })
                 .toList();
 
@@ -254,8 +253,7 @@ public class StaffServiceImpl implements StaffService {
         int booked = (int) appts.stream().filter(a -> a.getStatus() == AppointmentStatus.PENDING).count();
 
         StaffAppointmentSummaryDto summary = new StaffAppointmentSummaryDto(
-                total, checkedIn, inProgress, completed, cancelled, booked
-        );
+                total, checkedIn, inProgress, completed, cancelled, booked);
 
         return new StaffAppointmentListResponse(queryDate.toString(), items, summary);
     }
@@ -335,8 +333,7 @@ public class StaffServiceImpl implements StaffService {
 
         return new StaffAppointmentDetailResponse(
                 AppointmentDto.from(a, checkin),
-                recordDto
-        );
+                recordDto);
     }
 
     @Override
@@ -354,7 +351,8 @@ public class StaffServiceImpl implements StaffService {
             int capacity = capacityResolver.effectiveCapacity(queryDate, slot);
             int remaining = Math.max(0, capacity - (int) booked);
 
-            boolean isPast = queryDate.isBefore(today) || (queryDate.equals(today) && slot.getEndTime().isBefore(nowTime));
+            boolean isPast = queryDate.isBefore(today)
+                    || (queryDate.equals(today) && slot.getEndTime().isBefore(nowTime));
             boolean isFull = remaining <= 0;
             boolean hasDoctor = doctorAssignmentService.hasDoctorOnDuty(queryDate, slot);
             boolean available = !isPast && !isFull && hasDoctor;
@@ -380,8 +378,7 @@ public class StaffServiceImpl implements StaffService {
                     capacity,
                     remaining,
                     available,
-                    reason
-            ));
+                    reason));
         }
 
         return new StaffAvailabilityResponse(queryDate.toString(), slotDtos);
@@ -412,11 +409,11 @@ public class StaffServiceImpl implements StaffService {
         }
 
         boolean hasExisting = appointmentRepository.existsByPatientIdAndAppointmentDateAndStatusNot(
-                patient.getId(), slotDate, AppointmentStatus.CANCELLED
-        );
+                patient.getId(), slotDate, AppointmentStatus.CANCELLED);
         if (hasExisting) {
             throw AppException.of(ErrorCode.CONFLICT,
-                    "Người bệnh đã có phiếu hẹn trong ngày " + slotDate + ". Mỗi người bệnh chỉ đặt tối đa 1 phiếu mỗi ngày");
+                    "Người bệnh đã có phiếu hẹn trong ngày " + slotDate
+                            + ". Mỗi người bệnh chỉ đặt tối đa 1 phiếu mỗi ngày");
         }
 
         List<TimeSlot> slots = timeSlotRepository.findByIsActiveTrueOrderBySortOrderAsc();
@@ -429,15 +426,18 @@ public class StaffServiceImpl implements StaffService {
         LocalDateTime now = LocalDateTime.now(clock);
         if (!Boolean.TRUE.equals(request.checkInNow())) {
             com.chuctupk.service.SlotPolicy.SlotStatus slotStatus = slotPolicy.evaluate(
-                    slotDate, chosenSlot, now, com.chuctupk.service.SlotPolicy.BookingChannel.COUNTER
-            );
+                    slotDate, chosenSlot, now, com.chuctupk.service.SlotPolicy.BookingChannel.COUNTER);
             if (slotStatus != com.chuctupk.service.SlotPolicy.SlotStatus.OK) {
                 switch (slotStatus) {
-                    case PAST, TOO_LATE -> throw AppException.badRequest("Khung giờ này đã trôi qua. Vui lòng chọn khung giờ hiện tại hoặc kế tiếp");
+                    case PAST, TOO_LATE -> throw AppException
+                            .badRequest("Khung giờ này đã trôi qua. Vui lòng chọn khung giờ hiện tại hoặc kế tiếp");
                     case OUTSIDE_RECEPTION -> throw AppException.unprocessable(
-                            "Phòng khám chỉ tiếp nhận trong khoảng từ " + clinicSettingService.getReceptionOpen() + " đến " + clinicSettingService.getReceptionClose());
-                    case TOO_FAR -> throw AppException.badRequest("Tiếp tân chỉ được phép đặt lịch trước tối đa " + clinicSettingService.getCounterMaxDays() + " ngày");
-                    case FULL -> throw AppException.of(ErrorCode.SLOT_FULL, "Khung giờ này đã đủ bệnh nhân. Cô chú chọn khung khác giúp phòng khám nhé");
+                            "Phòng khám chỉ tiếp nhận trong khoảng từ " + clinicSettingService.getReceptionOpen()
+                                    + " đến " + clinicSettingService.getReceptionClose());
+                    case TOO_FAR -> throw AppException.badRequest("Tiếp tân chỉ được phép đặt lịch trước tối đa "
+                            + clinicSettingService.getCounterMaxDays() + " ngày");
+                    case FULL -> throw AppException.of(ErrorCode.SLOT_FULL,
+                            "Khung giờ này đã đủ bệnh nhân. Cô chú chọn khung khác giúp phòng khám nhé");
                     default -> throw AppException.badRequest("Khung giờ không hợp lệ");
                 }
             }
@@ -538,7 +538,8 @@ public class StaffServiceImpl implements StaffService {
 
     @Override
     @Transactional
-    public StaffAppointmentLookupResponse rescheduleAppointment(User staff, Long id, RescheduleAppointmentRequest request) {
+    public StaffAppointmentLookupResponse rescheduleAppointment(User staff, Long id,
+            RescheduleAppointmentRequest request) {
         Appointment oldAppt = appointmentRepository.findById(id)
                 .orElseThrow(() -> AppException.notFound("Không tìm thấy phiếu"));
 
@@ -546,7 +547,8 @@ public class StaffServiceImpl implements StaffService {
             throw AppException.badRequest("Phiếu khám đã kết thúc hoặc đã huỷ, không thể đổi giờ");
         }
 
-        String slotDateStr = request.getSlotDate() != null ? request.getSlotDate() : (request.getNewDate() != null ? request.getNewDate().toString() : null);
+        String slotDateStr = request.getSlotDate() != null ? request.getSlotDate()
+                : (request.getNewDate() != null ? request.getNewDate().toString() : null);
         if (slotDateStr == null) {
             throw AppException.badRequest("Ngày khám mới không được để trống");
         }
@@ -557,7 +559,8 @@ public class StaffServiceImpl implements StaffService {
         checkinRepository.deleteByAppointmentId(oldAppt.getId());
 
         oldAppt.setStatus(AppointmentStatus.CANCELLED);
-        oldAppt.setCancelReason("Đổi sang ngày " + newDate + " " + (request.getSlotStart() != null ? request.getSlotStart() : ""));
+        oldAppt.setCancelReason(
+                "Đổi sang ngày " + newDate + " " + (request.getSlotStart() != null ? request.getSlotStart() : ""));
         oldAppt.setCancelledAt(LocalDateTime.now(clock));
         appointmentRepository.save(oldAppt);
 
@@ -634,7 +637,8 @@ public class StaffServiceImpl implements StaffService {
 
     @Override
     @Transactional
-    public StaffAppointmentLookupResponse cancelAppointment(User staff, Long id, CancelAppointmentStaffRequest request) {
+    public StaffAppointmentLookupResponse cancelAppointment(User staff, Long id,
+            CancelAppointmentStaffRequest request) {
         if (request.reason() == null || request.reason().isBlank()) {
             throw AppException.badRequest("Vui lòng ghi rõ lý do huỷ");
         }
@@ -681,7 +685,8 @@ public class StaffServiceImpl implements StaffService {
         if (nowTime.isBefore(openTime) || nowTime.isAfter(closeTime)) {
             String openStr = ContractMapper.formatTime(openTime);
             String closeStr = ContractMapper.formatTime(closeTime);
-            throw AppException.of(ErrorCode.CLOSED, "Phòng khám chỉ tiếp nhận bệnh nhân từ " + openStr + " đến " + closeStr);
+            throw AppException.of(ErrorCode.CLOSED,
+                    "Phòng khám chỉ tiếp nhận bệnh nhân từ " + openStr + " đến " + closeStr);
         }
 
         if (appt.getStatus() == AppointmentStatus.CANCELLED || appt.getStatus() == AppointmentStatus.COMPLETED) {
@@ -691,7 +696,8 @@ public class StaffServiceImpl implements StaffService {
             throw AppException.badRequest("Phiếu khám đã được check-in trước đó");
         }
 
-        // Quy tắc nhóm ưu tiên: Phiếu đặt trước (WEB) đến trong [slotStart - priority_early_minutes, slotStart + 60m]
+        // Quy tắc nhóm ưu tiên: Phiếu đặt trước (WEB) đến trong [slotStart -
+        // priority_early_minutes, slotStart + 60m]
         PriorityGroup priorityGroup = PriorityGroup.NORMAL;
         if (appt.getSource() == AppointmentSource.WEB && appt.getTimeSlot() != null) {
             int earlyMinutes = clinicSettingService.getPriorityEarlyMinutes();
@@ -795,9 +801,12 @@ public class StaffServiceImpl implements StaffService {
 
     private boolean isStaffOrDoctorCaller() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) return false;
-        if (auth instanceof AnonymousAuthenticationToken) return false;
-        if ("anonymousUser".equals(auth.getPrincipal())) return false;
+        if (auth == null || !auth.isAuthenticated())
+            return false;
+        if (auth instanceof AnonymousAuthenticationToken)
+            return false;
+        if ("anonymousUser".equals(auth.getPrincipal()))
+            return false;
         return auth.getAuthorities().stream().anyMatch(a -> {
             String role = a.getAuthority();
             return "ROLE_STAFF".equals(role) || "ROLE_ADMIN".equals(role) || "ROLE_DOCTOR".equals(role)
@@ -807,42 +816,104 @@ public class StaffServiceImpl implements StaffService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<NoShowPreviewItemDto> getNoShowPreview(LocalDate date) {
+        LocalDate today = LocalDate.now(clock);
+        LocalDate queryDate = date != null ? date : today;
+        if (!queryDate.equals(today)) {
+            return List.of();
+        }
+
+        LocalTime nowTime = LocalTime.now(clock);
+        LocalTime noShowCancelAt = clinicSettingService.getNoShowCancelAt();
+
+        // 1 query fetch join duy nhất tránh N+1
+        List<Appointment> pendingAppointments = appointmentRepository.findWithDetailsByAppointmentDateAndStatus(
+                today, AppointmentStatus.PENDING);
+
+        long secondsUntilCancel = nowTime.isBefore(noShowCancelAt)
+                ? ChronoUnit.SECONDS.between(nowTime, noShowCancelAt)
+                : 0L;
+        long minutesUntilCancellation = (secondsUntilCancel + 59) / 60;
+
+        List<NoShowPreviewItemDto> result = new ArrayList<>();
+        for (Appointment appointment : pendingAppointments) {
+            TimeSlot slot = appointment.getTimeSlot();
+            // Đồng nhất 100% với ClinicScheduledTasks: ưu tiên slot sống trước, sau đó fallback snapshot
+            LocalTime endTime = slot != null && slot.getEndTime() != null
+                    ? slot.getEndTime()
+                    : appointment.getSlotEndSnapshot();
+
+            boolean slotEnded = (endTime == null || endTime.isBefore(nowTime));
+            if (slotEnded) {
+                String slotTime = "08:00 - 09:00";
+                if (appointment.getSlotStartSnapshot() != null && appointment.getSlotEndSnapshot() != null) {
+                    slotTime = appointment.getSlotStartSnapshot().toString().substring(0, 5) + " - " +
+                            appointment.getSlotEndSnapshot().toString().substring(0, 5);
+                } else if (slot != null && slot.getStartTime() != null && slot.getEndTime() != null) {
+                    slotTime = slot.getStartTime().toString().substring(0, 5) + " - " +
+                            slot.getEndTime().toString().substring(0, 5);
+                }
+
+                String patientName = appointment.getPatient() != null ? appointment.getPatient().getFullName() : "";
+                String patientPhone = appointment.getPatient() != null
+                        ? PhoneValidator.mask(appointment.getPatient().getPhone())
+                        : "";
+                String doctorName = appointment.getDoctor() != null ? appointment.getDoctor().getFullName()
+                        : "Chưa phân công";
+
+                result.add(new NoShowPreviewItemDto(
+                        appointment.getId(),
+                        appointment.getBookingCode(),
+                        appointment.getBookingCode(),
+                        patientName,
+                        patientPhone,
+                        slotTime,
+                        doctorName,
+                        minutesUntilCancellation));
+            }
+        }
+        return result;
+    }
+
+    @Override
     public QueueStateDto getQueueState() {
-        return getQueueState(null, null);
+        return getQueueState(null, 0);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public QueueStateDto getQueueState(User currentUser, Long doctorId) {
+    public QueueStateDto getQueueState(User currentUser, Integer mine) {
         LocalDate today = LocalDate.now(clock);
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime endOfDay = today.atTime(LocalTime.MAX);
 
         boolean isStaff = isStaffOrDoctorCaller();
 
-        Long targetDoctorId = doctorId;
-        if (currentUser != null && currentUser.getRole() == com.chuctupk.entity.enums.Role.DOCTOR) {
-            Doctor currentDoc = doctorRepository.findByUserId(currentUser.getId()).orElse(null);
-            if (currentDoc != null) {
-                targetDoctorId = currentDoc.getId();
-            }
+        // mine=1 chỉ có ý nghĩa với DOCTOR; STAFF/ADMIN gọi mine=1 -> bỏ qua, trả hàng
+        // đợi chung
+        Long targetDoctorUserId = null;
+        if (currentUser != null && currentUser.getRole() == com.chuctupk.entity.enums.Role.DOCTOR
+                && Integer.valueOf(1).equals(mine)) {
+            targetDoctorUserId = currentUser.getId();
         }
 
         List<Checkin> inRoom = checkinRepository.findInRoomToday(startOfDay, endOfDay);
         List<Checkin> waiting = checkinRepository.findWaitingTodayOrdered(startOfDay, endOfDay);
 
-        if (targetDoctorId != null) {
-            final Long docFilter = targetDoctorId;
+        if (targetDoctorUserId != null) {
+            final Long userFilter = targetDoctorUserId;
             waiting = waiting.stream()
                     .filter(c -> c.getAppointment() != null && c.getAppointment().getDoctor() != null
-                            && docFilter.equals(c.getAppointment().getDoctor().getId()))
+                            && c.getAppointment().getDoctor().getUser() != null
+                            && userFilter.equals(c.getAppointment().getDoctor().getUser().getId()))
                     .toList();
         }
 
-        final Long docFilter = targetDoctorId;
+        final Long userFilter = targetDoctorUserId;
         long completedCount = appointmentRepository.findByAppointmentDateOrderByTimeSlotStartTimeAsc(today).stream()
                 .filter(a -> a.getStatus() == AppointmentStatus.COMPLETED)
-                .filter(a -> docFilter == null || (a.getDoctor() != null && docFilter.equals(a.getDoctor().getId())))
+                .filter(a -> userFilter == null || (a.getDoctor() != null && a.getDoctor().getUser() != null
+                        && userFilter.equals(a.getDoctor().getUser().getId())))
                 .count();
 
         boolean autoInvite = "1".equals(clinicSettingService.getSettingValue("auto_invite", "0"));
@@ -865,11 +936,15 @@ public class StaffServiceImpl implements StaffService {
                 String slotStart = a.getSlotStartSnapshot() != null
                         ? a.getSlotStartSnapshot().toString().substring(0, 5)
                         : (a.getTimeSlot() != null && a.getTimeSlot().getStartTime() != null
-                                ? a.getTimeSlot().getStartTime().toString().substring(0, 5) : "08:00");
+                                ? a.getTimeSlot().getStartTime().toString().substring(0, 5)
+                                : "08:00");
 
-                PatientDto pDto = isStaff ? PatientDto.from(a.getPatient()) : PatientDto.masked(a.getPatient());
+                boolean isMyPatient = targetDoctorUserId == null || (a.getDoctor() != null && a.getDoctor().getUser() != null
+                        && targetDoctorUserId.equals(a.getDoctor().getUser().getId()));
+                boolean canViewPatientDetail = isStaff && isMyPatient;
+                PatientDto pDto = canViewPatientDetail ? PatientDto.from(a.getPatient()) : PatientDto.masked(a.getPatient());
                 String docName = a.getDoctor() != null ? a.getDoctor().getFullName() : "Chưa phân bác sĩ";
-                String ticketCode = isStaff ? a.getBookingCode() : null;
+                String ticketCode = canViewPatientDetail ? a.getBookingCode() : null;
 
                 seatDtos.add(new QueueSeatDto(
                         s,
@@ -883,8 +958,7 @@ public class StaffServiceImpl implements StaffService {
                         c.getPriorityGroup().name(),
                         ContractMapper.toFeSource(a.getSource()),
                         slotStart,
-                        ContractMapper.formatIso(c.getCheckInTime())
-                ));
+                        ContractMapper.formatIso(c.getCheckInTime())));
             } else {
                 seatDtos.add(new QueueSeatDto(
                         s,
@@ -898,8 +972,7 @@ public class StaffServiceImpl implements StaffService {
                         null,
                         null,
                         null,
-                        null
-                ));
+                        null));
             }
         }
 
@@ -907,12 +980,14 @@ public class StaffServiceImpl implements StaffService {
         List<QueueWaitingDto> waitingDtos = new ArrayList<>();
         for (Checkin c : waiting) {
             Appointment a = c.getAppointment();
-            if (a == null) continue;
+            if (a == null)
+                continue;
 
             String slotStart = a.getSlotStartSnapshot() != null
                     ? a.getSlotStartSnapshot().toString().substring(0, 5)
                     : (a.getTimeSlot() != null && a.getTimeSlot().getStartTime() != null
-                            ? a.getTimeSlot().getStartTime().toString().substring(0, 5) : "08:00");
+                            ? a.getTimeSlot().getStartTime().toString().substring(0, 5)
+                            : "08:00");
             slotMap.merge(slotStart, 1, Integer::sum);
 
             long waited = c.getCheckInTime() != null
@@ -932,8 +1007,7 @@ public class StaffServiceImpl implements StaffService {
                     ContractMapper.toFeSource(a.getSource()),
                     slotStart,
                     ContractMapper.formatIso(c.getCheckInTime()),
-                    Math.max(0, waited)
-            ));
+                    Math.max(0, waited)));
         }
 
         return new QueueStateDto(
@@ -945,8 +1019,7 @@ public class StaffServiceImpl implements StaffService {
                 autoInvite,
                 seatDtos,
                 waitingDtos,
-                slotMap
-        );
+                slotMap);
     }
 
     @Override
@@ -1015,7 +1088,8 @@ public class StaffServiceImpl implements StaffService {
         if (autoInvite) {
             try {
                 inviteNext();
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         return getQueueState();
@@ -1042,11 +1116,37 @@ public class StaffServiceImpl implements StaffService {
     public Map<String, Object> getDashboardBadges() {
         LocalDate today = LocalDate.now(clock);
         long newBookings = appointmentRepository.countByAppointmentDate(today);
-        long cancelledToday = appointmentRepository.findByAppointmentDateAndStatus(today, AppointmentStatus.CANCELLED).size();
+        long cancelledToday = appointmentRepository.findByAppointmentDateAndStatus(today, AppointmentStatus.CANCELLED)
+                .size();
+        long doctorChangeRequests = appointmentRepository
+                .countByDoctorChangeRequestedAtIsNotNullAndAppointmentDateGreaterThanEqual(today);
         return Map.of(
                 "newBookings", newBookings,
-                "cancelledToday", cancelledToday
-        );
+                "cancelledToday", cancelledToday,
+                "doctorChangeRequests", doctorChangeRequests);
+    }
+
+    @Override
+    @Transactional
+    public void requestDoctorChange(Long appointmentId, String note, User currentUser) {
+        if (currentUser == null || currentUser.getRole() != Role.DOCTOR) {
+            throw AppException.forbidden("Chỉ bác sĩ mới có quyền gửi yêu cầu đổi bác sĩ.");
+        }
+
+        Appointment appt = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> AppException.notFound("Không tìm thấy phiếu khám."));
+
+        Doctor currentDoc = doctorRepository.findByUserId(currentUser.getId()).orElse(null);
+        if (appt.getDoctor() == null || currentDoc == null || !currentDoc.getId().equals(appt.getDoctor().getId())) {
+            throw AppException
+                    .forbidden("Chỉ bác sĩ được phân công cho phiếu khám này mới có quyền gửi yêu cầu đổi bác sĩ.");
+        }
+
+        appt.setDoctorChangeRequestedAt(LocalDateTime.now(clock));
+        appt.setDoctorChangeNote(note != null && !note.isBlank() ? note.trim() : null);
+        appointmentRepository.save(appt);
+        log.info("Bác sĩ ID {} gửi yêu cầu đổi bác sĩ cho phiếu ID {}, ghi chú: {}", currentDoc.getId(), appointmentId,
+                note);
     }
 
     @Override
@@ -1067,7 +1167,7 @@ public class StaffServiceImpl implements StaffService {
         DoctorScheduleMatrixResponse.DoctorScheduleRow row = matrix.getDoctors().stream()
                 .filter(d -> doctor.getId().equals(d.getId()))
                 .findFirst()
-                .orElse(null);   // bác sĩ inactive sẽ không có trong matrix -> coi như lịch trống
+                .orElse(null); // bác sĩ inactive sẽ không có trong matrix -> coi như lịch trống
 
         LocalDate today = LocalDate.now(clock);
         List<DoctorDayOffDto> offs = doctorDayOffRepository
@@ -1083,7 +1183,7 @@ public class StaffServiceImpl implements StaffService {
                         .createdAt(o.getCreatedAt())
                         .build())
                 .sorted(Comparator.comparing(DoctorDayOffDto::getOffDate)
-                        .thenComparing(d -> periodOrder(d.getPeriod())))  // FULL_DAY, MORNING, AFTERNOON
+                        .thenComparing(d -> periodOrder(d.getPeriod()))) // FULL_DAY, MORNING, AFTERNOON
                 .toList();
 
         return MyScheduleResponse.builder()
@@ -1098,7 +1198,8 @@ public class StaffServiceImpl implements StaffService {
     }
 
     private int periodOrder(Period period) {
-        if (period == null) return 99;
+        if (period == null)
+            return 99;
         return switch (period) {
             case FULL_DAY -> 1;
             case MORNING -> 2;
@@ -1119,7 +1220,8 @@ public class StaffServiceImpl implements StaffService {
     // =========================================================================
 
     private String getRecipientPhone(Appointment appointment) {
-        if (appointment == null) return null;
+        if (appointment == null)
+            return null;
         if (appointment.getBookerPhone() != null && !appointment.getBookerPhone().isBlank()) {
             return appointment.getBookerPhone();
         }
@@ -1138,7 +1240,8 @@ public class StaffServiceImpl implements StaffService {
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> AppException.notFound("Không tìm thấy phiếu khám với ID: " + id));
 
-        if (appointment.getStatus() == AppointmentStatus.CANCELLED || appointment.getStatus() == AppointmentStatus.COMPLETED) {
+        if (appointment.getStatus() == AppointmentStatus.CANCELLED
+                || appointment.getStatus() == AppointmentStatus.COMPLETED) {
             throw AppException.unprocessable("Phiếu đã huỷ/hoàn tất, không cần nhắc");
         }
 
@@ -1148,7 +1251,8 @@ public class StaffServiceImpl implements StaffService {
         ManualProvider provider = this.manualProvider != null ? this.manualProvider : new ManualProvider(null);
         String content = provider.compose(appointment);
 
-        String patientName = appointment.getPatient() != null ? appointment.getPatient().getFullName() : appointment.getBookerName();
+        String patientName = appointment.getPatient() != null ? appointment.getPatient().getFullName()
+                : appointment.getBookerName();
 
         return new ReminderPreviewDto(
                 appointment.getId(),
@@ -1157,8 +1261,7 @@ public class StaffServiceImpl implements StaffService {
                 ManualProvider.CHANNEL,
                 appointment.getBookingCode(),
                 patientName,
-                rawPhone
-        );
+                rawPhone);
     }
 
     @Override
@@ -1215,7 +1318,8 @@ public class StaffServiceImpl implements StaffService {
         ManualProvider provider = this.manualProvider != null ? this.manualProvider : new ManualProvider(null);
 
         for (Long id : ids) {
-            if (id == null) continue;
+            if (id == null)
+                continue;
             Optional<Appointment> opt = appointmentRepository.findById(id);
             if (opt.isEmpty()) {
                 warnings.add("Không tìm thấy phiếu khám có ID: " + id);
@@ -1223,7 +1327,8 @@ public class StaffServiceImpl implements StaffService {
             }
             Appointment a = opt.get();
             if (a.getStatus() == AppointmentStatus.CANCELLED || a.getStatus() == AppointmentStatus.COMPLETED) {
-                warnings.add("Phiếu " + (a.getBookingCode() != null ? a.getBookingCode() : id) + " đã huỷ/hoàn tất, không cần nhắc");
+                warnings.add("Phiếu " + (a.getBookingCode() != null ? a.getBookingCode() : id)
+                        + " đã huỷ/hoàn tất, không cần nhắc");
                 continue;
             }
 
@@ -1239,8 +1344,7 @@ public class StaffServiceImpl implements StaffService {
                     ManualProvider.CHANNEL,
                     a.getBookingCode(),
                     patientName,
-                    rawPhone
-            ));
+                    rawPhone));
         }
 
         return new BulkReminderPreviewResponse(items, warnings);
@@ -1258,9 +1362,11 @@ public class StaffServiceImpl implements StaffService {
         List<Long> updatedIds = new ArrayList<>();
 
         for (Long id : ids) {
-            if (id == null) continue;
+            if (id == null)
+                continue;
             Optional<Appointment> opt = appointmentRepository.findById(id);
-            if (opt.isEmpty()) continue;
+            if (opt.isEmpty())
+                continue;
             Appointment a = opt.get();
 
             String rawPhone = getRecipientPhone(a);
@@ -1290,4 +1396,3 @@ public class StaffServiceImpl implements StaffService {
         return new BulkReminderMarkSentResponse(updatedIds, sentIso);
     }
 }
-

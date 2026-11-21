@@ -76,11 +76,20 @@ class ClinicScheduledTasksTest {
         List<Appointment> foundAppointments = new ArrayList<>();
         List<Appointment> savedAppointments = new ArrayList<>();
 
-        @Override
-        public List<Appointment> findByAppointmentDateAndStatus(LocalDate appointmentDate, AppointmentStatus status) {
+        @Override public List<Appointment> findByAppointmentDateAndStatus(LocalDate appointmentDate, AppointmentStatus status) {
             return foundAppointments.stream()
                     .filter(a -> a.getStatus() == status && appointmentDate.equals(a.getAppointmentDate()))
                     .toList();
+        }
+
+        @Override
+        public List<Appointment> findWithDetailsByAppointmentDateAndStatus(LocalDate date, AppointmentStatus status) {
+            return findByAppointmentDateAndStatus(date, status);
+        }
+
+        @Override
+        public long countByDoctorChangeRequestedAtIsNotNullAndAppointmentDateGreaterThanEqual(LocalDate date) {
+            return 0;
         }
 
         @Override

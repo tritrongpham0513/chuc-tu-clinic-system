@@ -102,6 +102,12 @@ public class Appointment {
     @Builder.Default
     private Integer rescheduleCount = 0;
 
+    @Column(name = "doctor_change_requested_at")
+    private LocalDateTime doctorChangeRequestedAt;
+
+    @Column(name = "doctor_change_note", length = 255)
+    private String doctorChangeNote;
+
     @Column(length = 500)
     private String note;
 

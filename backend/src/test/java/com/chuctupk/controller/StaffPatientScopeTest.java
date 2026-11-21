@@ -18,6 +18,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -284,9 +288,9 @@ class StaffPatientScopeTest {
     void doctorListPatients_ShouldQueryDbOnlyForDoctorPatients() throws Exception {
         authenticate(doctorA);
 
-        // Giả lập DB trả về chỉ bệnh nhân 1 cho Bác sĩ A
-        when(patientRepository.findDistinctPatientsByDoctorUserId(doctorA.getId()))
-                .thenReturn(List.of(patientOfDoctorA));
+        // Giả lập DB trả về chỉ bệnh nhân 1 cho Bác sĩ A (truy vấn phân trang có Specification)
+        when(patientRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(patientOfDoctorA), PageRequest.of(0, 10), 1));
 
         mockMvc.perform(get("/api/v1/staff/patients")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -296,16 +300,18 @@ class StaffPatientScopeTest {
                 .andExpect(jsonPath("$.data.items[0].id").value("1"))
                 .andExpect(jsonPath("$.data.items[0].fullName").value("Nguyễn Văn An"));
 
-        // Tuyệt đối không được gọi findAll() trong RAM khi DOCTOR truy vấn
-        verify(patientRepository, times(1)).findDistinctPatientsByDoctorUserId(doctorA.getId());
+        // Tuyệt đối không được gọi findAll() trong RAM; phải truy vấn DB kèm Specification
+        verify(patientRepository, times(1)).findAll(any(Specification.class), any(Pageable.class));
         verify(patientRepository, never()).findAll();
+        verify(patientRepository, never()).findDistinctPatientsByDoctorUserId(any());
     }
 
     @Test
-    @DisplayName("Test 6b: STAFF xem danh sách bệnh nhân -> gọi findAll() bình thường")
+    @DisplayName("Test 6b: STAFF xem danh sách bệnh nhân -> truy vấn DB phân trang, không lọc theo bác sĩ")
     void staffListPatients_ShouldCallFindAll() throws Exception {
         authenticate(staffUser);
-        when(patientRepository.findAll()).thenReturn(List.of(patientOfDoctorA, patientOfDoctorB));
+        when(patientRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(patientOfDoctorA, patientOfDoctorB), PageRequest.of(0, 10), 2));
 
         mockMvc.perform(get("/api/v1/staff/patients")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -313,7 +319,7 @@ class StaffPatientScopeTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.total").value(2));
 
-        verify(patientRepository, times(1)).findAll();
+        verify(patientRepository, times(1)).findAll(any(Specification.class), any(Pageable.class));
         verify(patientRepository, never()).findDistinctPatientsByDoctorUserId(any());
     }
 

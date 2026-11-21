@@ -82,6 +82,19 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     List<Appointment> findByAppointmentDateAndStatus(LocalDate appointmentDate, AppointmentStatus status);
 
+    @Query("SELECT a FROM Appointment a " +
+           "LEFT JOIN FETCH a.patient " +
+           "LEFT JOIN FETCH a.doctor " +
+           "LEFT JOIN FETCH a.timeSlot " +
+           "WHERE a.appointmentDate = :date AND a.status = :status " +
+           "ORDER BY a.timeSlot.startTime ASC, a.id ASC")
+    List<Appointment> findWithDetailsByAppointmentDateAndStatus(
+            @Param("date") LocalDate date,
+            @Param("status") AppointmentStatus status
+    );
+
+    long countByDoctorChangeRequestedAtIsNotNullAndAppointmentDateGreaterThanEqual(LocalDate date);
+
     long countByDoctorIdAndAppointmentDateAndStatusIn(Long doctorId, LocalDate appointmentDate, java.util.Collection<AppointmentStatus> statuses);
 
     @Query("SELECT a FROM Appointment a WHERE a.patient.user.id = :userId " +

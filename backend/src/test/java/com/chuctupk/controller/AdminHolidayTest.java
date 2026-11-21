@@ -364,6 +364,8 @@ class AdminHolidayTest {
         @Override public List<Appointment> lookupByCodeOrPhoneOrPatientCode(String code) { return List.of(); }
         @Override public List<Object[]> findLatestCompletedVisitDates(List<Long> patientIds) { return List.of(); }
         @Override public List<Appointment> findByAppointmentDateAndStatus(LocalDate appointmentDate, AppointmentStatus status) { return List.of(); }
+        @Override public List<Appointment> findWithDetailsByAppointmentDateAndStatus(LocalDate date, AppointmentStatus status) { return List.of(); }
+        @Override public long countByDoctorChangeRequestedAtIsNotNullAndAppointmentDateGreaterThanEqual(LocalDate date) { return 0; }
         @Override public long countByDoctorIdAndAppointmentDateAndStatusIn(Long doctorId, LocalDate appointmentDate, Collection<AppointmentStatus> statuses) { return 0; }
         @Override public List<Appointment> findUpcomingRemindersByUser(Long userId, Collection<AppointmentStatus> statuses, LocalDate startDate, LocalDate endDate, Pageable pageable) { return List.of(); }
         @Override public boolean existsByPatientIdAndDoctorUserId(Long patientId, Long userId) { return false; }

@@ -453,6 +453,8 @@ class AdminTimeSlotTest {
         @Override public boolean existsByPatientId(Long patientId) { return false; }
         @Override public List<Appointment> findByPatientId(Long patientId) { return List.of(); }
         @Override public boolean existsByPatientIdAndAppointmentDateAndStatusNot(Long patientId, LocalDate appointmentDate, AppointmentStatus excludeStatus) { return false; }
+        @Override public List<Appointment> findWithDetailsByAppointmentDateAndStatus(LocalDate date, AppointmentStatus status) { return List.of(); }
+        @Override public long countByDoctorChangeRequestedAtIsNotNullAndAppointmentDateGreaterThanEqual(LocalDate date) { return 0; }
         @Override public boolean hasActiveAppointmentOnDate(Long patientId, LocalDate date) { return false; }
         @Override public List<Appointment> findByPatient_UserIdOrderByAppointmentDateDesc(Long userId) { return List.of(); }
         @Override public List<Appointment> findByPatient_UserIdAndStatusNotOrderByAppointmentDateDesc(Long userId, AppointmentStatus status) { return List.of(); }

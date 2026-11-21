@@ -33,8 +33,65 @@ public record AppointmentDto(
         Boolean doctorOnDuty,
         String doctorId,
         String reminderSentAt,
-        String serviceLabel
+        String serviceLabel,
+        String doctorChangeRequestedAt,
+        String doctorChangeNote
 ) {
+    public AppointmentDto(
+            String id,
+            String bookingCode,
+            String ticketCode,
+            PatientDto patient,
+            String doctor,
+            String serviceType,
+            String slotDate,
+            String slotStart,
+            String slotEnd,
+            String expectedTime,
+            String status,
+            String source,
+            String cancelReason,
+            String bookerName,
+            String bookerPhone,
+            String createdAt,
+            String updatedAt,
+            String checkInAt,
+            String enteredAt,
+            Map<String, Object> checkin,
+            Boolean doctorOnDuty,
+            String doctorId,
+            String reminderSentAt,
+            String serviceLabel
+    ) {
+        this(
+                id,
+                bookingCode,
+                ticketCode,
+                patient,
+                doctor,
+                serviceType,
+                slotDate,
+                slotStart,
+                slotEnd,
+                expectedTime,
+                status,
+                source,
+                cancelReason,
+                bookerName,
+                bookerPhone,
+                createdAt,
+                updatedAt,
+                checkInAt,
+                enteredAt,
+                checkin,
+                doctorOnDuty,
+                doctorId,
+                reminderSentAt,
+                serviceLabel,
+                null,
+                null
+        );
+    }
     public AppointmentDto(
             String id,
             String bookingCode,
@@ -276,7 +333,9 @@ public record AppointmentDto(
                 doctorOnDuty,
                 a.getDoctor() != null ? String.valueOf(a.getDoctor().getId()) : null,
                 reminderSentAt,
-                serviceLabel
+                serviceLabel,
+                ContractMapper.formatIso(a.getDoctorChangeRequestedAt()),
+                a.getDoctorChangeNote()
         );
     }
 

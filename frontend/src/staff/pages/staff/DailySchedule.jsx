@@ -6,12 +6,13 @@ import { api, qs } from '../../../shared/lib/api.js';
 import { addDays, fmtDate, fmtTime, shortTime, todayVN, weekday } from '../../../shared/lib/format.js';
 import { useAsync, useDismiss, useDocumentTitle } from '../../../shared/lib/hooks.js';
 import { MonthGrid } from '../../components/MonthGrid.jsx';
-import { NoticeDialog } from '../../components/dialogs.jsx';
+import { NoticeDialog, TDialog } from '../../components/dialogs.jsx';
 import { Pager } from '../../components/Pager.jsx';
 import { AddAppointmentDialog } from '../../components/appointments/AddAppointmentDialog.jsx';
 import { CancelDialog, CheckinDialog, UndoCheckinDialog } from '../../components/appointments/StatusDialogs.jsx';
 import { RescheduleDialog } from '../../components/appointments/RescheduleDialog.jsx';
 import { ChangeDoctorDialog } from '../../components/appointments/ChangeDoctorDialog.jsx';
+import { RequestDoctorChangeDialog } from '../../components/appointments/RequestDoctorChangeDialog.jsx';
 import { ReminderDialog, BulkReminderDialog } from '../../components/appointments/ReminderDialog.jsx';
 import { StatusChip, stateNote, RowMenu } from './scheduleParts.jsx';
 import { useSession, isDoctor } from '../../../shared/lib/session.jsx';
@@ -68,12 +69,30 @@ export default function DailySchedule() {
   const [calOpen, setCalOpen] = useState(false);
   const [marked, setMarked] = useState(() => new Set());
   const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [noShowPreview, setNoShowPreview] = useState([]);
+  const [showNoShowModal, setShowNoShowModal] = useState(false);
+  const [checkingInId, setCheckingInId] = useState(null);
   const calRef = useDismiss(calOpen, () => setCalOpen(false));
 
   const { data, loading, error: loadError, reload } = useAsync(
     () => api.get(`/staff/appointments${qs({ date, mine: mine && doctorView ? 1 : undefined })}`),
     [date, mine]
   );
+
+  const loadNoShowPreview = useCallback(() => {
+    if (isToday) {
+      api
+        .get(`/staff/appointments/no-show-preview?date=${today}`)
+        .then((res) => setNoShowPreview(Array.isArray(res) ? res : res?.items || []))
+        .catch(() => setNoShowPreview([]));
+    } else {
+      setNoShowPreview([]);
+    }
+  }, [isToday, today]);
+
+  useEffect(() => {
+    loadNoShowPreview();
+  }, [loadNoShowPreview]);
 
   // Mở sẵn hộp thoại Thêm lịch khám: ?them=1, hoặc ?dat=<mã hồ sơ> để vào thẳng bước chọn giờ
   useEffect(() => {
@@ -201,7 +220,21 @@ export default function DailySchedule() {
   const done = (message) => {
     setDialog(null);
     if (message) setNotice(message);
+    loadNoShowPreview();
     reload({ silent: true });
+  };
+
+  const handleQuickCheckin = async (id) => {
+    setCheckingInId(id);
+    try {
+      await api.post(`/staff/appointments/${id}/checkin`);
+      loadNoShowPreview();
+      reload({ silent: true });
+    } catch (err) {
+      setError(err);
+    } finally {
+      setCheckingInId(null);
+    }
   };
 
   const act = (key, a) => {
@@ -212,8 +245,14 @@ export default function DailySchedule() {
     if (key === 'undo-checkin') return setDialog({ type: 'undo', appt: a });
     if (key === 'reschedule') return setDialog({ type: 'reschedule', appt: a });
     if (key === 'change-doctor') return setDialog({ type: 'change-doctor', appt: a });
+    if (key === 'request-doctor-change') return setDialog({ type: 'request-doctor-change', appt: a });
     if (key === 'cancel') return setDialog({ type: 'cancel', appt: a });
   };
+
+  const doctorChangeItems = useMemo(
+    () => all.filter((a) => a.doctorChangeRequestedAt != null && a.status !== 'CANCELLED' && a.status !== 'COMPLETED'),
+    [all]
+  );
 
   const dayLabel = isToday ? 'hôm nay' : `ngày ${fmtDate(date)}`;
 
@@ -337,6 +376,100 @@ export default function DailySchedule() {
 
       {notice && <NoticeDialog onClose={() => setNotice(null)}>{notice}</NoticeDialog>}
       <ErrorAlert error={error || loadError} />
+
+      {/* Ticket 1: Yellow alert banner cho các phiếu sắp bị huỷ do không đến */}
+      {isToday && noShowPreview.length > 0 && (
+        <div
+          role="alert"
+          style={{
+            background: '#FEF3C7',
+            border: '2px solid #F59E0B',
+            borderRadius: 16,
+            padding: '16px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 16,
+            marginBottom: 20,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Icon name="alertTriangle" size={28} color="#D97706" />
+            <span style={{ fontSize: 18, fontWeight: 700, color: '#92400E' }}>
+              Có {noShowPreview.length} phiếu sắp bị huỷ lúc 17:00 do chưa check-in.
+            </span>
+          </div>
+          <button
+            type="button"
+            className="t-btn t-btn-primary"
+            style={{ minHeight: 48, padding: '0 24px', fontWeight: 700, fontSize: 16 }}
+            onClick={() => setShowNoShowModal(true)}
+          >
+            Xem danh sách
+          </button>
+        </div>
+      )}
+
+      {/* Ticket 3: Lễ tân thấy danh sách bác sĩ báo cần đổi */}
+      {!doctorView && doctorChangeItems.length > 0 && (
+        <div
+          role="region"
+          aria-label="Danh sách bác sĩ báo cần đổi"
+          style={{
+            background: '#FEF2F2',
+            border: '2px solid #EF4444',
+            borderRadius: 16,
+            padding: '16px 20px',
+            marginBottom: 20,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Icon name="alertCircle" size={24} color="#DC2626" />
+            <span style={{ fontSize: 18, fontWeight: 700, color: '#991B1B' }}>
+              Bác sĩ báo cần đổi ({doctorChangeItems.length} phiếu)
+            </span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {doctorChangeItems.map((item) => (
+              <div
+                key={item.id}
+                style={{
+                  background: '#ffffff',
+                  border: '1px solid #FCA5A5',
+                  borderRadius: 12,
+                  padding: '12px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 12,
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 16, color: '#1F1610' }}>
+                    {item.ticketCode} — {item.patient?.fullName} ({item.doctor || 'Bác sĩ'})
+                  </div>
+                  <div style={{ fontSize: 15, color: '#78350F', marginTop: 2 }}>
+                    <strong>Ghi chú:</strong> {item.doctorChangeNote || 'Bác sĩ báo cần đổi'} · lúc {fmtTime(item.doctorChangeRequestedAt)}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="t-btn t-btn-primary"
+                  style={{ minHeight: 48, padding: '0 20px', fontWeight: 600, fontSize: 15 }}
+                  onClick={() => setDialog({ type: 'change-doctor', appt: item })}
+                >
+                  Đổi bác sĩ
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="t-card" id="lt-ketqua" style={{ scrollMarginTop: 24 }}>
         <p className="t-label" style={{ padding: '20px 24px 12px' }}>
@@ -538,6 +671,7 @@ export default function DailySchedule() {
                           onToggle={() => setMenu((m) => (m === a.id ? null : a.id))}
                           act={act}
                           canChangeDoctor={!doctorView}
+                          isDoctorUser={doctorView}
                         />
                       </div>
                       {a.status === 'CANCELLED' && (
@@ -590,6 +724,21 @@ export default function DailySchedule() {
       {dialog?.type === 'reschedule' && <RescheduleDialog appt={dialog.appt} onClose={() => setDialog(null)} onDone={done} />}
       {dialog?.type === 'change-doctor' && <ChangeDoctorDialog appt={dialog.appt} onClose={() => setDialog(null)} onDone={done} />}
       {dialog?.type === 'cancel' && <CancelDialog appt={dialog.appt} onClose={() => setDialog(null)} onDone={done} />}
+      {dialog?.type === 'request-doctor-change' && (
+        <RequestDoctorChangeDialog
+          appt={dialog.appt}
+          onClose={() => setDialog(null)}
+          onDone={done}
+        />
+      )}
+      {showNoShowModal && (
+        <NoShowPreviewDialog
+          items={noShowPreview}
+          onClose={() => setShowNoShowModal(false)}
+          onCheckin={handleQuickCheckin}
+          checkingInId={checkingInId}
+        />
+      )}
       {dialog?.type === 'reminder' && (
         <ReminderDialog
           appt={dialog.appt}
@@ -610,5 +759,63 @@ export default function DailySchedule() {
         />
       )}
     </>
+  );
+}
+
+function NoShowPreviewDialog({ items, onClose, onCheckin, checkingInId }) {
+  return (
+    <TDialog title="Phiếu sắp bị huỷ do không đến (17:00)" tone="gold" width={720} onClose={onClose}>
+      <div className="t-dialog-body" style={{ gap: 16 }}>
+        <p className="t-text" style={{ fontSize: 18, color: '#78350F', lineHeight: '26px' }}>
+          Các phiếu khám dưới đây thuộc ngày hôm nay, trạng thái chưa đến và khung giờ đã kết thúc. Nếu bệnh nhân đã có mặt tại phòng khám, vui lòng bấm Check-in ngay để không bị hệ thống tự động huỷ lúc 17:00.
+        </p>
+        <div style={{ maxHeight: 400, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {items.map((item) => (
+            <div
+              key={item.id}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '14px 18px',
+                background: '#FFFBEB',
+                border: '1px solid #FDE68A',
+                borderRadius: 12,
+                gap: 12,
+                flexWrap: 'wrap',
+              }}
+            >
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 18, color: '#1F1610' }}>
+                  {item.ticketCode} — {item.patientName}
+                </div>
+                <div style={{ fontSize: 16, color: '#78350F', marginTop: 4 }}>
+                  SĐT: {item.patientPhone} · Khung: {item.slotTime} · BS: {item.doctorName || 'Chưa phân công'}
+                </div>
+                <div style={{ fontSize: 16, color: item.minutesUntilCancellation > 0 ? '#B45309' : '#DC2626', fontWeight: 600, marginTop: 4 }}>
+                  {item.minutesUntilCancellation > 0
+                    ? `Sắp huỷ sau ${item.minutesUntilCancellation} phút`
+                    : 'Đã quá mốc 17:00'}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="t-btn t-btn-primary"
+                style={{ minHeight: 48, padding: '0 24px', fontWeight: 700, fontSize: 18 }}
+                disabled={checkingInId === item.id}
+                onClick={() => onCheckin(item.id)}
+              >
+                {checkingInId === item.id ? 'Đang check-in...' : 'Check-in'}
+              </button>
+            </div>
+          ))}
+        </div>
+        <div className="t-actions">
+          <button type="button" className="t-btn t-btn-ghost" style={{ minHeight: 48, padding: '0 24px' }} onClick={onClose}>
+            Đóng
+          </button>
+        </div>
+      </div>
+    </TDialog>
   );
 }

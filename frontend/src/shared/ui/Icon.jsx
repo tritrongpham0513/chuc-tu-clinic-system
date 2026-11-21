@@ -81,9 +81,14 @@ const PATHS = {
   maximize: 'M8 3H5a2 2 0 0 0-2 2v3 M21 8V5a2 2 0 0 0-2-2h-3 M3 16v3a2 2 0 0 0 2 2h3 M16 21h3a2 2 0 0 0 2-2v-3',
   minimize: 'M8 3v3a2 2 0 0 1-2 2H3 M21 8h-3a2 2 0 0 1-2-2V3 M3 16h3a2 2 0 0 1 2 2v3 M16 21v-3a2 2 0 0 1 2-2h3',
   question:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3 M12 17h.01',
+  // Bí danh dùng trong các banner cảnh báo / nút gửi (Sprint 9)
+  alertTriangle: 'M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z M12 9v4 M12 17h.01',
+  alertCircle: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z M12 8v4 M12 16h.01',
+  xCircle: 'M3 12a9 9 0 1 0 18 0 9 9 0 1 0-18 0Z M9 9l6 6 M15 9l-6 6',
+  send: 'M22 2 11 13 M22 2 15 22 11 13 2 9 22 2Z',
 };
 
-export function Icon({ name, size = 24, label, className, strokeWidth = 2 }) {
+export function Icon({ name, size = 24, label, className, strokeWidth = 2, color }) {
   const d = PATHS[name];
   if (!d) return null;
   return (
@@ -92,7 +97,7 @@ export function Icon({ name, size = 24, label, className, strokeWidth = 2 }) {
       height={size}
       viewBox="0 0 24 24"
       fill="none"
-      stroke="currentColor"
+      stroke={color || 'currentColor'}
       strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"

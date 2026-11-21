@@ -129,6 +129,8 @@ public class DoctorAssignmentServiceImpl implements DoctorAssignmentService {
         }
 
         appointment.setDoctor(doctor);
+        appointment.setDoctorChangeRequestedAt(null);
+        appointment.setDoctorChangeNote(null);
         appointmentRepository.save(appointment);
         log.info("Phân công bác sĩ ID {} cho lịch hẹn ID {}", doctorId, appointmentId);
     }

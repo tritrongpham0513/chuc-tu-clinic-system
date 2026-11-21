@@ -4,6 +4,7 @@ import { useDismiss } from '../../shared/lib/hooks.js';
 import { isAdmin, isDoctor, useSession } from '../../shared/lib/session.jsx';
 import { ROLE_LABELS } from '../../shared/lib/format.js';
 import { Icon } from '../../shared/ui/Icon.jsx';
+import { api } from '../../shared/lib/api.js';
 import { PrintProvider } from './print/PrintProvider.jsx';
 import './print/print.css';
 import './staff.css';
@@ -37,6 +38,7 @@ export function StaffLayout() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [badges, setBadges] = useState(null);
   const admin = isAdmin(user);
   const nav = admin
     ? ADMIN_NAV
@@ -47,6 +49,13 @@ export function StaffLayout() {
   const extraWide = EXTRA_WIDE.some((p) => matchPath(p, pathname));
 
   useEffect(() => setMenuOpen(false), [pathname]);
+
+  useEffect(() => {
+    api
+      .get('/staff/dashboard/badges')
+      .then(setBadges)
+      .catch(() => {});
+  }, [pathname]);
 
   const handleLogout = async () => {
     await logout();
@@ -92,7 +101,26 @@ export function StaffLayout() {
                   {nav.map((n) => (
                     <NavLink key={n.to} to={n.to} end={n.end}>
                       <Icon name={n.icon} strokeWidth={1.75} />
-                      {n.label}
+                      <span>{n.label}</span>
+                      {n.to === '/noi-bo/lich-trong-ngay' && (badges?.doctorChangeRequests || 0) > 0 && (
+                        <span
+                          style={{
+                            marginLeft: 'auto',
+                            background: '#DC2626',
+                            color: '#FFFFFF',
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            padding: '2px 8px',
+                            borderRadius: '999px',
+                            minWidth: '22px',
+                            textAlign: 'center',
+                            lineHeight: '18px',
+                          }}
+                          aria-label={`${badges.doctorChangeRequests} yêu cầu đổi bác sĩ`}
+                        >
+                          {badges.doctorChangeRequests}
+                        </span>
+                      )}
                     </NavLink>
                   ))}
                 </nav>

@@ -5,6 +5,7 @@ import com.chuctupk.dto.response.*;
 import com.chuctupk.entity.User;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 public interface StaffService {
@@ -37,9 +38,13 @@ public interface StaffService {
 
     StaffAppointmentLookupResponse enterRoom(User staff, Long id);
 
+    List<NoShowPreviewItemDto> getNoShowPreview(LocalDate date);
+
     QueueStateDto getQueueState();
 
-    QueueStateDto getQueueState(User currentUser, Long doctorId);
+    QueueStateDto getQueueState(User currentUser, Integer mine);
+
+    void requestDoctorChange(Long appointmentId, String note, User currentUser);
 
     Map<String, Object> getDashboardBadges();
 

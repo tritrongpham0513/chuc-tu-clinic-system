@@ -22,8 +22,14 @@ import com.chuctupk.repository.RecordAccessLogRepository;
 import com.chuctupk.repository.UserRepository;
 import com.chuctupk.service.SequenceGeneratorService;
 import com.chuctupk.service.StaffPatientService;
+import com.chuctupk.repository.specification.PatientSpecifications;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -64,37 +70,20 @@ public class StaffPatientServiceImpl implements StaffPatientService {
         }
 
         int pageSize = limit > 0 ? Math.min(limit, 100) : 10;
-        List<Patient> all;
+        int pageIndex = Math.max(0, page - 1);
 
-        if (currentUser != null && currentUser.getRole() == Role.DOCTOR) {
-            all = patientRepository.findDistinctPatientsByDoctorUserId(currentUser.getId());
-        } else {
-            all = patientRepository.findAll();
-        }
+        Long doctorUserId = (currentUser != null && currentUser.getRole() == Role.DOCTOR)
+                ? currentUser.getId()
+                : null;
 
-        List<Patient> filtered = all.stream()
-                .filter(p -> {
-                    if (locked == null) return true;
-                    boolean isLocked = Boolean.FALSE.equals(p.getIsActive()) || p.getLockedAt() != null;
-                    return locked ? isLocked : !isLocked;
-                })
-                .filter(p -> {
-                    if (q == null || q.isBlank()) return true;
-                    String query = q.trim().toLowerCase();
-                    return (p.getFullName() != null && p.getFullName().toLowerCase().contains(query))
-                            || (p.getPhone() != null && p.getPhone().contains(query))
-                            || (p.getPatientCode() != null && p.getPatientCode().toLowerCase().contains(query));
-                })
-                .sorted(Comparator.comparing(Patient::getId).reversed())
-                .toList();
+        Specification<Patient> spec = PatientSpecifications.buildSearchSpec(q, locked, doctorUserId);
+        Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(Sort.Direction.ASC, "fullName").and(Sort.by(Sort.Direction.ASC, "id")));
 
-        int total = filtered.size();
-        int pages = Math.max(1, (int) Math.ceil((double) total / pageSize));
-        int curPage = Math.max(1, Math.min(page, pages));
-        int fromIndex = (curPage - 1) * pageSize;
-        int toIndex = Math.min(fromIndex + pageSize, total);
-
-        List<Patient> pageItems = fromIndex < total ? filtered.subList(fromIndex, toIndex) : List.of();
+        Page<Patient> pageResult = patientRepository.findAll(spec, pageable);
+        List<Patient> pageItems = pageResult.getContent();
+        int total = (int) pageResult.getTotalElements();
+        int pages = Math.max(1, pageResult.getTotalPages());
+        int curPage = pageIndex + 1;
 
         // Batch query lastVisitDate
         Map<Long, LocalDate> lastVisitMap = new HashMap<>();

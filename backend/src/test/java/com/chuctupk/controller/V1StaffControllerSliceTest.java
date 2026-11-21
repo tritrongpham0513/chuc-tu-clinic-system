@@ -162,11 +162,11 @@ class V1StaffControllerSliceTest {
 
         @Override
         public QueueStateDto getQueueState() {
-            return getQueueState(null, null);
+            return getQueueState(null, 0);
         }
 
         @Override
-        public QueueStateDto getQueueState(User currentUser, Long doctorId) {
+        public QueueStateDto getQueueState(User currentUser, Integer mine) {
             List<QueueSeatDto> seats = new ArrayList<>();
             seats.add(new QueueSeatDto(
                     1, false, "1", "100", "CT-PK-26-1411-001", samplePatient, "BS. Nguyễn Văn Minh",
@@ -181,6 +181,15 @@ class V1StaffControllerSliceTest {
             );
 
             return new QueueStateDto("2026-11-14", 5, 1, 1, 0, false, seats, waiting, Map.of("08:00", 1));
+        }
+
+        @Override
+        public List<NoShowPreviewItemDto> getNoShowPreview(LocalDate date) {
+            return List.of();
+        }
+
+        @Override
+        public void requestDoctorChange(Long appointmentId, String note, User currentUser) {
         }
 
         @Override
