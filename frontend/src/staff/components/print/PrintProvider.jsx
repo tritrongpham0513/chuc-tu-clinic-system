@@ -3,11 +3,13 @@ import { createPortal } from 'react-dom';
 import { Icon } from '../../../shared/ui/Icon.jsx';
 import { AppointmentTicketPrint } from './AppointmentTicketPrint.jsx';
 import { RecordPrintSheet } from './RecordPrintSheet.jsx';
+import { PrescriptionPrintSheet } from './PrescriptionPrintSheet.jsx';
 import './print.css';
 
 const PrintContext = createContext({
   printTicket: () => {},
   printRecord: () => {},
+  printPrescription: () => {},
   isPrinting: false,
 });
 
@@ -93,8 +95,13 @@ export function PrintProvider({ children }) {
     triggerPrint({ type: 'record', record, patient, variant });
   }, [triggerPrint]);
 
+  const printPrescription = useCallback((record, patient, variant = 'a5') => {
+    if (!record) return;
+    triggerPrint({ type: 'prescription', record, patient, variant });
+  }, [triggerPrint]);
+
   return (
-    <PrintContext.Provider value={{ printTicket, printRecord, isPrinting }}>
+    <PrintContext.Provider value={{ printTicket, printRecord, printPrescription, isPrinting }}>
       {children}
 
       {/* Thông báo nhỏ (Toast) Elderly-First không popup chặn */}
@@ -114,6 +121,13 @@ export function PrintProvider({ children }) {
             )}
             {activePrint.type === 'record' && (
               <RecordPrintSheet
+                record={activePrint.record}
+                patient={activePrint.patient}
+                variant={activePrint.variant}
+              />
+            )}
+            {activePrint.type === 'prescription' && (
+              <PrescriptionPrintSheet
                 record={activePrint.record}
                 patient={activePrint.patient}
                 variant={activePrint.variant}

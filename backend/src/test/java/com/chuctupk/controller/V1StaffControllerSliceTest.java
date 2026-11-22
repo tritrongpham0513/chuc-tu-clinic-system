@@ -101,6 +101,17 @@ class V1StaffControllerSliceTest {
         }
 
         @Override
+        public AppointmentHistoryResponse getAppointmentHistory(Long appointmentId) {
+            return new AppointmentHistoryResponse(List.of(
+                    new AppointmentStatusHistoryItemDto(
+                            java.time.LocalDateTime.of(2026, 11, 14, 8, 12),
+                            "PENDING", "Chưa đến",
+                            "NO_SHOW", "Không đến",
+                            "Hệ thống", "Không đến khám (tự động)")
+            ));
+        }
+
+        @Override
         public StaffAvailabilityResponse getAvailability(LocalDate date) {
             SlotAvailabilityDto s = new SlotAvailabilityDto("1", "08:00", "09:00", 2, 6, 4, true, null);
             return new StaffAvailabilityResponse("2026-11-14", List.of(s));
@@ -236,6 +247,21 @@ class V1StaffControllerSliceTest {
         public BulkReminderMarkSentResponse bulkReminderMarkSent(User staff, com.chuctupk.dto.request.BulkReminderMarkSentRequest request) {
             return new BulkReminderMarkSentResponse(List.of(), "2026-11-20T09:15:00");
         }
+
+        @Override
+        public com.chuctupk.dto.response.FollowUpListResponse getFollowUps(int days, User currentUser) {
+            return new com.chuctupk.dto.response.FollowUpListResponse(List.of(), 0, 0, 0, 0);
+        }
+
+        @Override
+        public com.chuctupk.dto.response.FollowUpReminderPreviewDto getFollowUpReminderPreview(Long recordId) {
+            return new com.chuctupk.dto.response.FollowUpReminderPreviewDto(recordId, "Bệnh nhân", "0987 *** 321", "0987654321", "Nội dung", "MANUAL", "FOLLOW_UP");
+        }
+
+        @Override
+        public Map<String, Object> markFollowUpReminderSent(User staff, Long recordId, com.chuctupk.dto.request.ReminderMarkSentRequest request) {
+            return Map.of("recordId", recordId, "sentAt", "2026-11-22T10:00:00", "status", "SENT");
+        }
     }
 
     @BeforeEach
@@ -350,6 +376,19 @@ class V1StaffControllerSliceTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.appointment.id", is("100")))
                 .andExpect(jsonPath("$.data.record.diagnosis", is("Châm cứu giảm đau khớp gối")));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/staff/appointments/{id}/history - Trả DB enum và nhãn tiếng Việt, giữ NO_SHOW")
+    void testGetAppointmentHistory() throws Exception {
+        mockMvc.perform(get("/api/v1/staff/appointments/100/history"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items", hasSize(1)))
+                .andExpect(jsonPath("$.data.items[0].oldStatus", is("PENDING")))
+                .andExpect(jsonPath("$.data.items[0].oldStatusLabel", is("Chưa đến")))
+                .andExpect(jsonPath("$.data.items[0].newStatus", is("NO_SHOW")))
+                .andExpect(jsonPath("$.data.items[0].newStatusLabel", is("Không đến")))
+                .andExpect(jsonPath("$.data.items[0].actorName", is("Hệ thống")));
     }
 
     @Test

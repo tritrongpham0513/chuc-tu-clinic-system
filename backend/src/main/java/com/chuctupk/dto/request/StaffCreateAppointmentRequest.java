@@ -15,6 +15,13 @@ public record StaffCreateAppointmentRequest(
         @NotBlank(message = "Khung giờ khám không được để trống")
         String slotStart,
 
-        Boolean checkInNow
-) {}
+        Boolean checkInNow,
 
+        Long doctorId,
+
+        String note
+) {
+        public StaffCreateAppointmentRequest(Long patientId, String serviceType, String slotDate, String slotStart, Boolean checkInNow) {
+                this(patientId, serviceType, slotDate, slotStart, checkInNow, null, null);
+        }
+}

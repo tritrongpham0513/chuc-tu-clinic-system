@@ -39,7 +39,15 @@ function usePatientSearch(q) {
  * Thêm lịch khám (đặt hộ tại quầy, UC.7.5): 1. chọn hoặc tạo hồ sơ, 2. chọn nội dung, ngày, giờ, 3. phiếu khám.
  * `patient` có sẵn thì vào thẳng bước 2.
  */
-export function AddAppointmentDialog({ patient: initialPatient, onClose, onBooked }) {
+export function AddAppointmentDialog({
+  patient: initialPatient,
+  initialService,
+  initialDoctor,
+  suggestedDate,
+  defaultNote,
+  onClose,
+  onBooked
+}) {
   const { meta } = useSession();
   const maxDays = meta?.counterMaxDays ?? 7;
   const services = meta?.serviceTypes || [];
@@ -48,13 +56,15 @@ export function AddAppointmentDialog({ patient: initialPatient, onClose, onBooke
   const [isNew, setIsNew] = useState(false);
   const [q, setQ] = useState('');
   const [creating, setCreating] = useState(false);
-  const [service, setService] = useState('');
-  const [date, setDate] = useState(todayVN());
+  const [service, setService] = useState(initialService || '');
+  const [date, setDate] = useState(suggestedDate || todayVN());
   const [start, setStart] = useState('');
   const [chosenSlot, setChosenSlot] = useState(null);
   const [ticket, setTicket] = useState(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(null);
+  const [note, setNote] = useState(defaultNote || (suggestedDate ? `Tái khám theo hẹn ngày ${fmtDate(suggestedDate)}` : ''));
+  const [doctor, setDoctor] = useState(initialDoctor || null);
   const search = usePatientSearch(q);
 
   useEffect(() => {
@@ -74,7 +84,15 @@ export function AddAppointmentDialog({ patient: initialPatient, onClose, onBooke
     setPending(true);
     setError(null);
     try {
-      const res = await api.post('/staff/appointments', { patientId: patient.id, serviceType: service, slotDate: date, slotStart: start });
+      const payload = {
+        patientId: patient.id,
+        serviceType: service,
+        slotDate: date,
+        slotStart: start,
+      };
+      if (doctor?.id) payload.doctorId = doctor.id;
+      if (note) payload.note = note;
+      const res = await api.post('/staff/appointments', payload);
       setTicket(res.appointment);
       setStep('ve');
       onBooked(null, res.appointment);
@@ -229,6 +247,19 @@ export function AddAppointmentDialog({ patient: initialPatient, onClose, onBooke
               Phòng khám nhận bệnh 8:00 – 16:30. Mỗi khung giờ tính cả tiếng (10:00 là từ 10:00 đến 11:00, khung cuối 16:00 là đến 16:30), khung đang diễn ra vẫn đặt được. Khung đã hết giờ trong hôm nay và
               khung đã đủ chỗ đặt trước hiện màu xám. Đặt hộ được từ hôm nay đến {maxDays} ngày sau.
             </p>
+          </div>
+          <div className="t-field" style={{ gap: 8 }}>
+            <label htmlFor="tl-ghi-chu" className="t-label">
+              Ghi chú {doctor?.fullName ? `· Bác sĩ chỉ định: ${doctor.fullName}` : ''}
+            </label>
+            <input
+              id="tl-ghi-chu"
+              type="text"
+              className="t-input"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Ghi chú phiếu hẹn..."
+            />
           </div>
           <ErrorAlert error={error} />
           <div className="t-actions">

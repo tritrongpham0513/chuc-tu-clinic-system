@@ -62,6 +62,8 @@ public class StaffServiceImpl implements StaffService {
     private final NotificationLogRepository notificationLogRepository;
     private final ManualProvider manualProvider;
     private final com.chuctupk.service.CapacityResolver capacityResolver;
+    private final com.chuctupk.service.AppointmentStateService appointmentStateService;
+    private final com.chuctupk.repository.AppointmentStatusHistoryRepository statusHistoryRepository;
 
     @Autowired
     public StaffServiceImpl(
@@ -82,7 +84,9 @@ public class StaffServiceImpl implements StaffService {
             Clock clock,
             NotificationLogRepository notificationLogRepository,
             ManualProvider manualProvider,
-            com.chuctupk.service.CapacityResolver capacityResolver) {
+            com.chuctupk.service.CapacityResolver capacityResolver,
+            com.chuctupk.service.AppointmentStateService appointmentStateService,
+            com.chuctupk.repository.AppointmentStatusHistoryRepository statusHistoryRepository) {
         this.appointmentRepository = appointmentRepository;
         this.checkinRepository = checkinRepository;
         this.patientRepository = patientRepository;
@@ -102,6 +106,51 @@ public class StaffServiceImpl implements StaffService {
         this.manualProvider = manualProvider;
         this.capacityResolver = capacityResolver != null ? capacityResolver
                 : new com.chuctupk.service.CapacityResolver(doctorAssignmentService, clinicSettingService);
+        this.statusHistoryRepository = statusHistoryRepository;
+        this.appointmentStateService = appointmentStateService != null ? appointmentStateService
+                : new AppointmentStateServiceImpl(appointmentRepository, statusHistoryRepository, clock);
+    }
+
+    public StaffServiceImpl(
+            AppointmentRepository appointmentRepository,
+            CheckinRepository checkinRepository,
+            PatientRepository patientRepository,
+            TimeSlotRepository timeSlotRepository,
+            MedicalRecordRepository medicalRecordRepository,
+            AppointmentSeatRepository appointmentSeatRepository,
+            ClinicSettingService clinicSettingService,
+            com.chuctupk.service.SlotPolicy slotPolicy,
+            com.chuctupk.service.DoctorAssignmentService doctorAssignmentService,
+            com.chuctupk.repository.DoctorRepository doctorRepository,
+            DoctorScheduleAdminService doctorScheduleAdminService,
+            DoctorDayOffRepository doctorDayOffRepository,
+            com.chuctupk.service.NotificationService notificationService,
+            SequenceGeneratorService sequenceGeneratorService,
+            Clock clock,
+            NotificationLogRepository notificationLogRepository,
+            ManualProvider manualProvider,
+            com.chuctupk.service.CapacityResolver capacityResolver) {
+        this(
+                appointmentRepository,
+                checkinRepository,
+                patientRepository,
+                timeSlotRepository,
+                medicalRecordRepository,
+                appointmentSeatRepository,
+                clinicSettingService,
+                slotPolicy,
+                doctorAssignmentService,
+                doctorRepository,
+                doctorScheduleAdminService,
+                doctorDayOffRepository,
+                notificationService,
+                sequenceGeneratorService,
+                clock,
+                notificationLogRepository,
+                manualProvider,
+                capacityResolver,
+                null,
+                null);
     }
 
     public StaffServiceImpl(
@@ -140,6 +189,8 @@ public class StaffServiceImpl implements StaffService {
                 clock,
                 notificationLogRepository,
                 manualProvider,
+                null,
+                null,
                 null);
     }
 
@@ -175,6 +226,8 @@ public class StaffServiceImpl implements StaffService {
                 notificationService,
                 sequenceGeneratorService,
                 clock,
+                null,
+                null,
                 null,
                 null,
                 null);
@@ -411,7 +464,7 @@ public class StaffServiceImpl implements StaffService {
         boolean hasExisting = appointmentRepository.existsByPatientIdAndAppointmentDateAndStatusNot(
                 patient.getId(), slotDate, AppointmentStatus.CANCELLED);
         if (hasExisting) {
-            throw AppException.of(ErrorCode.CONFLICT,
+            throw AppException.unprocessable(
                     "Người bệnh đã có phiếu hẹn trong ngày " + slotDate
                             + ". Mỗi người bệnh chỉ đặt tối đa 1 phiếu mỗi ngày");
         }
@@ -478,7 +531,13 @@ public class StaffServiceImpl implements StaffService {
                 if (savedAppointment == null) {
                     String bookingCode = sequenceGeneratorService.nextAppointmentCode(slotDate);
                     boolean checkInNow = Boolean.TRUE.equals(request.checkInNow());
-                    Doctor doctor = doctorAssignmentService.pickDoctor(slotDate, chosenSlot);
+                    Doctor doctor = null;
+                    if (request.doctorId() != null) {
+                        doctor = doctorRepository.findById(request.doctorId()).orElse(null);
+                    }
+                    if (doctor == null) {
+                        doctor = doctorAssignmentService.pickDoctor(slotDate, chosenSlot);
+                    }
 
                     Appointment appt = Appointment.builder()
                             .bookingCode(bookingCode)
@@ -490,15 +549,15 @@ public class StaffServiceImpl implements StaffService {
                             .slotStartSnapshot(chosenSlot.getStartTime())
                             .slotEndSnapshot(chosenSlot.getEndTime())
                             .source(AppointmentSource.WALK_IN)
-                            .status(checkInNow ? AppointmentStatus.CONFIRMED : AppointmentStatus.PENDING)
                             .bookerName(staff != null ? staff.getFullName() : "Tiếp tân")
                             .bookerPhone(staff != null ? staff.getPhone() : "")
-                            .checkInAt(checkInNow ? LocalDateTime.now(clock) : null)
-                            .confirmedBy(checkInNow ? staff : null)
-                            .confirmedAt(checkInNow ? LocalDateTime.now(clock) : null)
+                            .note(request.note())
                             .build();
 
-                    savedAppointment = appointmentRepository.save(appt);
+                    savedAppointment = appointmentStateService.transition(appt,
+                            checkInNow ? AppointmentStatus.CONFIRMED : AppointmentStatus.PENDING,
+                            staff,
+                            "Lễ tân tạo phiếu tại quầy");
                 }
 
                 AppointmentSeat seat = AppointmentSeat.builder()
@@ -558,12 +617,6 @@ public class StaffServiceImpl implements StaffService {
         appointmentSeatRepository.deleteByAppointmentId(oldAppt.getId());
         checkinRepository.deleteByAppointmentId(oldAppt.getId());
 
-        oldAppt.setStatus(AppointmentStatus.CANCELLED);
-        oldAppt.setCancelReason(
-                "Đổi sang ngày " + newDate + " " + (request.getSlotStart() != null ? request.getSlotStart() : ""));
-        oldAppt.setCancelledAt(LocalDateTime.now(clock));
-        appointmentRepository.save(oldAppt);
-
         List<TimeSlot> slots = timeSlotRepository.findByIsActiveTrueOrderBySortOrderAsc();
         String reqStart = request.getSlotStart() != null ? request.getSlotStart().trim() : "";
         TimeSlot newSlot = slots.stream()
@@ -609,13 +662,20 @@ public class StaffServiceImpl implements StaffService {
                             .slotStartSnapshot(newSlot.getStartTime())
                             .slotEndSnapshot(newSlot.getEndTime())
                             .source(oldAppt.getSource())
-                            .status(AppointmentStatus.PENDING)
                             .rescheduledFrom(oldAppt)
                             .bookerName(staff != null ? staff.getFullName() : oldAppt.getBookerName())
                             .bookerPhone(staff != null ? staff.getPhone() : oldAppt.getBookerPhone())
                             .build();
 
-                    savedNewAppt = appointmentRepository.save(nextAppt);
+                    savedNewAppt = appointmentStateService.transition(nextAppt,
+                            AppointmentStatus.PENDING,
+                            staff,
+                            "Đổi giờ, cấp phiếu mới " + bookingCode);
+
+                    appointmentStateService.transition(oldAppt,
+                            AppointmentStatus.CANCELLED,
+                            staff,
+                            "Đổi giờ, cấp phiếu mới " + bookingCode);
                 }
 
                 AppointmentSeat seat = AppointmentSeat.builder()
@@ -658,10 +718,10 @@ public class StaffServiceImpl implements StaffService {
         appointmentSeatRepository.deleteByAppointmentId(id);
         checkinRepository.deleteByAppointmentId(id);
 
-        appt.setStatus(AppointmentStatus.CANCELLED);
-        appt.setCancelReason(request.reason().trim());
-        appt.setCancelledAt(LocalDateTime.now(clock));
-        Appointment saved = appointmentRepository.save(appt);
+        Appointment saved = appointmentStateService.transition(appt,
+                AppointmentStatus.CANCELLED,
+                staff,
+                request.reason().trim());
 
         notificationService.notifyCancellation(saved, request.reason());
 
@@ -722,11 +782,10 @@ public class StaffServiceImpl implements StaffService {
 
         Checkin savedCheckin = checkinRepository.save(checkin);
 
-        appt.setStatus(AppointmentStatus.CONFIRMED);
-        appt.setCheckInAt(LocalDateTime.now(clock));
-        appt.setConfirmedBy(staff);
-        appt.setConfirmedAt(LocalDateTime.now(clock));
-        Appointment savedAppt = appointmentRepository.save(appt);
+        Appointment savedAppt = appointmentStateService.transition(appt,
+                AppointmentStatus.CONFIRMED,
+                staff,
+                "Check-in tại quầy");
 
         return new StaffAppointmentLookupResponse(AppointmentDto.from(savedAppt, savedCheckin));
     }
@@ -746,11 +805,10 @@ public class StaffServiceImpl implements StaffService {
             checkinRepository.delete(c);
         }
 
-        appt.setStatus(AppointmentStatus.PENDING);
-        appt.setCheckInAt(null);
-        appt.setConfirmedBy(null);
-        appt.setConfirmedAt(null);
-        Appointment saved = appointmentRepository.save(appt);
+        Appointment saved = appointmentStateService.transition(appt,
+                AppointmentStatus.PENDING,
+                staff,
+                "Hoàn tác check-in");
 
         return new StaffAppointmentLookupResponse(AppointmentDto.from(saved, (Checkin) null));
     }
@@ -792,9 +850,10 @@ public class StaffServiceImpl implements StaffService {
         checkin.setEnteredAt(LocalDateTime.now(clock));
         Checkin savedCheckin = checkinRepository.save(checkin);
 
-        appt.setStatus(AppointmentStatus.IN_PROGRESS);
-        appt.setEnteredAt(LocalDateTime.now(clock));
-        Appointment savedAppt = appointmentRepository.save(appt);
+        Appointment savedAppt = appointmentStateService.transition(appt,
+                AppointmentStatus.IN_PROGRESS,
+                staff,
+                "Mời vào phòng khám");
 
         return new StaffAppointmentLookupResponse(AppointmentDto.from(savedAppt, savedCheckin));
     }
@@ -1057,9 +1116,10 @@ public class StaffServiceImpl implements StaffService {
 
         Appointment appt = next.getAppointment();
         if (appt != null) {
-            appt.setStatus(AppointmentStatus.IN_PROGRESS);
-            appt.setEnteredAt(LocalDateTime.now(clock));
-            appointmentRepository.save(appt);
+            appointmentStateService.transition(appt,
+                    AppointmentStatus.IN_PROGRESS,
+                    null,
+                    "Mời vào phòng khám (tự động)");
         }
 
         return getQueueState();
@@ -1079,9 +1139,10 @@ public class StaffServiceImpl implements StaffService {
 
         Appointment a = c.getAppointment();
         if (a != null) {
-            a.setStatus(AppointmentStatus.CONFIRMED);
-            a.setEnteredAt(null);
-            appointmentRepository.save(a);
+            appointmentStateService.transition(a,
+                    AppointmentStatus.CONFIRMED,
+                    null,
+                    "Hoàn tác mời vào khám");
         }
 
         boolean autoInvite = "1".equals(clinicSettingService.getSettingValue("auto_invite", "0"));
@@ -1394,5 +1455,185 @@ public class StaffServiceImpl implements StaffService {
 
         String sentIso = ContractMapper.formatIso(now);
         return new BulkReminderMarkSentResponse(updatedIds, sentIso);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AppointmentHistoryResponse getAppointmentHistory(Long appointmentId) {
+        Appointment appt = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> AppException.notFound("Không tìm thấy phiếu khám"));
+
+        List<AppointmentStatusHistory> list = statusHistoryRepository != null
+                ? statusHistoryRepository.findByAppointmentIdOrderByChangedAtAsc(appointmentId)
+                : List.of();
+
+        List<AppointmentStatusHistoryItemDto> items = list.stream().map(h -> new AppointmentStatusHistoryItemDto(
+                h.getChangedAt(),
+                h.getOldStatus(),
+                AppointmentStatusHistoryItemDto.getStatusLabel(h.getOldStatus()),
+                h.getNewStatus(),
+                AppointmentStatusHistoryItemDto.getStatusLabel(h.getNewStatus()),
+                h.getChangedBy() != null ? h.getChangedBy().getFullName() : "Hệ thống",
+                h.getReason()
+        )).toList();
+
+        return new AppointmentHistoryResponse(items);
+    }
+
+    // =========================================================================
+    // SPRINT 11: TÁI KHÁM & NHẮC TÁI KHÁM
+    // =========================================================================
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.chuctupk.dto.response.FollowUpListResponse getFollowUps(int days, User currentUser) {
+        LocalDate today = LocalDate.now(clock);
+        LocalDate fromDate = today.minusDays(30);
+        LocalDate toDate = today.plusDays(Math.max(0, days));
+
+        Long doctorUserId = (currentUser != null && currentUser.getRole() == Role.DOCTOR)
+                ? currentUser.getId()
+                : null;
+
+        List<MedicalRecord> records = (doctorUserId != null)
+                ? medicalRecordRepository.findFollowUpsByDoctorUserId(fromDate, toDate, today, doctorUserId)
+                : medicalRecordRepository.findFollowUpsAll(fromDate, toDate, today);
+
+        List<Long> apptIds = records.stream()
+                .map(MedicalRecord::getAppointment)
+                .filter(Objects::nonNull)
+                .map(Appointment::getId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        Map<Long, LocalDateTime> reminderSentAtMap = new HashMap<>();
+        if (!apptIds.isEmpty() && notificationLogRepository != null) {
+            List<Object[]> reminderRows = notificationLogRepository.findLatestReminderSentAtByAppointmentIds(apptIds);
+            for (Object[] row : reminderRows) {
+                if (row != null && row.length >= 2 && row[0] instanceof Long id && row[1] instanceof LocalDateTime sentAt) {
+                    reminderSentAtMap.put(id, sentAt);
+                }
+            }
+        }
+
+        int overdueCount = 0;
+        int todayCount = 0;
+        int upcomingCount = 0;
+
+        List<com.chuctupk.dto.response.FollowUpItemDto> items = new ArrayList<>();
+        for (MedicalRecord mr : records) {
+            Patient p = mr.getPatient();
+            Doctor d = mr.getDoctor() != null ? mr.getDoctor() : (mr.getAppointment() != null ? mr.getAppointment().getDoctor() : null);
+            Appointment a = mr.getAppointment();
+
+            long daysUntil = ChronoUnit.DAYS.between(today, mr.getFollowUpDate());
+            if (daysUntil < 0) {
+                overdueCount++;
+            } else if (daysUntil == 0) {
+                todayCount++;
+            } else {
+                upcomingCount++;
+            }
+
+            String phone = p != null && p.getPhone() != null ? PhoneValidator.mask(p.getPhone()) : "—";
+            String rawPhone = p != null && p.getPhone() != null ? p.getPhone() : "";
+            String doctorName = mr.getDoctorName() != null && !mr.getDoctorName().isBlank()
+                    ? mr.getDoctorName()
+                    : (d != null ? d.getFullName() : "—");
+            Long doctorId = d != null ? d.getId() : null;
+            String serviceType = a != null && a.getServiceType() != null ? ContractMapper.toFeServiceType(a.getServiceType()) : "CHUA_RO";
+            Long apptId = a != null ? a.getId() : null;
+            LocalDateTime reminderSentAt = apptId != null ? reminderSentAtMap.get(apptId) : null;
+
+            items.add(new com.chuctupk.dto.response.FollowUpItemDto(
+                    p != null ? p.getId() : null,
+                    p != null ? p.getFullName() : "—",
+                    p != null ? p.getYearOfBirth() : null,
+                    phone,
+                    rawPhone,
+                    mr.getVisitDate(),
+                    mr.getFollowUpDate(),
+                    doctorName,
+                    doctorId,
+                    serviceType,
+                    mr.getId(),
+                    apptId,
+                    daysUntil,
+                    reminderSentAt
+            ));
+        }
+
+        return new com.chuctupk.dto.response.FollowUpListResponse(items, items.size(), overdueCount, todayCount, upcomingCount);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.chuctupk.dto.response.FollowUpReminderPreviewDto getFollowUpReminderPreview(Long recordId) {
+        MedicalRecord mr = medicalRecordRepository.findById(recordId)
+                .orElseThrow(() -> AppException.notFound("Không tìm thấy hồ sơ bệnh án"));
+
+        Patient p = mr.getPatient();
+        if (p == null) {
+            throw AppException.notFound("Không tìm thấy thông tin bệnh nhân");
+        }
+        if (Boolean.FALSE.equals(p.getIsActive()) || p.getLockedAt() != null) {
+            throw AppException.of(ErrorCode.FORBIDDEN, "Hồ sơ bệnh nhân đã bị khóa");
+        }
+
+        String dateStr = mr.getFollowUpDate() != null ? ContractMapper.formatDate(mr.getFollowUpDate()) : "ngày hẹn";
+        String doctorName = mr.getDoctorName() != null && !mr.getDoctorName().isBlank()
+                ? mr.getDoctorName()
+                : (mr.getDoctor() != null ? mr.getDoctor().getFullName() : "bác sĩ điều trị");
+
+        ManualProvider provider = this.manualProvider != null ? this.manualProvider : new ManualProvider(null);
+        String content = provider.composeFollowUp(p.getFullName(), dateStr, doctorName);
+        String phone = p.getPhone() != null ? PhoneValidator.mask(p.getPhone()) : "—";
+        String rawPhone = p.getPhone() != null ? p.getPhone() : "";
+
+        return new com.chuctupk.dto.response.FollowUpReminderPreviewDto(
+                recordId,
+                p.getFullName(),
+                phone,
+                rawPhone,
+                content,
+                ManualProvider.CHANNEL,
+                "FOLLOW_UP"
+        );
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> markFollowUpReminderSent(User staff, Long recordId, ReminderMarkSentRequest request) {
+        MedicalRecord mr = medicalRecordRepository.findById(recordId)
+                .orElseThrow(() -> AppException.notFound("Không tìm thấy hồ sơ bệnh án"));
+
+        Patient p = mr.getPatient();
+        if (p == null) {
+            throw AppException.notFound("Không tìm thấy thông tin bệnh nhân");
+        }
+
+        Appointment a = mr.getAppointment();
+        LocalDateTime now = LocalDateTime.now(clock);
+
+        NotificationLog logEntry = NotificationLog.builder()
+                .appointment(a)
+                .channel(ManualProvider.CHANNEL)
+                .template("FOLLOW_UP")
+                .recipientMasked(p.getPhone() != null ? PhoneValidator.mask(p.getPhone()) : "—")
+                .status("SENT")
+                .provider("manual")
+                .createdAt(now)
+                .build();
+
+        if (notificationLogRepository != null) {
+            notificationLogRepository.save(logEntry);
+        }
+
+        Map<String, Object> res = new HashMap<>();
+        res.put("recordId", recordId);
+        res.put("sentAt", ContractMapper.formatIso(now));
+        res.put("status", "SENT");
+        return res;
     }
 }

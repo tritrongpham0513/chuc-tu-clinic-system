@@ -14,6 +14,7 @@ import Queue from './pages/staff/Queue.jsx';
 import QueueDisplay from './pages/staff/QueueDisplay.jsx';
 import Patients from './pages/staff/Patients.jsx';
 import PatientDetail from './pages/staff/PatientDetail.jsx';
+import FollowUps from './pages/staff/FollowUps.jsx';
 import RecordForm from './pages/staff/RecordForm.jsx';
 import AccountInfo from './pages/staff/AccountInfo.jsx';
 
@@ -101,6 +102,7 @@ export default function StaffApp() {
         <Route path="hang-doi" element={<Queue />} />
         <Route path="benh-nhan" element={<Patients />} />
         <Route path="benh-nhan/:id" element={<PatientDetail />} />
+        <Route path="tai-kham" element={<FollowUps />} />
         <Route path="phieu-kham/:appointmentId/ket-qua" element={<RecordForm />} />
         <Route path="tai-khoan" element={<AccountInfo />} />
         <Route path="*" element={<Empty title="Không tìm thấy trang">Đường dẫn này không có trong khu vực nội bộ.</Empty>} />

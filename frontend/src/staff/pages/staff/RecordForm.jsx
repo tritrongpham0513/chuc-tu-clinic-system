@@ -21,7 +21,7 @@ const backTo = (back, fallback) => (typeof back === 'string' && back.startsWith(
 export default function RecordForm() {
   const { appointmentId } = useParams();
   useDocumentTitle('Phiếu kết quả khám');
-  const { printRecord } = usePrint();
+  const { printRecord, printPrescription } = usePrint();
   const appt = useAsync(() => api.get(`/staff/appointments/${appointmentId}`), [appointmentId]);
   const patientId = appt.data?.appointment.patient.id;
   const detail = useAsync(() => (patientId ? api.get(`/staff/patients/${patientId}`) : Promise.resolve(null)), [patientId]);
@@ -125,6 +125,18 @@ export default function RecordForm() {
             <Icon name="printer" size={20} />
             In kết quả
           </button>
+          {saved.record?.prescription && (
+            <button
+              type="button"
+              className="t-btn t-btn-ghost"
+              style={{ padding: '0 20px', minHeight: '48px', border: '1.5px solid var(--gold-600, #D97706)', color: 'var(--gold-900, #78350F)' }}
+              onClick={() => printPrescription(saved.record, p)}
+              aria-label={`In đơn thuốc riêng cho ${p.fullName}`}
+            >
+              <Icon name="clipboard" size={20} />
+              In đơn thuốc
+            </button>
+          )}
           <button type="button" className="t-btn t-btn-ghost" style={{ padding: '0 20px' }} onClick={() => setDialog({ type: 'view', record: saved.record })}>
             Xem phiếu kết quả
           </button>
@@ -215,6 +227,18 @@ export default function RecordForm() {
               <Icon name="printer" size={20} />
               In kết quả
             </button>
+            {record?.prescription && (
+              <button
+                type="button"
+                className="t-btn t-btn-ghost"
+                style={{ padding: '0 20px', minHeight: '48px', border: '1.5px solid var(--gold-600, #D97706)', color: 'var(--gold-900, #78350F)' }}
+                onClick={() => printPrescription(record, p)}
+                aria-label={`In đơn thuốc riêng cho ${p.fullName}`}
+              >
+                <Icon name="clipboard" size={20} />
+                In đơn thuốc
+              </button>
+            )}
             <button type="button" className="t-btn t-btn-ghost" style={{ padding: '0 20px' }} onClick={() => setDialog({ type: 'view', record })}>
               <Icon name="eye" size={20} />
               Xem phiếu kết quả

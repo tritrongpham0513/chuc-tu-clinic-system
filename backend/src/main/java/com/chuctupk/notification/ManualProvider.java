@@ -92,4 +92,17 @@ public class ManualProvider implements NotificationProvider {
 
         return compose(patientName, time, date, code);
     }
+
+    /**
+     * Soạn thảo nội dung nhắc tái khám chuẩn theo mẫu (Sprint 11):
+     * "Phòng khám Chúc Từ nhắc Cô/chú tái khám ngày {ngay} theo hẹn của bác sĩ {tenBacSi}."
+     */
+    public String composeFollowUp(String patientName, String ngay, String tenBacSi) {
+        String date = (ngay != null && !ngay.isBlank()) ? ngay.trim() : "hẹn";
+        String doctor = (tenBacSi != null && !tenBacSi.isBlank()) ? tenBacSi.trim() : "bác sĩ";
+        return String.format(
+                "Phòng khám Chúc Từ nhắc Cô/chú tái khám ngày %s theo hẹn của bác sĩ %s.",
+                date, doctor
+        );
+    }
 }

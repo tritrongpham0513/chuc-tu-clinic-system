@@ -15,6 +15,7 @@ const STAFF_NAV = [
   { to: '/noi-bo/lich-trong-ngay', label: 'Lịch trong ngày', icon: 'calendar' },
   { to: '/noi-bo/hang-doi', label: 'Hàng đợi', icon: 'queue' },
   { to: '/noi-bo/benh-nhan', label: 'Hồ sơ bệnh nhân', icon: 'users' },
+  { to: '/noi-bo/tai-kham', label: 'Cần tái khám', icon: 'refresh' },
 ];
 const ADMIN_NAV = [
   { to: '/noi-bo/quan-tri', label: 'Tổng quan', icon: 'dashboard', end: true },

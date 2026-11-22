@@ -24,6 +24,8 @@ public interface StaffService {
         return getAppointmentDetail(id);
     }
 
+    AppointmentHistoryResponse getAppointmentHistory(Long appointmentId);
+
     StaffAvailabilityResponse getAvailability(LocalDate date);
 
     Map<String, Object> createCounterAppointment(User staff, StaffCreateAppointmentRequest request);
@@ -67,4 +69,14 @@ public interface StaffService {
     BulkReminderPreviewResponse bulkReminderPreview(BulkReminderPreviewRequest request);
 
     BulkReminderMarkSentResponse bulkReminderMarkSent(User staff, BulkReminderMarkSentRequest request);
+
+    // =========================================================================
+    // SPRINT 11: TÁI KHÁM & NHẮC TÁI KHÁM
+    // =========================================================================
+
+    com.chuctupk.dto.response.FollowUpListResponse getFollowUps(int days, User currentUser);
+
+    com.chuctupk.dto.response.FollowUpReminderPreviewDto getFollowUpReminderPreview(Long recordId);
+
+    Map<String, Object> markFollowUpReminderSent(User staff, Long recordId, ReminderMarkSentRequest request);
 }

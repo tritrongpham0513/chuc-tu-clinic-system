@@ -390,4 +390,16 @@
     font-weight: 600 !important;
     color: #111111 !important;
   }
+
+  .print-hw-line {
+    border-bottom: 1pt dotted #777777 !important;
+    height: 7mm !important;
+    margin-bottom: 2mm !important;
+  }
+}
+
+.print-hw-line {
+  border-bottom: 1px dotted #999999;
+  height: 24px;
+  margin-bottom: 8px;
 }

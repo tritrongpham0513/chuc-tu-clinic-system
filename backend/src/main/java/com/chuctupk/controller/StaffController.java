@@ -97,6 +97,14 @@ public class StaffController {
         return ResponseEntity.ok(ApiResponse.success(response, "Lấy chi tiết phiếu khám thành công"));
     }
 
+    @GetMapping("/appointments/{id}/history")
+    @Operation(summary = "Xem lịch sử thay đổi trạng thái của phiếu khám")
+    public ResponseEntity<ApiResponse<AppointmentHistoryResponse>> getAppointmentHistory(
+            @PathVariable Long id) {
+        AppointmentHistoryResponse response = staffService.getAppointmentHistory(id);
+        return ResponseEntity.ok(ApiResponse.success(response, "Lấy lịch sử phiếu khám thành công"));
+    }
+
     @GetMapping("/availability")
     @Operation(summary = "Kiểm tra tình trạng khung giờ khả dụng tại quầy (tối đa 7 ngày)")
     public ResponseEntity<ApiResponse<StaffAvailabilityResponse>> getAvailability(
@@ -267,6 +275,37 @@ public class StaffController {
             @RequestBody BulkReminderMarkSentRequest request) {
         BulkReminderMarkSentResponse response = staffService.bulkReminderMarkSent(staff, request);
         return ResponseEntity.ok(ApiResponse.success(response, "Đã ghi nhận nhắc lịch hàng loạt thành công"));
+    }
+
+    // =========================================================================
+    // 5. TÁI KHÁM & NHẮC TÁI KHÁM (SPRINT 11)
+    // =========================================================================
+
+    @GetMapping("/follow-ups")
+    @Operation(summary = "Lấy danh sách bệnh nhân cần tái khám")
+    public ResponseEntity<ApiResponse<com.chuctupk.dto.response.FollowUpListResponse>> getFollowUps(
+            @AuthenticationPrincipal User currentUser,
+            @RequestParam(defaultValue = "7") int days) {
+        com.chuctupk.dto.response.FollowUpListResponse response = staffService.getFollowUps(days, currentUser);
+        return ResponseEntity.ok(ApiResponse.success(response, "Lấy danh sách cần tái khám thành công"));
+    }
+
+    @GetMapping("/follow-ups/{recordId}/reminder-preview")
+    @Operation(summary = "Xem trước nội dung nhắc lịch tái khám")
+    public ResponseEntity<ApiResponse<com.chuctupk.dto.response.FollowUpReminderPreviewDto>> getFollowUpReminderPreview(
+            @PathVariable Long recordId) {
+        com.chuctupk.dto.response.FollowUpReminderPreviewDto response = staffService.getFollowUpReminderPreview(recordId);
+        return ResponseEntity.ok(ApiResponse.success(response, "Lấy nội dung nhắc tái khám thành công"));
+    }
+
+    @PostMapping("/follow-ups/{recordId}/reminder-mark-sent")
+    @Operation(summary = "Xác nhận đã gửi nhắc lịch tái khám")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> markFollowUpReminderSent(
+            @AuthenticationPrincipal User staff,
+            @PathVariable Long recordId,
+            @RequestBody(required = false) ReminderMarkSentRequest request) {
+        Map<String, Object> response = staffService.markFollowUpReminderSent(staff, recordId, request);
+        return ResponseEntity.ok(ApiResponse.success(response, "Đã ghi nhận nhắc tái khám thành công"));
     }
 }
 
