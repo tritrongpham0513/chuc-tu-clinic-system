@@ -68,11 +68,24 @@ export function RowMenu({ a, isToday, isPast, open, onToggle, act, canChangeDoct
   const name = a.patient?.fullName;
 
   const items = [];
+  // 1. Nhóm tiếp nhận
   if (a.status === 'BOOKED' && isToday) {
     // Ngoài giờ nhận bệnh: vẫn hiện mục Check-in nhưng làm mờ, kèm lý do
     items.push(isReceivingNow() ? ['checkin', 'check', 'Check-in', 'green'] : ['checkin', 'check', RECEIVING_CLOSED, 'disabled']);
   }
-  // Mời vào khám và hoàn tác vào khám chỉ làm ở trang Hàng đợi, để mọi thay đổi ghế nằm một chỗ
+  if (a.status === 'IN_PROGRESS') items.push(['record', 'file', 'Ghi nhận lượt khám']);
+  if (a.status === 'COMPLETED') items.push(['record', 'file', 'Xem lượt khám']);
+
+  // 2. Nhóm tương tác bệnh nhân
+  if (a.status !== 'CANCELLED' && a.status !== 'COMPLETED') {
+    items.push(['reminder', 'chat', 'Nhắc lịch khám']);
+  }
+  if (a.status !== 'CANCELLED') {
+    items.push(['print', 'printer', 'In phiếu khám']);
+  }
+  items.push(['patient', 'user', 'Mở hồ sơ bệnh nhân']);
+
+  // 3. Nhóm điều chỉnh
   if (a.status === 'BOOKED' && !isPast) items.push(['reschedule', 'clock', 'Đổi giờ khám']);
   if (canChangeDoctor && (a.status === 'BOOKED' || a.status === 'CHECKED_IN') && !isPast) {
     items.push(['change-doctor', 'userPlus', 'Đổi bác sĩ']);
@@ -80,11 +93,9 @@ export function RowMenu({ a, isToday, isPast, open, onToggle, act, canChangeDoct
   if (isDoctorUser && (a.status === 'BOOKED' || a.status === 'CHECKED_IN') && !isPast) {
     items.push(['request-doctor-change', 'userPlus', 'Báo lễ tân đổi bác sĩ']);
   }
-  if (a.status === 'IN_PROGRESS') items.push(['record', 'file', 'Ghi nhận lượt khám']);
-  if (a.status === 'COMPLETED') items.push(['record', 'file', 'Xem lượt khám']);
-  items.push(['patient', 'user', 'Mở hồ sơ bệnh nhân']);
-  if (a.status !== 'CANCELLED') items.push(['print', 'printer', 'In phiếu khám']);
   items.push(['history', 'clock', 'Lịch sử phiếu']);
+
+  // 4. Nhóm huỷ / hoàn tác
   if (a.status === 'CHECKED_IN' && isToday) items.push(['undo-checkin', 'undo', 'Hoàn tác check-in']);
   if (a.status === 'BOOKED' && !isPast) items.push(['cancel', 'x', 'Huỷ phiếu khám', 'danger']);
 

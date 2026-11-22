@@ -86,10 +86,10 @@ export default function AdminHolidays() {
       {/* Tiêu đề & Nút Thêm mới */}
       <div className="db-panel-head" style={{ alignItems: 'center', marginBottom: 16 }}>
         <div>
-          <h1 className="t-h1" style={{ fontSize: '26px', color: '#1F1610', margin: 0 }}>
+          <h1 className="t-h1" style={{ fontSize: '26px', color: 'var(--ink-900)', margin: 0 }}>
             Ngày nghỉ phòng khám
           </h1>
-          <p className="t-muted" style={{ fontSize: '18px', marginTop: 6, color: '#5C4838' }}>
+          <p className="t-muted" style={{ fontSize: '18px', marginTop: 6, color: 'var(--ink-600)' }}>
             Khai báo lịch nghỉ lễ, Tết và ngày nghỉ định kỳ. Hệ thống sẽ chặn người bệnh đặt lịch vào các ngày này.
           </p>
         </div>
@@ -99,7 +99,7 @@ export default function AdminHolidays() {
             className="t-input"
             value={yearFilter}
             onChange={(e) => setYearFilter(Number(e.target.value))}
-            style={{ minHeight: 48, fontSize: 18, padding: '0 16px', background: '#FFFFFF', fontWeight: 600 }}
+            style={{ minHeight: 48, fontSize: 18, padding: '0 16px', background: 'var(--surface-card)', color: 'var(--ink-900)', border: '2px solid var(--line-strong)', fontWeight: 600 }}
             aria-label="Chọn năm"
           >
             {[2025, 2026, 2027, 2028].map((y) => (
@@ -126,11 +126,11 @@ export default function AdminHolidays() {
         <div
           role="status"
           style={{
-            background: '#ECFDF5',
-            border: '2px solid #10B981',
+            background: 'var(--green-100)',
+            border: '2px solid var(--green-600)',
             borderRadius: '8px',
             padding: '16px 20px',
-            color: '#065F46',
+            color: 'var(--green-700)',
             fontSize: '18px',
             fontWeight: 600,
             display: 'flex',
@@ -195,25 +195,25 @@ export default function AdminHolidays() {
               <div
                 key={mKey}
                 style={{
-                  background: '#FFFFFF',
+                  background: 'var(--surface-card)',
                   borderRadius: '12px',
-                  border: '1px solid #D5C7B5',
+                  border: '1px solid var(--line-soft)',
                   overflow: 'hidden',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                 }}
               >
                 <div
                   style={{
-                    background: '#F5EFE6',
+                    background: 'var(--surface-200)',
                     padding: '14px 20px',
-                    borderBottom: '2px solid #D5C7B5',
+                    borderBottom: '2px solid var(--line-soft)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 10,
                   }}
                 >
                   <Icon name="calendar" size={22} />
-                  <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#1F1610', margin: 0 }}>
+                  <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ink-900)', margin: 0 }}>
                     Tháng {m}/{y} ({monthHolidays.length} ngày nghỉ)
                   </h2>
                 </div>
@@ -224,18 +224,18 @@ export default function AdminHolidays() {
                     style={{ width: '100%', borderCollapse: 'collapse', fontSize: '18px', textAlign: 'left' }}
                   >
                     <thead>
-                      <tr style={{ background: '#FAF7F2', borderBottom: '1px solid #E8DFD5' }}>
-                        <th style={{ padding: '14px 18px', fontWeight: 700, color: '#5C4838', width: '180px' }}>
+                      <tr style={{ background: 'var(--surface-100)', borderBottom: '1px solid var(--line-soft)' }}>
+                        <th style={{ padding: '14px 18px', fontWeight: 700, color: 'var(--ink-800)', width: '180px' }}>
                           Ngày nghỉ
                         </th>
-                        <th style={{ padding: '14px 18px', fontWeight: 700, color: '#5C4838' }}>Tên ngày nghỉ</th>
-                        <th style={{ padding: '14px 18px', fontWeight: 700, color: '#5C4838', textAlign: 'center', width: '180px' }}>
+                        <th style={{ padding: '14px 18px', fontWeight: 700, color: 'var(--ink-800)' }}>Tên ngày nghỉ</th>
+                        <th style={{ padding: '14px 18px', fontWeight: 700, color: 'var(--ink-800)', textAlign: 'center', width: '180px' }}>
                           Nghỉ cả ngày
                         </th>
-                        <th style={{ padding: '14px 18px', fontWeight: 700, color: '#5C4838', textAlign: 'center', width: '160px' }}>
+                        <th style={{ padding: '14px 18px', fontWeight: 700, color: 'var(--ink-800)', textAlign: 'center', width: '160px' }}>
                           Phiếu khám
                         </th>
-                        <th style={{ padding: '14px 18px', fontWeight: 700, color: '#5C4838', textAlign: 'center', width: '200px' }}>
+                        <th style={{ padding: '14px 18px', fontWeight: 700, color: 'var(--ink-800)', textAlign: 'center', width: '200px' }}>
                           Thao tác
                         </th>
                       </tr>
@@ -247,11 +247,11 @@ export default function AdminHolidays() {
                           <tr
                             key={h.id}
                             style={{
-                              borderBottom: '1px solid #E8DFD5',
-                              background: h.isClosed ? '#FFFFFF' : '#FFFDF7',
+                              borderBottom: '1px solid var(--line-soft)',
+                              background: 'var(--surface-card)',
                             }}
                           >
-                            <td style={{ padding: '16px 18px', fontWeight: 600, color: '#1F1610' }}>
+                            <td style={{ padding: '16px 18px', fontWeight: 600, color: 'var(--ink-900)' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                 <span>{fmtDate(h.holidayDate)}</span>
                                 {isPast && (
@@ -259,8 +259,8 @@ export default function AdminHolidays() {
                                     style={{
                                       fontSize: '13px',
                                       padding: '2px 8px',
-                                      background: '#F3F4F6',
-                                      color: '#6B7280',
+                                      background: 'var(--surface-200)',
+                                      color: 'var(--ink-500)',
                                       borderRadius: '4px',
                                     }}
                                   >
@@ -269,7 +269,7 @@ export default function AdminHolidays() {
                                 )}
                               </div>
                             </td>
-                            <td style={{ padding: '16px 18px', color: '#1F1610', fontWeight: 600 }}>
+                            <td style={{ padding: '16px 18px', color: 'var(--ink-900)', fontWeight: 600 }}>
                               {h.name}
                             </td>
                             <td style={{ padding: '16px 18px', textAlign: 'center' }}>
@@ -283,9 +283,9 @@ export default function AdminHolidays() {
                                   minHeight: '44px',
                                   padding: '6px 14px',
                                   borderRadius: '20px',
-                                  border: h.isClosed ? '2px solid #15803D' : '2px solid #9CA3AF',
-                                  background: h.isClosed ? '#DCFCE7' : '#F3F4F6',
-                                  color: h.isClosed ? '#166534' : '#4B5563',
+                                  border: h.isClosed ? '2px solid var(--alert-700)' : '2px solid var(--line-strong)',
+                                  background: h.isClosed ? 'var(--alert-100)' : 'var(--surface-200)',
+                                  color: h.isClosed ? 'var(--alert-700)' : 'var(--ink-700)',
                                   fontSize: '16px',
                                   fontWeight: 600,
                                   cursor: 'pointer',
@@ -303,8 +303,8 @@ export default function AdminHolidays() {
                                     display: 'inline-block',
                                     padding: '4px 12px',
                                     borderRadius: '12px',
-                                    background: '#FEF3C7',
-                                    color: '#92400E',
+                                    background: 'var(--gold-100)',
+                                    color: 'var(--gold-700)',
                                     fontWeight: 700,
                                     fontSize: '16px',
                                   }}
@@ -312,7 +312,7 @@ export default function AdminHolidays() {
                                   {h.appointmentCount} phiếu
                                 </span>
                               ) : (
-                                <span style={{ color: '#9CA3AF', fontSize: '16px' }}>0</span>
+                                <span style={{ color: 'var(--ink-500)', fontSize: '16px' }}>0</span>
                               )}
                             </td>
                             <td style={{ padding: '16px 18px', textAlign: 'center' }}>
@@ -329,7 +329,7 @@ export default function AdminHolidays() {
                                 <button
                                   type="button"
                                   className="t-btn t-btn-outline"
-                                  style={{ minHeight: '44px', padding: '0 14px', fontSize: '16px', color: '#B91C1C' }}
+                                  style={{ minHeight: '44px', padding: '0 14px', fontSize: '16px', color: 'var(--alert-700)' }}
                                   onClick={() => setDeleteDialog(h)}
                                 >
                                   <Icon name="trash" size={18} />
@@ -373,15 +373,15 @@ export default function AdminHolidays() {
           onClose={() => !deletePending && setDeleteDialog(null)}
           alert
         >
-          <div style={{ padding: '24px', fontSize: '18px', color: '#1F1610' }}>
+          <div style={{ padding: '24px', fontSize: '18px', color: 'var(--ink-900)' }}>
             <p style={{ margin: '0 0 16px', lineHeight: 1.6 }}>
               Bạn có chắc chắn muốn xoá ngày nghỉ <strong>{deleteDialog.name}</strong> ({fmtDate(deleteDialog.holidayDate)}) không?
             </p>
-            <p style={{ margin: 0, color: '#5C4838', fontSize: '16px' }}>
+            <p style={{ margin: 0, color: 'var(--ink-600)', fontSize: '16px' }}>
               Sau khi xoá, khung giờ của ngày này sẽ mở lại cho người bệnh đặt lịch bình thường.
             </p>
           </div>
-          <div className="t-dialog-actions" style={{ padding: '16px 24px', background: '#FAF7F2' }}>
+          <div className="t-dialog-actions" style={{ padding: '16px 24px', background: 'var(--surface-200)' }}>
             <button
               type="button"
               className="t-btn t-btn-outline"
@@ -520,8 +520,8 @@ function HolidayFormDialog({ mode, holiday, onClose, onSuccess }) {
 
           {/* Ô chọn ngày */}
           <div>
-            <label htmlFor={dateId} style={{ display: 'block', fontWeight: 700, color: '#1F1610', marginBottom: 8 }}>
-              Ngày nghỉ <span style={{ color: '#DC2626' }}>*</span>
+            <label htmlFor={dateId} style={{ display: 'block', fontWeight: 700, color: 'var(--ink-900)', marginBottom: 8 }}>
+              Ngày nghỉ <span style={{ color: 'var(--alert-700)' }}>*</span>
             </label>
             <input
               id={dateId}
@@ -535,12 +535,13 @@ function HolidayFormDialog({ mode, holiday, onClose, onSuccess }) {
                 minHeight: '48px',
                 fontSize: '18px',
                 padding: '0 16px',
-                background: isEdit ? '#F3F4F6' : '#FFFFFF',
-                borderColor: fieldErrors.holidayDate ? '#DC2626' : undefined,
+                background: isEdit ? 'var(--surface-200)' : 'var(--surface-card)',
+                color: 'var(--ink-900)',
+                borderColor: fieldErrors.holidayDate ? 'var(--alert-700)' : undefined,
               }}
             />
             {fieldErrors.holidayDate && (
-              <p style={{ color: '#DC2626', fontSize: '16px', marginTop: 4, margin: 0 }}>
+              <p style={{ color: 'var(--alert-700)', fontSize: '16px', marginTop: 4, margin: 0 }}>
                 {fieldErrors.holidayDate}
               </p>
             )}
@@ -550,11 +551,11 @@ function HolidayFormDialog({ mode, holiday, onClose, onSuccess }) {
           {pastDateWarning && !isEdit && (
             <div
               style={{
-                background: '#FFFBEB',
-                border: '2px solid #F59E0B',
+                background: 'var(--gold-100)',
+                border: '2px solid var(--gold-500)',
                 borderRadius: '8px',
                 padding: '12px 16px',
-                color: '#92400E',
+                color: 'var(--gold-700)',
                 fontSize: '17px',
                 display: 'flex',
                 alignItems: 'center',
@@ -570,11 +571,11 @@ function HolidayFormDialog({ mode, holiday, onClose, onSuccess }) {
           {appointmentWarning && !isEdit && (
             <div
               style={{
-                background: '#FEF3C7',
-                border: '2px solid #D97706',
+                background: 'var(--gold-100)',
+                border: '2px solid var(--gold-700)',
                 borderRadius: '8px',
                 padding: '16px',
-                color: '#78350F',
+                color: 'var(--gold-700)',
                 fontSize: '18px',
               }}
             >
@@ -593,6 +594,7 @@ function HolidayFormDialog({ mode, holiday, onClose, onSuccess }) {
                   cursor: 'pointer',
                   fontWeight: 600,
                   fontSize: '17px',
+                  color: 'var(--ink-900)',
                 }}
               >
                 <input
@@ -608,8 +610,8 @@ function HolidayFormDialog({ mode, holiday, onClose, onSuccess }) {
 
           {/* Ô nhập tên ngày nghỉ */}
           <div>
-            <label htmlFor={nameId} style={{ display: 'block', fontWeight: 700, color: '#1F1610', marginBottom: 8 }}>
-              Tên ngày nghỉ <span style={{ color: '#DC2626' }}>*</span>
+            <label htmlFor={nameId} style={{ display: 'block', fontWeight: 700, color: 'var(--ink-900)', marginBottom: 8 }}>
+              Tên ngày nghỉ <span style={{ color: 'var(--alert-700)' }}>*</span>
             </label>
             <input
               id={nameId}
@@ -627,11 +629,11 @@ function HolidayFormDialog({ mode, holiday, onClose, onSuccess }) {
                 minHeight: '48px',
                 fontSize: '18px',
                 padding: '0 16px',
-                borderColor: fieldErrors.name ? '#DC2626' : undefined,
+                borderColor: fieldErrors.name ? 'var(--alert-700)' : undefined,
               }}
             />
             {fieldErrors.name && (
-              <p style={{ color: '#DC2626', fontSize: '16px', marginTop: 4, margin: 0 }}>
+              <p style={{ color: 'var(--alert-700)', fontSize: '16px', marginTop: 4, margin: 0 }}>
                 {fieldErrors.name}
               </p>
             )}
@@ -646,7 +648,7 @@ function HolidayFormDialog({ mode, holiday, onClose, onSuccess }) {
                 gap: 12,
                 cursor: 'pointer',
                 fontWeight: 600,
-                color: '#1F1610',
+                color: 'var(--ink-900)',
                 fontSize: '18px',
               }}
             >

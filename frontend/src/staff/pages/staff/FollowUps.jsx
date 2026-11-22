@@ -83,17 +83,17 @@ export default function FollowUps() {
       {/* Tiêu đề & bộ lọc */}
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--wood-800, #5C3A21)', margin: 0 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--wood-800)', margin: 0 }}>
             Danh sách Cần tái khám
           </h1>
-          <p style={{ fontSize: 18, color: 'var(--ink-700, #4A3B32)', marginTop: 4, margin: 0 }}>
+          <p style={{ fontSize: 18, color: 'var(--ink-700)', marginTop: 4, margin: 0 }}>
             Theo dõi người bệnh có lịch hẹn tái khám của bác sĩ để kịp thời nhắc nhở và sắp xếp lượt khám.
           </p>
         </div>
 
         {/* Bộ lọc số ngày */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 17, fontWeight: 600, color: 'var(--ink-800, #1F1610)' }}>Xem trong:</span>
+          <span style={{ fontSize: 17, fontWeight: 600, color: 'var(--ink-800)' }}>Xem trong:</span>
           {[7, 14, 30].map((d) => (
             <button
               key={d}
@@ -125,31 +125,31 @@ export default function FollowUps() {
         <>
           {/* Thẻ thống kê */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 28 }}>
-            <div style={{ background: '#FEF2F2', border: '1.5px solid #FCA5A5', borderRadius: 14, padding: '16px 20px' }}>
-              <p style={{ fontSize: 16, fontWeight: 600, color: '#991B1B', margin: 0 }}>ĐÃ QUÁ HẠN</p>
-              <p style={{ fontSize: 32, fontWeight: 800, color: '#B91C1C', margin: '4px 0 0' }}>{data.overdueCount || 0}</p>
+            <div style={{ background: 'var(--alert-100)', border: '1.5px solid var(--alert-700)', borderRadius: 14, padding: '16px 20px' }}>
+              <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--alert-700)', margin: 0 }}>ĐÃ QUÁ HẠN</p>
+              <p style={{ fontSize: 32, fontWeight: 800, color: 'var(--alert-700)', margin: '4px 0 0' }}>{data.overdueCount || 0}</p>
             </div>
-            <div style={{ background: '#FFFBEB', border: '1.5px solid #FDE68A', borderRadius: 14, padding: '16px 20px' }}>
-              <p style={{ fontSize: 16, fontWeight: 600, color: '#92400E', margin: 0 }}>HÔM NAY</p>
-              <p style={{ fontSize: 32, fontWeight: 800, color: '#D97706', margin: '4px 0 0' }}>{data.todayCount || 0}</p>
+            <div style={{ background: 'var(--gold-100)', border: '1.5px solid var(--gold-500)', borderRadius: 14, padding: '16px 20px' }}>
+              <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--gold-700)', margin: 0 }}>HÔM NAY</p>
+              <p style={{ fontSize: 32, fontWeight: 800, color: 'var(--gold-700)', margin: '4px 0 0' }}>{data.todayCount || 0}</p>
             </div>
-            <div style={{ background: '#F0FDF4', border: '1.5px solid #BBF7D0', borderRadius: 14, padding: '16px 20px' }}>
-              <p style={{ fontSize: 16, fontWeight: 600, color: '#166534', margin: 0 }}>TRONG {days} NGÀY TỚI</p>
-              <p style={{ fontSize: 32, fontWeight: 800, color: '#15803D', margin: '4px 0 0' }}>{data.upcomingCount || 0}</p>
+            <div style={{ background: 'var(--green-100)', border: '1.5px solid var(--green-600)', borderRadius: 14, padding: '16px 20px' }}>
+              <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--green-700)', margin: 0 }}>TRONG {days} NGÀY TỚI</p>
+              <p style={{ fontSize: 32, fontWeight: 800, color: 'var(--green-700)', margin: '4px 0 0' }}>{data.upcomingCount || 0}</p>
             </div>
-            <div style={{ background: '#FDFBF7', border: '1.5px solid #E5E0D8', borderRadius: 14, padding: '16px 20px' }}>
-              <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink-700, #4A3B32)', margin: 0 }}>TỔNG CẦN TÁI KHÁM</p>
-              <p style={{ fontSize: 32, fontWeight: 800, color: 'var(--wood-800, #5C3A21)', margin: '4px 0 0' }}>{data.total || 0}</p>
+            <div style={{ background: 'var(--surface-card)', border: '1.5px solid var(--line-soft)', borderRadius: 14, padding: '16px 20px' }}>
+              <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink-700)', margin: 0 }}>TỔNG CẦN TÁI KHÁM</p>
+              <p style={{ fontSize: 32, fontWeight: 800, color: 'var(--wood-800)', margin: '4px 0 0' }}>{data.total || 0}</p>
             </div>
           </div>
 
           {items.length === 0 ? (
-            <div className="t-boxed" style={{ padding: '48px 24px', textAlign: 'center', borderRadius: 16, background: '#FDFBF7', border: '1.5px dashed #D1C7BD' }}>
-              <Icon name="checkCircle" size={48} style={{ color: 'var(--green-700, #2D5A27)', margin: '0 auto 12px' }} />
-              <p style={{ fontSize: 20, fontWeight: 600, color: 'var(--ink-800, #1F1610)', margin: 0 }}>
+            <div className="t-boxed" style={{ padding: '48px 24px', textAlign: 'center', borderRadius: 16, background: 'var(--surface-card)', border: '1.5px dashed var(--line-soft)' }}>
+              <Icon name="checkCircle" size={48} style={{ color: 'var(--green-700)', margin: '0 auto 12px' }} />
+              <p style={{ fontSize: 20, fontWeight: 600, color: 'var(--ink-900)', margin: 0 }}>
                 Không có bệnh nhân nào cần tái khám trong {days} ngày tới.
               </p>
-              <p style={{ fontSize: 17, color: 'var(--ink-600, #786B60)', marginTop: 6, margin: 0 }}>
+              <p style={{ fontSize: 17, color: 'var(--ink-600)', marginTop: 6, margin: 0 }}>
                 Hệ thống tự động loại bỏ những người bệnh đã có lịch hẹn mới.
               </p>
             </div>
@@ -159,8 +159,8 @@ export default function FollowUps() {
               {overdueList.length > 0 && (
                 <section aria-labelledby="sec-overdue">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                    <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: '#DC2626' }} />
-                    <h2 id="sec-overdue" style={{ fontSize: 22, fontWeight: 700, color: '#991B1B', margin: 0 }}>
+                    <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: 'var(--alert-700)' }} />
+                    <h2 id="sec-overdue" style={{ fontSize: 22, fontWeight: 700, color: 'var(--alert-700)', margin: 0 }}>
                       Quá hạn tái khám ({overdueList.length})
                     </h2>
                   </div>
@@ -183,8 +183,8 @@ export default function FollowUps() {
               {todayList.length > 0 && (
                 <section aria-labelledby="sec-today">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                    <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: '#D97706' }} />
-                    <h2 id="sec-today" style={{ fontSize: 22, fontWeight: 700, color: '#B45309', margin: 0 }}>
+                    <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: 'var(--gold-500)' }} />
+                    <h2 id="sec-today" style={{ fontSize: 22, fontWeight: 700, color: 'var(--gold-700)', margin: 0 }}>
                       Hẹn tái khám hôm nay ({todayList.length})
                     </h2>
                   </div>
@@ -207,8 +207,8 @@ export default function FollowUps() {
               {upcomingList.length > 0 && (
                 <section aria-labelledby="sec-upcoming">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                    <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: '#15803D' }} />
-                    <h2 id="sec-upcoming" style={{ fontSize: 22, fontWeight: 700, color: '#166534', margin: 0 }}>
+                    <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: 'var(--green-600)' }} />
+                    <h2 id="sec-upcoming" style={{ fontSize: 22, fontWeight: 700, color: 'var(--green-700)', margin: 0 }}>
                       Tái khám trong {days} ngày tới ({upcomingList.length})
                     </h2>
                   </div>
@@ -269,8 +269,8 @@ function FollowUpRow({ item, variant, onBook, onRemind, onPrint }) {
   const isOverdue = variant === 'overdue';
   const isToday = variant === 'today';
 
-  const bgColor = isOverdue ? '#FEF2F2' : isToday ? '#FFFBEB' : '#FFFFFF';
-  const borderColor = isOverdue ? '#FCA5A5' : isToday ? '#FDE68A' : '#E5E0D8';
+  const bgColor = isOverdue ? 'var(--alert-100)' : isToday ? 'var(--gold-100)' : 'var(--surface-card)';
+  const borderColor = isOverdue ? 'var(--alert-700)' : isToday ? 'var(--gold-500)' : 'var(--line-soft)';
 
   const daysText =
     item.daysUntil < 0
@@ -296,25 +296,25 @@ function FollowUpRow({ item, variant, onBook, onRemind, onPrint }) {
       {/* Thông tin bệnh nhân */}
       <div style={{ flex: '1 1 300px', minWidth: 260 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--ink-900, #1F1610)' }}>
+          <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--ink-900)' }}>
             {item.patientName}
           </span>
           {item.yearOfBirth && (
-            <span style={{ fontSize: 17, color: 'var(--ink-600, #786B60)' }}>
+            <span style={{ fontSize: 17, color: 'var(--ink-600)' }}>
               ({item.yearOfBirth})
             </span>
           )}
-          <span style={{ fontSize: 17, fontWeight: 600, color: 'var(--ink-800, #1F1610)' }}>
+          <span style={{ fontSize: 17, fontWeight: 600, color: 'var(--ink-800)' }}>
             · {item.phone}
           </span>
         </div>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginTop: 6, fontSize: 17, color: 'var(--ink-700, #4A3B32)' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginTop: 6, fontSize: 17, color: 'var(--ink-700)' }}>
           <span>
             Khám lần trước: <strong>{fmtDate(item.lastVisitDate)}</strong>
           </span>
           <span>
-            Hẹn tái khám: <strong style={{ color: isOverdue ? '#B91C1C' : isToday ? '#D97706' : 'var(--green-700, #2D5A27)' }}>{weekday(item.followUpDate)}, {fmtDate(item.followUpDate)}</strong> ({daysText})
+            Hẹn tái khám: <strong style={{ color: isOverdue ? 'var(--alert-700)' : isToday ? 'var(--gold-700)' : 'var(--green-700)' }}>{weekday(item.followUpDate)}, {fmtDate(item.followUpDate)}</strong> ({daysText})
           </span>
           <span>
             Bác sĩ: <strong>{item.doctorName}</strong>
@@ -322,7 +322,7 @@ function FollowUpRow({ item, variant, onBook, onRemind, onPrint }) {
         </div>
 
         {item.reminderSentAt && (
-          <p style={{ margin: '6px 0 0', fontSize: 15, fontWeight: 600, color: 'var(--green-700, #15803D)' }}>
+          <p style={{ margin: '6px 0 0', fontSize: 15, fontWeight: 600, color: 'var(--green-700)' }}>
             ✓ Đã gửi tin nhắc lúc {new Date(item.reminderSentAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} ({fmtDate(item.reminderSentAt.slice(0, 10))})
           </p>
         )}
@@ -344,7 +344,7 @@ function FollowUpRow({ item, variant, onBook, onRemind, onPrint }) {
         <button
           type="button"
           className="t-btn t-btn-ghost"
-          style={{ minHeight: 48, minWidth: 96, padding: '0 16px', fontSize: 18, fontWeight: 700, borderRadius: 12, border: '1.5px solid var(--gold-600, #D97706)', color: 'var(--gold-900, #78350F)' }}
+          style={{ minHeight: 48, minWidth: 96, padding: '0 16px', fontSize: 18, fontWeight: 700, borderRadius: 12, border: '1.5px solid var(--gold-500)', color: 'var(--gold-700)' }}
           onClick={onRemind}
           aria-label={`Nhắc lịch tái khám cho ${item.patientName}`}
         >
@@ -355,7 +355,7 @@ function FollowUpRow({ item, variant, onBook, onRemind, onPrint }) {
         <button
           type="button"
           className="t-btn t-btn-ghost"
-          style={{ minHeight: 48, minWidth: 48, padding: '0 14px', fontSize: 17, borderRadius: 12, color: 'var(--ink-700, #4A3B32)' }}
+          style={{ minHeight: 48, minWidth: 48, padding: '0 14px', fontSize: 17, borderRadius: 12, color: 'var(--ink-700)' }}
           onClick={onPrint}
           title="In đơn thuốc"
           aria-label={`In đơn thuốc cho ${item.patientName}`}
@@ -429,8 +429,9 @@ function ReminderDialog({ item, onClose, onMarkedSent }) {
                   fontSize: 18,
                   lineHeight: 1.5,
                   padding: '14px 16px',
-                  background: '#FDFBF7',
-                  border: '1.5px solid var(--border-300, #D1C7BD)',
+                  background: 'var(--surface-card)',
+                  color: 'var(--ink-900)',
+                  border: '1.5px solid var(--line-soft)',
                   borderRadius: 10,
                   resize: 'none',
                 }}
@@ -455,7 +456,7 @@ function ReminderDialog({ item, onClose, onMarkedSent }) {
                   <a
                     href={`sms:${cleanPhone}?body=${encodedContent}`}
                     className="t-btn t-btn-ghost"
-                    style={{ minHeight: 48, padding: '0 16px', fontSize: 17, borderRadius: 10, border: '1.5px solid var(--border-400, #B8ACA0)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                    style={{ minHeight: 48, padding: '0 16px', fontSize: 17, borderRadius: 10, border: '1.5px solid var(--line-strong)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
                   >
                     <Icon name="phone" size={18} />
                     Mở ứng dụng SMS
@@ -465,7 +466,7 @@ function ReminderDialog({ item, onClose, onMarkedSent }) {
                     target="_blank"
                     rel="noreferrer noopener"
                     className="t-btn t-btn-ghost"
-                    style={{ minHeight: 48, padding: '0 16px', fontSize: 17, borderRadius: 10, border: '1.5px solid var(--border-400, #B8ACA0)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                    style={{ minHeight: 48, padding: '0 16px', fontSize: 17, borderRadius: 10, border: '1.5px solid var(--line-strong)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
                   >
                     <Icon name="user" size={18} />
                     Mở Zalo
@@ -474,7 +475,7 @@ function ReminderDialog({ item, onClose, onMarkedSent }) {
               )}
             </div>
 
-            <p style={{ fontSize: 16, color: 'var(--ink-600, #786B60)', margin: 0, fontStyle: 'italic' }}>
+            <p style={{ fontSize: 16, color: 'var(--ink-500)', margin: 0, fontStyle: 'italic' }}>
               * Sau khi sao chép hoặc gửi tin nhắn cho người bệnh, bấm &quot;Đã gửi&quot; bên dưới để hệ thống lưu lịch sử nhắc nhở.
             </p>
           </>

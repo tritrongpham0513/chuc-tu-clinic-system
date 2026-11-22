@@ -242,6 +242,7 @@ export default function DailySchedule() {
     setMenu(null);
     setError(null);
     if (key === 'print') return printTicket(a);
+    if (key === 'reminder') return setDialog({ type: 'reminder', appt: a });
     if (key === 'checkin') return setDialog({ type: 'checkin', appt: a });
     if (key === 'undo-checkin') return setDialog({ type: 'undo', appt: a });
     if (key === 'reschedule') return setDialog({ type: 'reschedule', appt: a });
@@ -384,8 +385,8 @@ export default function DailySchedule() {
         <div
           role="alert"
           style={{
-            background: '#FEF3C7',
-            border: '2px solid #F59E0B',
+            background: 'var(--gold-100)',
+            border: '2px solid var(--gold-500)',
             borderRadius: 16,
             padding: '16px 20px',
             display: 'flex',
@@ -397,8 +398,8 @@ export default function DailySchedule() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Icon name="alertTriangle" size={28} color="#D97706" />
-            <span style={{ fontSize: 18, fontWeight: 700, color: '#92400E' }}>
+            <Icon name="alertTriangle" size={28} style={{ color: 'var(--gold-700)' }} />
+            <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--gold-700)' }}>
               Có {noShowPreview.length} phiếu sắp bị huỷ lúc 17:00 do chưa check-in.
             </span>
           </div>
@@ -419,8 +420,8 @@ export default function DailySchedule() {
           role="region"
           aria-label="Danh sách bác sĩ báo cần đổi"
           style={{
-            background: '#FEF2F2',
-            border: '2px solid #EF4444',
+            background: 'var(--alert-100)',
+            border: '2px solid var(--alert-700)',
             borderRadius: 16,
             padding: '16px 20px',
             marginBottom: 20,
@@ -430,8 +431,8 @@ export default function DailySchedule() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Icon name="alertCircle" size={24} color="#DC2626" />
-            <span style={{ fontSize: 18, fontWeight: 700, color: '#991B1B' }}>
+            <Icon name="alertCircle" size={24} style={{ color: 'var(--alert-700)' }} />
+            <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--alert-700)' }}>
               Bác sĩ báo cần đổi ({doctorChangeItems.length} phiếu)
             </span>
           </div>
@@ -440,8 +441,8 @@ export default function DailySchedule() {
               <div
                 key={item.id}
                 style={{
-                  background: '#ffffff',
-                  border: '1px solid #FCA5A5',
+                  background: 'var(--surface-card)',
+                  border: '1px solid var(--line-soft)',
                   borderRadius: 12,
                   padding: '12px 16px',
                   display: 'flex',
@@ -452,10 +453,10 @@ export default function DailySchedule() {
                 }}
               >
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: 16, color: '#1F1610' }}>
+                  <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--ink-900)' }}>
                     {item.ticketCode} — {item.patient?.fullName} ({item.doctor || 'Bác sĩ'})
                   </div>
-                  <div style={{ fontSize: 15, color: '#78350F', marginTop: 2 }}>
+                  <div style={{ fontSize: 15, color: 'var(--ink-600)', marginTop: 2 }}>
                     <strong>Ghi chú:</strong> {item.doctorChangeNote || 'Bác sĩ báo cần đổi'} · lúc {fmtTime(item.doctorChangeRequestedAt)}
                   </div>
                 </div>
@@ -573,8 +574,8 @@ export default function DailySchedule() {
                 <div role="columnheader" className="t-th">
                   Bệnh nhân
                 </div>
-                <div role="columnheader" className="t-th">
-                  Giờ khám dự kiến
+                <div role="columnheader" className="t-th" style={{ whiteSpace: 'nowrap' }}>
+                  Giờ dự kiến
                 </div>
                 <div role="columnheader" className="t-th">
                   Bác sĩ
@@ -582,7 +583,7 @@ export default function DailySchedule() {
                 <div role="columnheader" className="t-th">
                   Trạng thái
                 </div>
-                <div role="columnheader" className="t-th">
+                <div role="columnheader" className="t-th t-th-act">
                   Thao tác
                 </div>
               </div>
@@ -630,7 +631,7 @@ export default function DailySchedule() {
                           <span className="t-doctor-warn">Bác sĩ không trực ngày này</span>
                         )}
                       </div>
-                      <div role="cell" className="t-td">
+                      <div role="cell" className="t-td t-td-status">
                         <StatusChip a={a} />
                         {note && <span className="t-state-note">{note}</span>}
                         {a.reminderSentAt && (
@@ -641,30 +642,6 @@ export default function DailySchedule() {
                         )}
                       </div>
                       <div role="cell" className="t-td t-td-act">
-                        {a.status !== 'CANCELLED' && (
-                          <button
-                            type="button"
-                            className="t-btn-print"
-                            aria-label={`In phiếu khám cho ${a.patient?.fullName || a.ticketCode}`}
-                            onClick={() => printTicket(a)}
-                            title="In phiếu khám bệnh"
-                          >
-                            <Icon name="printer" size={18} strokeWidth={2} />
-                            <span>In phiếu</span>
-                          </button>
-                        )}
-                        {a.status !== 'CANCELLED' && a.status !== 'COMPLETED' && (
-                          <button
-                            type="button"
-                            className="t-btn-reminder"
-                            aria-label={`Nhắc lịch cho bệnh nhân ${a.patient?.fullName || a.ticketCode}`}
-                            onClick={() => setDialog({ type: 'reminder', appt: a })}
-                            title="Nhắc lịch khám cho bệnh nhân qua tin nhắn"
-                          >
-                            <Icon name="chat" size={18} />
-                            <span>Nhắc lịch</span>
-                          </button>
-                        )}
                         <RowMenu
                           a={a}
                           isToday={isToday}
@@ -774,7 +751,7 @@ function NoShowPreviewDialog({ items, onClose, onCheckin, checkingInId }) {
   return (
     <TDialog title="Phiếu sắp bị huỷ do không đến (17:00)" tone="gold" width={720} onClose={onClose}>
       <div className="t-dialog-body" style={{ gap: 16 }}>
-        <p className="t-text" style={{ fontSize: 18, color: '#78350F', lineHeight: '26px' }}>
+        <p className="t-text" style={{ fontSize: 18, color: 'var(--ink-700)', lineHeight: '26px' }}>
           Các phiếu khám dưới đây thuộc ngày hôm nay, trạng thái chưa đến và khung giờ đã kết thúc. Nếu bệnh nhân đã có mặt tại phòng khám, vui lòng bấm Check-in ngay để không bị hệ thống tự động huỷ lúc 17:00.
         </p>
         <div style={{ maxHeight: 400, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -786,21 +763,21 @@ function NoShowPreviewDialog({ items, onClose, onCheckin, checkingInId }) {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '14px 18px',
-                background: '#FFFBEB',
-                border: '1px solid #FDE68A',
+                background: 'var(--surface-card)',
+                border: '1px solid var(--line-soft)',
                 borderRadius: 12,
                 gap: 12,
                 flexWrap: 'wrap',
               }}
             >
               <div>
-                <div style={{ fontWeight: 700, fontSize: 18, color: '#1F1610' }}>
+                <div style={{ fontWeight: 700, fontSize: 18, color: 'var(--ink-900)' }}>
                   {item.ticketCode} — {item.patientName}
                 </div>
-                <div style={{ fontSize: 16, color: '#78350F', marginTop: 4 }}>
+                <div style={{ fontSize: 16, color: 'var(--ink-600)', marginTop: 4 }}>
                   SĐT: {item.patientPhone} · Khung: {item.slotTime} · BS: {item.doctorName || 'Chưa phân công'}
                 </div>
-                <div style={{ fontSize: 16, color: item.minutesUntilCancellation > 0 ? '#B45309' : '#DC2626', fontWeight: 600, marginTop: 4 }}>
+                <div style={{ fontSize: 16, color: item.minutesUntilCancellation > 0 ? 'var(--gold-700)' : 'var(--alert-700)', fontWeight: 600, marginTop: 4 }}>
                   {item.minutesUntilCancellation > 0
                     ? `Sắp huỷ sau ${item.minutesUntilCancellation} phút`
                     : 'Đã quá mốc 17:00'}

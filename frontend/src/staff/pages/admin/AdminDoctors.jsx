@@ -76,10 +76,10 @@ export default function AdminDoctors() {
       {/* Tiêu đề trang & Nút Thêm mới */}
       <div className="db-panel-head" style={{ alignItems: 'center', marginBottom: 8 }}>
         <div>
-          <h1 className="t-h1" style={{ fontSize: '26px', color: '#1F1610', margin: 0 }}>
+          <h1 className="t-h1" style={{ fontSize: '26px', color: 'var(--ink-900)', margin: 0 }}>
             Hồ sơ bác sĩ
           </h1>
-          <p className="t-muted" style={{ fontSize: '18px', marginTop: 6, color: '#5C4838' }}>
+          <p className="t-muted" style={{ fontSize: '18px', marginTop: 6, color: 'var(--ink-600)' }}>
             Quản lý thông tin khám bệnh, chuyên khoa, phân quyền tài khoản và thứ tự hiển thị.
           </p>
         </div>
@@ -102,10 +102,10 @@ export default function AdminDoctors() {
       ) : error ? (
         <div className="empty stack-sm" style={{ alignItems: 'center', padding: '48px 16px' }} role="alert">
           <Icon name="alert" size={48} />
-          <h2 className="t-h2" style={{ color: '#991B1B', margin: '8px 0' }}>
+          <h2 className="t-h2" style={{ color: 'var(--alert-700)', margin: '8px 0' }}>
             Không thể tải dữ liệu bác sĩ
           </h2>
-          <p className="t-text" style={{ fontSize: '18px', color: '#5C4838', marginBottom: '20px' }}>
+          <p className="t-text" style={{ fontSize: '18px', color: 'var(--ink-600)', marginBottom: '20px' }}>
             {error?.message || 'Có lỗi khi kết nối máy chủ. Cô chú vui lòng thử lại.'}
           </p>
           <button
@@ -121,7 +121,7 @@ export default function AdminDoctors() {
       ) : doctors.length === 0 ? (
         <div style={{ padding: '40px 0' }}>
           <Empty icon="users" title="Chưa có bác sĩ nào">
-            <p style={{ fontSize: '18px', color: '#5C4838', marginBottom: '20px' }}>
+            <p style={{ fontSize: '18px', color: 'var(--ink-600)', marginBottom: '20px' }}>
               Hiện phòng khám chưa có hồ sơ bác sĩ nào trong hệ thống.
             </p>
             <button
@@ -143,13 +143,13 @@ export default function AdminDoctors() {
             style={{ width: '100%', borderCollapse: 'collapse', fontSize: '18px', textAlign: 'left' }}
           >
             <thead>
-              <tr style={{ background: '#F5EFE6', borderBottom: '2px solid #D5C7B5' }}>
-                <th style={{ padding: '16px 14px', fontWeight: 700, color: '#1F1610' }}>Bác sĩ</th>
-                <th style={{ padding: '16px 14px', fontWeight: 700, color: '#1F1610' }}>Chuyên khoa</th>
-                <th style={{ padding: '16px 14px', fontWeight: 700, color: '#1F1610' }}>Tài khoản</th>
-                <th style={{ padding: '16px 14px', fontWeight: 700, color: '#1F1610', textAlign: 'center' }}>Thứ tự</th>
-                <th style={{ padding: '16px 14px', fontWeight: 700, color: '#1F1610', textAlign: 'center' }}>Đang hoạt động</th>
-                <th style={{ padding: '16px 14px', fontWeight: 700, color: '#1F1610', textAlign: 'center' }}>Thao tác</th>
+              <tr style={{ background: 'var(--surface-200)', borderBottom: '2px solid var(--line-soft)' }}>
+                <th style={{ padding: '16px 14px', fontWeight: 700, color: 'var(--ink-800)' }}>Bác sĩ</th>
+                <th style={{ padding: '16px 14px', fontWeight: 700, color: 'var(--ink-800)' }}>Chuyên khoa</th>
+                <th style={{ padding: '16px 14px', fontWeight: 700, color: 'var(--ink-800)' }}>Tài khoản</th>
+                <th style={{ padding: '16px 14px', fontWeight: 700, color: 'var(--ink-800)', textAlign: 'center' }}>Thứ tự</th>
+                <th style={{ padding: '16px 14px', fontWeight: 700, color: 'var(--ink-800)', textAlign: 'center' }}>Đang hoạt động</th>
+                <th style={{ padding: '16px 14px', fontWeight: 700, color: 'var(--ink-800)', textAlign: 'center' }}>Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -157,8 +157,8 @@ export default function AdminDoctors() {
                 <tr
                   key={d.id}
                   style={{
-                    borderBottom: '1px solid #E8DFD5',
-                    background: d.isActive ? '#FFFFFF' : '#FAF8F5',
+                    borderBottom: '1px solid var(--line-soft)',
+                    background: d.isActive ? 'var(--surface-card)' : 'var(--surface-100)',
                     opacity: d.isActive ? 1 : 0.85,
                   }}
                 >
@@ -177,11 +177,11 @@ export default function AdminDoctors() {
                             width: 48,
                             height: 48,
                             borderRadius: '50%',
-                            background: '#EAE1D5',
+                            background: 'var(--surface-200)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            color: '#5C3A21',
+                            color: 'var(--wood-800)',
                             fontWeight: 700,
                             flexShrink: 0,
                           }}
@@ -190,11 +190,11 @@ export default function AdminDoctors() {
                         </div>
                       )}
                       <div>
-                        <div style={{ fontWeight: 700, color: '#1F1610', fontSize: '18px' }}>
+                        <div style={{ fontWeight: 700, color: 'var(--ink-900)', fontSize: '18px' }}>
                           {d.title ? `${d.title} ` : ''}
                           {d.fullName}
                         </div>
-                        <div style={{ fontSize: '16px', color: '#786858', marginTop: 2 }}>
+                        <div style={{ fontSize: '16px', color: 'var(--ink-500)', marginTop: 2 }}>
                           📞 {d.phone || 'Chưa có SĐT'}
                         </div>
                       </div>
@@ -203,9 +203,9 @@ export default function AdminDoctors() {
 
                   {/* Cột 2: Chuyên khoa */}
                   <td style={{ padding: '16px 14px', verticalAlign: 'middle' }}>
-                    <div style={{ fontWeight: 600, color: '#2D5A27' }}>{d.specialty}</div>
+                    <div style={{ fontWeight: 600, color: 'var(--green-700)' }}>{d.specialty}</div>
                     {d.experienceYears != null && (
-                      <div style={{ fontSize: '16px', color: '#786858', marginTop: 2 }}>
+                      <div style={{ fontSize: '16px', color: 'var(--ink-500)', marginTop: 2 }}>
                         {d.experienceYears} năm kinh nghiệm
                       </div>
                     )}
@@ -221,8 +221,8 @@ export default function AdminDoctors() {
                           gap: 6,
                           padding: '6px 12px',
                           borderRadius: 8,
-                          background: '#EBF3EB',
-                          color: '#2D5A27',
+                          background: 'var(--green-100)',
+                          color: 'var(--green-700)',
                           fontWeight: 600,
                           fontSize: '16px',
                         }}
@@ -238,8 +238,8 @@ export default function AdminDoctors() {
                           gap: 6,
                           padding: '6px 12px',
                           borderRadius: 8,
-                          background: '#F0ECE6',
-                          color: '#786858',
+                          background: 'var(--surface-200)',
+                          color: 'var(--ink-500)',
                           fontSize: '16px',
                         }}
                       >
@@ -249,7 +249,7 @@ export default function AdminDoctors() {
                   </td>
 
                   {/* Cột 4: Thứ tự hiển thị */}
-                  <td style={{ padding: '16px 14px', textAlign: 'center', verticalAlign: 'middle', fontWeight: 600 }}>
+                  <td style={{ padding: '16px 14px', textAlign: 'center', verticalAlign: 'middle', fontWeight: 600, color: 'var(--ink-900)' }}>
                     {d.sortOrder}
                   </td>
 
@@ -263,8 +263,8 @@ export default function AdminDoctors() {
                           gap: 6,
                           padding: '6px 14px',
                           borderRadius: 20,
-                          background: '#E8F5E9',
-                          color: '#1B5E20',
+                          background: 'var(--green-100)',
+                          color: 'var(--green-700)',
                           fontWeight: 700,
                           fontSize: '16px',
                         }}
@@ -280,8 +280,8 @@ export default function AdminDoctors() {
                           gap: 6,
                           padding: '6px 14px',
                           borderRadius: 20,
-                          background: '#FFEBEE',
-                          color: '#B71C1C',
+                          background: 'var(--alert-100)',
+                          color: 'var(--alert-700)',
                           fontWeight: 700,
                           fontSize: '16px',
                         }}
@@ -314,8 +314,8 @@ export default function AdminDoctors() {
                             padding: '0 14px',
                             fontSize: '16px',
                             fontWeight: 600,
-                            color: '#B71C1C',
-                            borderColor: '#FFCDD2',
+                            color: 'var(--alert-700)',
+                            borderColor: 'var(--alert-700)',
                           }}
                           onClick={() => {
                             setToggleError(null);
@@ -334,8 +334,8 @@ export default function AdminDoctors() {
                             padding: '0 14px',
                             fontSize: '16px',
                             fontWeight: 600,
-                            color: '#1B5E20',
-                            borderColor: '#C8E6C9',
+                            color: 'var(--green-700)',
+                            borderColor: 'var(--green-700)',
                           }}
                           onClick={() => {
                             setToggleError(null);
@@ -382,8 +382,8 @@ export default function AdminDoctors() {
                   width: 44,
                   height: 44,
                   borderRadius: '50%',
-                  background: toggleConfirm.targetActive ? '#E8F5E9' : '#FFEBEE',
-                  color: toggleConfirm.targetActive ? '#1B5E20' : '#B71C1C',
+                  background: toggleConfirm.targetActive ? 'var(--green-100)' : 'var(--alert-100)',
+                  color: toggleConfirm.targetActive ? 'var(--green-700)' : 'var(--alert-700)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -392,12 +392,12 @@ export default function AdminDoctors() {
               >
                 <Icon name={toggleConfirm.targetActive ? 'checkCircle' : 'alert'} size={28} />
               </span>
-              <h2 id="toggle-doctor-title" className="t-h2" style={{ margin: 0, fontSize: '22px' }}>
+              <h2 id="toggle-doctor-title" className="t-h2" style={{ margin: 0, fontSize: '22px', color: 'var(--ink-900)' }}>
                 {toggleConfirm.targetActive ? 'Hiện bác sĩ trên hệ thống?' : 'Ẩn hồ sơ bác sĩ?'}
               </h2>
             </div>
 
-            <p style={{ fontSize: '18px', lineHeight: '26px', color: '#33271E', marginBottom: 18 }}>
+            <p style={{ fontSize: '18px', lineHeight: '26px', color: 'var(--ink-700)', marginBottom: 18 }}>
               {toggleConfirm.targetActive ? (
                 <>
                   Bác sĩ <strong>{toggleConfirm.doctor.fullName}</strong> sẽ được kích hoạt lại và xuất hiện trên danh
@@ -417,9 +417,9 @@ export default function AdminDoctors() {
                 style={{
                   padding: '14px 18px',
                   borderRadius: 8,
-                  background: '#FEE2E2',
-                  border: '1px solid #F87171',
-                  color: '#991B1B',
+                  background: 'var(--alert-100)',
+                  border: '1px solid var(--alert-700)',
+                  color: 'var(--alert-700)',
                   fontSize: '18px',
                   lineHeight: '24px',
                   marginBottom: 18,
@@ -452,7 +452,7 @@ export default function AdminDoctors() {
                   padding: '0 24px',
                   fontSize: '18px',
                   fontWeight: 600,
-                  background: toggleConfirm.targetActive ? '#2D5A27' : '#B91C1C',
+                  background: toggleConfirm.targetActive ? 'var(--green-600)' : 'var(--alert-700)',
                   color: '#FFFFFF',
                 }}
                 disabled={togglePending}
@@ -621,7 +621,7 @@ function DoctorFormDialog({ mode, doctor, onClose, onSaved }) {
     <PlainDialog labelledBy={titleId} width={640} onClose={onClose}>
       <form onSubmit={handleSubmit} noValidate style={{ padding: '28px 32px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <h2 id={titleId} className="t-h2" style={{ margin: 0, fontSize: '24px', color: '#1F1610' }}>
+          <h2 id={titleId} className="t-h2" style={{ margin: 0, fontSize: '24px', color: 'var(--ink-900)' }}>
             {isCreate ? 'Thêm mới hồ sơ bác sĩ' : `Chỉnh sửa hồ sơ bác sĩ: ${doctor?.fullName}`}
           </h2>
           <button
@@ -640,9 +640,9 @@ function DoctorFormDialog({ mode, doctor, onClose, onSaved }) {
             style={{
               padding: '14px 18px',
               borderRadius: 8,
-              background: '#FEE2E2',
-              border: '1px solid #F87171',
-              color: '#991B1B',
+              background: 'var(--alert-100)',
+              border: '1px solid var(--alert-700)',
+              color: 'var(--alert-700)',
               fontSize: '18px',
               lineHeight: '24px',
               marginBottom: 18,
@@ -667,7 +667,7 @@ function DoctorFormDialog({ mode, doctor, onClose, onSaved }) {
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
               <div className="t-field">
                 <label className="t-label" htmlFor="doc-fullname" style={{ fontSize: '18px', fontWeight: 600 }}>
-                  Họ và tên bác sĩ <span style={{ color: '#B91C1C' }}>*</span>
+                  Họ và tên bác sĩ <span style={{ color: 'var(--alert-700)' }}>*</span>
                 </label>
                 <input
                   id="doc-fullname"
@@ -701,7 +701,7 @@ function DoctorFormDialog({ mode, doctor, onClose, onSaved }) {
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
               <div className="t-field">
                 <label className="t-label" htmlFor="doc-specialty" style={{ fontSize: '18px', fontWeight: 600 }}>
-                  Chuyên khoa <span style={{ color: '#B91C1C' }}>*</span>
+                  Chuyên khoa <span style={{ color: 'var(--alert-700)' }}>*</span>
                 </label>
                 <input
                   id="doc-specialty"
@@ -737,7 +737,7 @@ function DoctorFormDialog({ mode, doctor, onClose, onSaved }) {
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
               <div className="t-field">
                 <label className="t-label" htmlFor="doc-phone" style={{ fontSize: '18px', fontWeight: 600 }}>
-                  Số điện thoại <span style={{ color: '#B91C1C' }}>*</span>
+                  Số điện thoại <span style={{ color: 'var(--alert-700)' }}>*</span>
                 </label>
                 <input
                   id="doc-phone"
@@ -776,7 +776,7 @@ function DoctorFormDialog({ mode, doctor, onClose, onSaved }) {
               <select
                 id="doc-account"
                 className="t-input"
-                style={{ minHeight: '48px', fontSize: '18px', background: '#FFFFFF' }}
+                style={{ minHeight: '48px', fontSize: '18px', background: 'var(--surface-card)', color: 'var(--ink-900)' }}
                 value={form.accountId}
                 onChange={(e) => setForm({ ...form, accountId: e.target.value })}
                 disabled={loadingAccounts}
@@ -788,7 +788,7 @@ function DoctorFormDialog({ mode, doctor, onClose, onSaved }) {
                   </option>
                 ))}
               </select>
-              <p className="t-muted" style={{ fontSize: '16px', marginTop: 4, color: '#786858' }}>
+              <p className="t-muted" style={{ fontSize: '16px', marginTop: 4, color: 'var(--ink-500)' }}>
                 Tuỳ chọn: Cho phép bác sĩ đăng nhập xem danh sách và lập phiếu kết quả khám.
               </p>
             </div>

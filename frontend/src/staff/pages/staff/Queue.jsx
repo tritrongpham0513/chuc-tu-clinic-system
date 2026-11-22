@@ -133,10 +133,10 @@ export default function Queue() {
       </div>
 
       {doctorView && (
-        <div className="t-card" style={{ padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, borderLeft: '4px solid #D97706' }}>
+        <div className="t-card" style={{ padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, borderLeft: '4px solid var(--gold-500)' }}>
           <div>
-            <strong style={{ fontSize: 18, color: '#1F1610', display: 'block' }}>Phạm vi hiển thị hàng đợi:</strong>
-            <span style={{ fontSize: 15, color: '#78350F' }}>
+            <strong style={{ fontSize: 18, color: 'var(--ink-900)', display: 'block' }}>Phạm vi hiển thị hàng đợi:</strong>
+            <span style={{ fontSize: 15, color: 'var(--ink-600)' }}>
               {mineOnly ? 'Đang hiển thị bệnh nhân phân công cho riêng bạn' : 'Đang hiển thị toàn bộ bệnh nhân trong phòng khám'}
             </span>
           </div>

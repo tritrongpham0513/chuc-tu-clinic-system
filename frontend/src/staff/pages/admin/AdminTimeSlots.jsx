@@ -77,10 +77,10 @@ export default function AdminTimeSlots() {
       {/* Tiêu đề & Nút Thêm mới */}
       <div className="db-panel-head" style={{ alignItems: 'center', marginBottom: 8 }}>
         <div>
-          <h1 className="t-h1" style={{ fontSize: '26px', color: '#1F1610', margin: 0 }}>
+          <h1 className="t-h1" style={{ fontSize: '26px', color: 'var(--ink-900)', margin: 0 }}>
             Khung giờ khám
           </h1>
-          <p className="t-muted" style={{ fontSize: '18px', marginTop: 6, color: '#5C4838' }}>
+          <p className="t-muted" style={{ fontSize: '18px', marginTop: 6, color: 'var(--ink-600)' }}>
             Quản lý các khung giờ tiếp nhận bệnh nhân, ca khám, sức chứa và kiểm soát an toàn phiếu hẹn.
           </p>
         </div>
@@ -100,11 +100,11 @@ export default function AdminTimeSlots() {
         <div
           role="status"
           style={{
-            background: '#ECFDF5',
-            border: '2px solid #10B981',
+            background: 'var(--green-100)',
+            border: '2px solid var(--green-600)',
             borderRadius: '8px',
             padding: '16px 20px',
-            color: '#065F46',
+            color: 'var(--green-700)',
             fontSize: '18px',
             fontWeight: 600,
             display: 'flex',
@@ -126,10 +126,10 @@ export default function AdminTimeSlots() {
       ) : error ? (
         <div className="empty stack-sm" style={{ alignItems: 'center', padding: '48px 16px' }} role="alert">
           <Icon name="alert" size={48} />
-          <h2 className="t-h2" style={{ color: '#991B1B', margin: '8px 0' }}>
+          <h2 className="t-h2" style={{ color: 'var(--alert-700)', margin: '8px 0' }}>
             Không thể tải dữ liệu khung giờ
           </h2>
-          <p className="t-text" style={{ fontSize: '18px', color: '#5C4838', marginBottom: '20px' }}>
+          <p className="t-text" style={{ fontSize: '18px', color: 'var(--ink-600)', marginBottom: '20px' }}>
             {error?.message || 'Có lỗi khi kết nối máy chủ. Cô chú vui lòng thử lại.'}
           </p>
           <button
@@ -167,14 +167,14 @@ export default function AdminTimeSlots() {
             style={{ width: '100%', borderCollapse: 'collapse', fontSize: '18px', textAlign: 'left' }}
           >
             <thead>
-              <tr style={{ background: '#F5EFE6', borderBottom: '2px solid #D5C7B5' }}>
-                <th style={{ padding: '16px 14px', fontWeight: 700, color: '#1F1610' }}>Khung giờ</th>
-                <th style={{ padding: '16px 14px', fontWeight: 700, color: '#1F1610' }}>Ca khám</th>
-                <th style={{ padding: '16px 14px', fontWeight: 700, color: '#1F1610', textAlign: 'center' }}>Sức chứa</th>
-                <th style={{ padding: '16px 14px', fontWeight: 700, color: '#1F1610', textAlign: 'center' }}>Phiếu sắp tới</th>
-                <th style={{ padding: '16px 14px', fontWeight: 700, color: '#1F1610', textAlign: 'center' }}>Thứ tự</th>
-                <th style={{ padding: '16px 14px', fontWeight: 700, color: '#1F1610', textAlign: 'center' }}>Trạng thái</th>
-                <th style={{ padding: '16px 14px', fontWeight: 700, color: '#1F1610', textAlign: 'center' }}>Thao tác</th>
+              <tr style={{ background: 'var(--surface-200)', borderBottom: '2px solid var(--line-soft)' }}>
+                <th style={{ padding: '16px 14px', fontWeight: 700, color: 'var(--ink-800)' }}>Khung giờ</th>
+                <th style={{ padding: '16px 14px', fontWeight: 700, color: 'var(--ink-800)' }}>Ca khám</th>
+                <th style={{ padding: '16px 14px', fontWeight: 700, color: 'var(--ink-800)', textAlign: 'center' }}>Sức chứa</th>
+                <th style={{ padding: '16px 14px', fontWeight: 700, color: 'var(--ink-800)', textAlign: 'center' }}>Phiếu sắp tới</th>
+                <th style={{ padding: '16px 14px', fontWeight: 700, color: 'var(--ink-800)', textAlign: 'center' }}>Thứ tự</th>
+                <th style={{ padding: '16px 14px', fontWeight: 700, color: 'var(--ink-800)', textAlign: 'center' }}>Trạng thái</th>
+                <th style={{ padding: '16px 14px', fontWeight: 700, color: 'var(--ink-800)', textAlign: 'center' }}>Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -182,8 +182,8 @@ export default function AdminTimeSlots() {
                 <tr
                   key={s.id}
                   style={{
-                    borderBottom: '1px solid #E8DFD5',
-                    background: s.isActive ? '#FFFFFF' : '#FAF8F5',
+                    borderBottom: '1px solid var(--line-soft)',
+                    background: s.isActive ? 'var(--surface-card)' : 'var(--surface-100)',
                     opacity: s.isActive ? 1 : 0.85,
                   }}
                 >
@@ -195,11 +195,11 @@ export default function AdminTimeSlots() {
                           width: 10,
                           height: 10,
                           borderRadius: '50%',
-                          background: s.isActive ? '#15803D' : '#9CA3AF',
+                          background: s.isActive ? 'var(--green-600)' : 'var(--line-strong)',
                           flexShrink: 0,
                         }}
                       />
-                      <span style={{ fontWeight: 700, color: '#1F1610', fontSize: '19px' }}>
+                      <span style={{ fontWeight: 700, color: 'var(--ink-900)', fontSize: '19px' }}>
                         {s.slotLabel || `${s.startTime} - ${s.endTime}`}
                       </span>
                     </div>
@@ -214,8 +214,8 @@ export default function AdminTimeSlots() {
                         borderRadius: '6px',
                         fontSize: '16px',
                         fontWeight: 600,
-                        background: s.period === 'MORNING' ? '#FEF3C7' : '#E0E7FF',
-                        color: s.period === 'MORNING' ? '#92400E' : '#3730A3',
+                        background: s.period === 'MORNING' ? 'var(--gold-100)' : 'var(--info-100)',
+                        color: s.period === 'MORNING' ? 'var(--gold-700)' : 'var(--info-700)',
                       }}
                     >
                       {PERIOD_LABELS[s.period] || s.period}
@@ -224,7 +224,7 @@ export default function AdminTimeSlots() {
 
                   {/* Cột 3: Sức chứa */}
                   <td style={{ padding: '16px 14px', textAlign: 'center' }}>
-                    <span style={{ fontWeight: 600, color: '#1F1610' }}>
+                    <span style={{ fontWeight: 600, color: 'var(--ink-900)' }}>
                       {s.maxPatients} người
                     </span>
                   </td>
@@ -238,8 +238,8 @@ export default function AdminTimeSlots() {
                         borderRadius: '16px',
                         fontSize: '16px',
                         fontWeight: 700,
-                        background: s.upcomingAppointmentCount > 0 ? '#FEE2E2' : '#F3F4F6',
-                        color: s.upcomingAppointmentCount > 0 ? '#B91C1C' : '#6B7280',
+                        background: s.upcomingAppointmentCount > 0 ? 'var(--alert-100)' : 'var(--surface-200)',
+                        color: s.upcomingAppointmentCount > 0 ? 'var(--alert-700)' : 'var(--ink-500)',
                       }}
                     >
                       {s.upcomingAppointmentCount} phiếu
@@ -247,7 +247,7 @@ export default function AdminTimeSlots() {
                   </td>
 
                   {/* Cột 5: Thứ tự */}
-                  <td style={{ padding: '16px 14px', textAlign: 'center', color: '#5C4838' }}>
+                  <td style={{ padding: '16px 14px', textAlign: 'center', color: 'var(--ink-900)' }}>
                     {s.sortOrder}
                   </td>
 
@@ -262,8 +262,8 @@ export default function AdminTimeSlots() {
                         borderRadius: '20px',
                         fontSize: '16px',
                         fontWeight: 600,
-                        background: s.isActive ? '#DCFCE7' : '#F3F4F6',
-                        color: s.isActive ? '#15803D' : '#4B5563',
+                        background: s.isActive ? 'var(--green-100)' : 'var(--surface-200)',
+                        color: s.isActive ? 'var(--green-700)' : 'var(--ink-500)',
                       }}
                     >
                       <span
@@ -271,7 +271,7 @@ export default function AdminTimeSlots() {
                           width: 8,
                           height: 8,
                           borderRadius: '50%',
-                          background: s.isActive ? '#16A34A' : '#9CA3AF',
+                          background: s.isActive ? 'var(--green-600)' : 'var(--line-strong)',
                         }}
                       />
                       {s.isActive ? 'Đang hoạt động' : 'Đã ngưng'}
@@ -284,7 +284,7 @@ export default function AdminTimeSlots() {
                       <button
                         type="button"
                         className="t-btn t-btn-ghost"
-                        style={{ minHeight: '48px', padding: '0 16px', fontSize: '17px', color: '#5C3A21' }}
+                        style={{ minHeight: '48px', padding: '0 16px', fontSize: '17px', color: 'var(--ink-900)' }}
                         onClick={() => setFormDialog({ mode: 'edit', slot: s })}
                         aria-label={`Chỉnh sửa khung giờ ${s.slotLabel}`}
                       >
@@ -296,7 +296,7 @@ export default function AdminTimeSlots() {
                         <button
                           type="button"
                           className="t-btn t-btn-ghost"
-                          style={{ minHeight: '48px', padding: '0 16px', fontSize: '17px', color: '#991B1B' }}
+                          style={{ minHeight: '48px', padding: '0 16px', fontSize: '17px', color: 'var(--alert-700)' }}
                           onClick={() => {
                             setToggleError(null);
                             setToggleConfirm({ slot: s, targetActive: false });
@@ -310,7 +310,7 @@ export default function AdminTimeSlots() {
                         <button
                           type="button"
                           className="t-btn t-btn-ghost"
-                          style={{ minHeight: '48px', padding: '0 16px', fontSize: '17px', color: '#15803D' }}
+                          style={{ minHeight: '48px', padding: '0 16px', fontSize: '17px', color: 'var(--green-700)' }}
                           onClick={() => {
                             setToggleError(null);
                             setToggleConfirm({ slot: s, targetActive: true });
@@ -354,24 +354,24 @@ export default function AdminTimeSlots() {
         >
           <div className="t-dialog-body" style={{ gap: 20 }}>
             {toggleConfirm.targetActive ? (
-              <p className="t-text" style={{ fontSize: '18px', color: '#1F1610', margin: 0 }}>
+              <p className="t-text" style={{ fontSize: '18px', color: 'var(--ink-900)', margin: 0 }}>
                 Bạn có chắc chắn muốn kích hoạt lại khung giờ{' '}
-                <strong style={{ color: '#15803D' }}>{toggleConfirm.slot.slotLabel}</strong>? Khung giờ sẽ hiển thị cho bệnh nhân đặt lịch trở lại.
+                <strong style={{ color: 'var(--green-700)' }}>{toggleConfirm.slot.slotLabel}</strong>? Khung giờ sẽ hiển thị cho bệnh nhân đặt lịch trở lại.
               </p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <p className="t-text" style={{ fontSize: '18px', color: '#1F1610', margin: 0 }}>
+                <p className="t-text" style={{ fontSize: '18px', color: 'var(--ink-900)', margin: 0 }}>
                   Bạn có chắc chắn muốn ngưng hoạt động khung giờ{' '}
-                  <strong style={{ color: '#991B1B' }}>{toggleConfirm.slot.slotLabel}</strong>?
+                  <strong style={{ color: 'var(--alert-700)' }}>{toggleConfirm.slot.slotLabel}</strong>?
                 </p>
                 {toggleConfirm.slot.upcomingAppointmentCount > 0 ? (
                   <div
                     style={{
-                      background: '#FEF2F2',
-                      border: '1px solid #F87171',
+                      background: 'var(--alert-100)',
+                      border: '1px solid var(--alert-700)',
                       borderRadius: '8px',
                       padding: '14px',
-                      color: '#991B1B',
+                      color: 'var(--alert-700)',
                       fontSize: '17px',
                     }}
                   >
@@ -380,7 +380,7 @@ export default function AdminTimeSlots() {
                     Hệ thống sẽ từ chối ngưng hoạt động cho đến khi các phiếu này được xử lý hoặc dời sang khung khác.
                   </div>
                 ) : (
-                  <p className="t-muted" style={{ fontSize: '17px', margin: 0 }}>
+                  <p className="t-muted" style={{ fontSize: '17px', margin: 0, color: 'var(--ink-500)' }}>
                     Khung giờ hiện không có phiếu khám nào sắp tới. Ngưng hoạt động sẽ ẩn khung này khỏi trang đặt lịch.
                   </p>
                 )}
@@ -392,11 +392,11 @@ export default function AdminTimeSlots() {
               <div
                 role="alert"
                 style={{
-                  background: '#FEF2F2',
-                  border: '1px solid #DC2626',
+                  background: 'var(--alert-100)',
+                  border: '1px solid var(--alert-700)',
                   borderRadius: '8px',
                   padding: '14px 18px',
-                  color: '#B91C1C',
+                  color: 'var(--alert-700)',
                   fontSize: '17px',
                   fontWeight: 600,
                   display: 'flex',
@@ -531,11 +531,11 @@ function TimeSlotFormDialog({ mode, slot, onClose, onSuccess }) {
         {hasUpcoming && (
           <div
             style={{
-              background: '#FFFBEB',
-              border: '1px solid #F59E0B',
+              background: 'var(--gold-100)',
+              border: '1px solid var(--gold-500)',
               borderRadius: '8px',
               padding: '14px 18px',
-              color: '#92400E',
+              color: 'var(--gold-700)',
               fontSize: '17px',
             }}
           >
@@ -549,11 +549,11 @@ function TimeSlotFormDialog({ mode, slot, onClose, onSuccess }) {
           <div
             role="alert"
             style={{
-              background: '#FEF2F2',
-              border: '1px solid #DC2626',
+              background: 'var(--alert-100)',
+              border: '1px solid var(--alert-700)',
               borderRadius: '8px',
               padding: '14px 18px',
-              color: '#B91C1C',
+              color: 'var(--alert-700)',
               fontSize: '17px',
               fontWeight: 600,
               display: 'flex',
@@ -586,7 +586,7 @@ function TimeSlotFormDialog({ mode, slot, onClose, onSuccess }) {
               }}
             />
             {fieldErrors.startTime && (
-              <span className="t-field-error" style={{ color: '#DC2626', fontSize: '15px', marginTop: 4 }}>
+              <span className="t-field-error" style={{ color: 'var(--alert-700)', fontSize: '15px', marginTop: 4 }}>
                 {fieldErrors.startTime}
               </span>
             )}
@@ -610,7 +610,7 @@ function TimeSlotFormDialog({ mode, slot, onClose, onSuccess }) {
               }}
             />
             {fieldErrors.endTime && (
-              <span className="t-field-error" style={{ color: '#DC2626', fontSize: '15px', marginTop: 4 }}>
+              <span className="t-field-error" style={{ color: 'var(--alert-700)', fontSize: '15px', marginTop: 4 }}>
                 {fieldErrors.endTime}
               </span>
             )}
@@ -639,7 +639,7 @@ function TimeSlotFormDialog({ mode, slot, onClose, onSuccess }) {
               <option value="AFTERNOON">Buổi chiều (từ 12:00 trở đi)</option>
             </select>
             {fieldErrors.period && (
-              <span className="t-field-error" style={{ color: '#DC2626', fontSize: '15px', marginTop: 4 }}>
+              <span className="t-field-error" style={{ color: 'var(--alert-700)', fontSize: '15px', marginTop: 4 }}>
                 {fieldErrors.period}
               </span>
             )}
@@ -665,7 +665,7 @@ function TimeSlotFormDialog({ mode, slot, onClose, onSuccess }) {
               }}
             />
             {fieldErrors.maxPatients && (
-              <span className="t-field-error" style={{ color: '#DC2626', fontSize: '15px', marginTop: 4 }}>
+              <span className="t-field-error" style={{ color: 'var(--alert-700)', fontSize: '15px', marginTop: 4 }}>
                 {fieldErrors.maxPatients}
               </span>
             )}
@@ -721,7 +721,7 @@ function TimeSlotFormDialog({ mode, slot, onClose, onSuccess }) {
             checked={isActive}
             onChange={(e) => setIsActive(e.target.checked)}
           />
-          <label htmlFor="slot-active" style={{ fontSize: '18px', fontWeight: 600, color: '#1F1610', cursor: 'pointer' }}>
+          <label htmlFor="slot-active" style={{ fontSize: '18px', fontWeight: 600, color: 'var(--ink-900)', cursor: 'pointer' }}>
             Đang hoạt động (cho phép tiếp nhận đặt lịch)
           </label>
         </div>

@@ -24,6 +24,18 @@
     --t-wait: #b8913f;
   }
 }
+:root[data-theme='dark'] .t-vars,
+.dark .t-vars {
+  --t-blue-700: #9cc7e4;
+  --t-blue-100: #1e2c36;
+  --t-blue-line: #35506a;
+  --t-cancel-bg: #2a231b;
+  --t-red-100: #3a2520;
+  --t-muted-line: #6f6553;
+  --t-soft-line: #4a4134;
+  --t-white: #2b251d;
+  --t-wait: #b8913f;
+}
 
 .t-app-portal { font-size: 16px; line-height: 24px; color: var(--ink-700); }
 .t-app { min-height: 100vh; display: flex; flex-direction: column; background: var(--surface-100); font-size: 16px; line-height: 24px; }
@@ -294,8 +306,8 @@
 .t-table { width: 100%; }
 .t-tr { display: grid; align-items: center; border-bottom: 1px solid var(--line-soft); }
 .t-thead { background: var(--surface-200); border-bottom: 2px solid var(--line-strong); }
-.t-th { padding: 14px 16px; font-weight: 700; color: var(--ink-900); }
-.t-td { padding: 18px 16px; min-width: 0; }
+.t-th { padding: 14px 12px; font-weight: 700; color: var(--ink-900); }
+.t-td { padding: 16px 12px; min-width: 0; }
 .t-td-name { display: block; font-weight: 600; color: var(--ink-900); }
 .t-td-code { display: block; font-weight: 700; color: var(--ink-900); white-space: nowrap; }
 .t-td-sub { display: block; color: var(--ink-500); }
@@ -304,15 +316,21 @@
 .t-boxed { border: 1px solid var(--line-soft); border-radius: 16px; overflow: hidden; }
 .t-boxed .t-th { padding: 12px 16px; }
 .t-boxed .t-td { padding: 14px 16px; }
-@media (max-width: 960px) {
-  .t-scroll { overflow-x: auto; }
-  .t-scroll .t-table { min-width: 760px; }
+
+/* Luôn cho phép cuộn ngang an toàn khi màn hình không đủ chỗ, không bao giờ ép bẹp cột */
+.t-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
 }
-/* Bảng Lịch trong ngày có thêm cột Bác sĩ: dưới 1100px phải cuộn ngang để không bóp cột */
-@media (max-width: 1100px) {
-  .t-scroll { overflow-x: auto; }
-  .t-scroll .t-sched { min-width: 1060px; }
-  .t-scroll .t-sched.with-no { min-width: 1150px; }
+.t-scroll .t-sched {
+  min-width: 960px;
+}
+.t-scroll .t-sched.with-no {
+  min-width: 1040px;
+}
+@media (max-width: 960px) {
+  .t-scroll .t-table { min-width: 760px; }
 }
 
 .t-empty { padding: 28px 24px 32px; border-top: 1px solid var(--line-soft); }
@@ -343,25 +361,36 @@
 .t-pg[aria-disabled='true'] { background: var(--surface-200); border-color: var(--t-soft-line); color: var(--line-strong); cursor: not-allowed; }
 
 /* ---------- Chip lọc ---------- */
-.t-filters { display: flex; flex-wrap: wrap; gap: 10px; }
+.t-filters {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 8px;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.t-filters::-webkit-scrollbar {
+  display: none;
+}
 .t-filter {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-height: 44px;
-  padding: 0 18px;
+  padding: 0 12px;
   border-radius: 999px;
   font: inherit;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
   background: var(--t-white);
   border: 2px solid var(--line-strong);
   color: var(--green-700);
+  flex-shrink: 0;
 }
 .t-filter:hover { background: var(--green-100); }
-.t-filter-n { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; padding: 0 8px; border-radius: 999px; font-weight: 700; background: var(--surface-200); color: var(--ink-900); }
+.t-filter-n { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; padding: 0 7px; border-radius: 999px; font-weight: 700; background: var(--surface-200); color: var(--ink-900); }
 .t-filter[aria-pressed='true'] { background: var(--green-600); border-color: var(--green-700); color: var(--on-brand); }
 .t-filter[aria-pressed='true'] .t-filter-n { background: var(--t-white); color: var(--green-700); }
 
@@ -483,9 +512,72 @@
 .t-dialog-head.gold { background: #8a6012; }
 .t-dialog-head.red { background: #90372a; }
 .t-dialog-head h2 { flex-grow: 1; min-width: 0; font-family: var(--font-serif); font-size: 20px; line-height: 28px; font-weight: 700; color: #fff; }
-.t-dialog-head p { margin-top: 2px; color: #fff; }
-.t-dialog-close { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: transparent; border: 2px solid rgba(255, 255, 255, 0.6); border-radius: 12px; color: #fff; cursor: pointer; flex-shrink: 0; }
-.t-dialog-close:hover { background: rgba(255, 255, 255, 0.14); }
+.t-dialog-head p { margin-top: 2px; color: rgba(255, 255, 255, 0.9); font-size: 15px; }
+.t-dialog-close { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: transparent; border: 2px solid rgba(255, 255, 255, 0.6); border-radius: 12px; color: #fff; cursor: pointer; flex-shrink: 0; transition: background-color 150ms ease, border-color 150ms ease; }
+.t-dialog-close:hover { background: rgba(255, 255, 255, 0.18); border-color: #fff; }
+
+@media (prefers-color-scheme: dark) {
+  .t-dialog-head {
+    background: #142e1b;
+    border-bottom: 1px solid #23492e;
+  }
+  .t-dialog-head.gold {
+    background: #38250b;
+    border-bottom: 1px solid #5a3c14;
+  }
+  .t-dialog-head.red {
+    background: #3e1713;
+    border-bottom: 1px solid #5f241e;
+  }
+  .t-dialog-head h2 {
+    color: #f7faf7;
+  }
+  .t-dialog-head p {
+    color: #c9decb;
+  }
+  .t-dialog-close {
+    border-color: rgba(255, 255, 255, 0.45);
+    color: #f7faf7;
+  }
+  .t-dialog-close:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #f7faf7;
+  }
+}
+
+:root[data-theme='dark'] .t-dialog-head,
+.dark .t-dialog-head {
+  background: #142e1b;
+  border-bottom: 1px solid #23492e;
+}
+:root[data-theme='dark'] .t-dialog-head.gold,
+.dark .t-dialog-head.gold {
+  background: #38250b;
+  border-bottom: 1px solid #5a3c14;
+}
+:root[data-theme='dark'] .t-dialog-head.red,
+.dark .t-dialog-head.red {
+  background: #3e1713;
+  border-bottom: 1px solid #5f241e;
+}
+:root[data-theme='dark'] .t-dialog-head h2,
+.dark .t-dialog-head h2 {
+  color: #f7faf7;
+}
+:root[data-theme='dark'] .t-dialog-head p,
+.dark .t-dialog-head p {
+  color: #c9decb;
+}
+:root[data-theme='dark'] .t-dialog-close,
+.dark .t-dialog-close {
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #f7faf7;
+}
+:root[data-theme='dark'] .t-dialog-close:hover,
+.dark .t-dialog-close:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #f7faf7;
+}
 .t-dialog-body { padding: 26px 28px 30px; display: flex; flex-direction: column; gap: 22px; }
 .t-summary { background: var(--t-white); border: 2px solid var(--line-soft); border-radius: 16px; padding: 16px 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 10px 20px; }
 .t-summary p:first-child { color: var(--ink-500); }
@@ -579,14 +671,22 @@ button.t-check { cursor: pointer; }
 .t-datebar-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .t-datebtn { flex: 1 1 220px; justify-content: flex-start; gap: 12px; padding: 0 18px; background: var(--t-white); color: var(--ink-900); font-weight: 700; }
 .t-datebtn svg { color: var(--green-700); }
-.t-sched .t-tr { grid-template-columns: 48px 190px minmax(0, 1.3fr) 100px 150px minmax(0, 1.1fr) 240px; }
-.t-sched.with-no .t-tr { grid-template-columns: 48px 80px 180px minmax(0, 1.3fr) 100px 150px minmax(0, 1.1fr) 240px; }
+.t-sched .t-tr { grid-template-columns: 44px 205px minmax(180px, 1.2fr) 110px 140px minmax(215px, 1.1fr) 92px; }
+.t-sched.with-no .t-tr { grid-template-columns: 44px 80px 190px minmax(180px, 1.2fr) 110px 140px minmax(215px, 1.1fr) 92px; }
 .t-sched .t-tr.prio { background: var(--t-blue-100); }
 .t-sched .t-tr.cancel { background: var(--t-cancel-bg); }
-.t-sched .t-td-act { padding: 10px 12px; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.t-sched .t-th-act { text-align: center; padding: 14px 4px; white-space: nowrap; }
+.t-sched .t-td-act { padding: 8px 4px; display: flex; align-items: center; justify-content: center; }
+.t-td-status {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  gap: 4px !important;
+}
 .t-queue-no { font-family: var(--font-serif); font-size: 24px; line-height: 32px; font-weight: 700; color: var(--green-700); }
 .t-cancel-reason { grid-column: 1 / -1; padding: 0 16px 14px; color: var(--alert-700); }
-.t-state-note { display: block; margin-top: 6px; line-height: 22px; color: var(--ink-500); }
+.t-state-note { display: block; margin-top: 6px; line-height: 22px; color: var(--ink-600); font-size: 14px; font-weight: 500; }
 .t-doctor-warn { display: block; margin-top: 2px; font-size: 13px; font-weight: 700; color: var(--gold-700); }
 
 /* Hộp thoại Thêm lịch khám */
@@ -752,21 +852,22 @@ button.t-check { cursor: pointer; }
   min-height: 48px;
   min-width: 48px;
   padding: 0 14px;
-  background: var(--surface-100);
-  border: 2px solid var(--green-700);
+  background: var(--surface-card);
+  border: 2px solid var(--green-600);
   border-radius: 12px;
-  color: var(--green-800);
+  color: var(--green-700);
   font-family: inherit;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
-  transition: background-color 150ms ease, color 150ms ease;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
 }
 
 .t-btn-reminder:hover {
   background: var(--green-100);
-  color: var(--green-900);
+  color: var(--ink-900);
+  border-color: var(--green-700);
 }
 
 .t-btn-reminder:focus-visible {
@@ -774,10 +875,35 @@ button.t-check { cursor: pointer; }
   outline-offset: 2px;
 }
 
+@media (prefers-color-scheme: dark) {
+  .t-btn-reminder {
+    background: var(--surface-card);
+    border-color: var(--green-600);
+    color: var(--green-700);
+  }
+  .t-btn-reminder:hover {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--green-300, #86efac);
+    border-color: var(--green-500, #22c55e);
+  }
+}
+:root[data-theme='dark'] .t-btn-reminder,
+.dark .t-btn-reminder {
+  background: var(--surface-card);
+  border-color: var(--green-600);
+  color: var(--green-700);
+}
+:root[data-theme='dark'] .t-btn-reminder:hover,
+.dark .t-btn-reminder:hover {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--green-300, #86efac);
+  border-color: var(--green-500, #22c55e);
+}
+
 .t-reminder-sent {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   margin-top: 6px;
   font-size: 14px;
   font-weight: 700;
@@ -786,6 +912,20 @@ button.t-check { cursor: pointer; }
   padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid var(--green-300, #a3d9a5);
+}
+
+@media (prefers-color-scheme: dark) {
+  .t-reminder-sent {
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.35);
+    color: var(--green-700);
+  }
+}
+:root[data-theme='dark'] .t-reminder-sent,
+.dark .t-reminder-sent {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: var(--green-700);
 }
 
 .t-bulk-bar {
@@ -813,19 +953,48 @@ button.t-check { cursor: pointer; }
 
 .t-reminder-info {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px 20px;
   background: var(--surface-200);
-  padding: 14px 18px;
+  padding: 16px 20px;
   border-radius: 14px;
+  border: 1px solid var(--line-soft);
   font-size: 16px;
+}
+
+.t-reminder-info-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.t-reminder-info .t-label {
+  color: var(--ink-600);
+  font-weight: 600;
+  margin: 0;
+}
+
+.t-reminder-val {
+  color: var(--ink-900);
+  font-weight: 700;
 }
 
 .t-reminder-phone {
   font-family: monospace;
   font-weight: 700;
   font-size: 17px;
-  color: var(--green-800);
+  color: var(--green-700);
+}
+
+@media (prefers-color-scheme: dark) {
+  .t-reminder-phone {
+    color: var(--green-700);
+  }
+}
+:root[data-theme='dark'] .t-reminder-phone,
+.dark .t-reminder-phone {
+  color: var(--green-700);
 }
 
 .t-reminder-textarea {
@@ -845,25 +1014,57 @@ button.t-check { cursor: pointer; }
   gap: 10px;
   padding: 12px 18px;
   background: var(--green-100);
-  color: var(--green-800);
+  color: var(--green-700);
   font-size: 17px;
   font-weight: 700;
   border: 1px solid var(--green-600);
   border-radius: 12px;
 }
 
+.t-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.t-reminder-footer {
+  margin-top: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-soft);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .t-reminder-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: 12px;
   align-items: center;
   justify-content: space-between;
 }
 
 .t-reminder-copy-btn {
-  min-height: 52px !important;
-  padding: 0 24px !important;
-  font-size: 18px !important;
+  min-height: 48px !important;
+  padding: 0 20px !important;
+  font-size: 16px !important;
+  background: var(--surface-card) !important;
+  border: 2px solid var(--line-strong) !important;
+  color: var(--ink-800) !important;
+  border-radius: 12px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease !important;
+}
+
+.t-reminder-copy-btn:hover {
+  background: var(--surface-200) !important;
+  border-color: var(--green-600) !important;
+  color: var(--green-700) !important;
 }
 
 .t-reminder-links {
@@ -875,21 +1076,23 @@ button.t-check { cursor: pointer; }
 .t-reminder-link-btn {
   min-height: 48px !important;
   padding: 0 16px !important;
-  font-size: 16px !important;
+  font-size: 15px !important;
   font-weight: 600 !important;
   border: 1.5px solid var(--line-strong) !important;
+  background: var(--surface-card) !important;
   text-decoration: none !important;
   color: var(--ink-800) !important;
   display: inline-flex !important;
   align-items: center !important;
   gap: 8px !important;
   border-radius: 12px !important;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease !important;
 }
 
 .t-reminder-link-btn:hover {
   background: var(--green-100) !important;
-  border-color: var(--green-700) !important;
-  color: var(--green-800) !important;
+  border-color: var(--green-600) !important;
+  color: var(--green-700) !important;
 }
 
 .t-bulk-card {

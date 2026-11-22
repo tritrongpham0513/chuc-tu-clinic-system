@@ -290,8 +290,8 @@ export default function DoctorSchedules() {
                       const docSchedules = localSchedules[doc.id] || {};
                       const isChanged = changedDoctorIds.includes(doc.id);
                       return (
-                        <tr key={doc.id} style={{ background: isChanged ? 'var(--gold-50, #fffcf4)' : undefined }}>
-                          <td className="ds-td ds-sticky-col" style={{ background: isChanged ? 'var(--gold-50, #fffcf4)' : 'var(--surface-card)' }}>
+                        <tr key={doc.id} style={{ background: isChanged ? 'var(--gold-50)' : undefined }}>
+                          <td className="ds-td ds-sticky-col" style={{ background: isChanged ? 'var(--gold-50)' : 'var(--surface-card)' }}>
                             <div className="ds-doc-info">
                               <span className="ds-doc-name">{doc.fullName}</span>
                               <span className="ds-doc-meta">{[doc.title, doc.specialty].filter(Boolean).join(' · ')}</span>

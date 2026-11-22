@@ -25,20 +25,21 @@
   min-width: 48px;
   padding: 0 14px;
   border-radius: 12px;
-  border: 2px solid var(--gold-700, #D97706);
-  background: var(--surface-100, #FDFBF7);
-  color: var(--gold-800, #92400E);
+  border: 2px solid var(--gold-500, #c9963f);
+  background: var(--surface-card, #fffcf6);
+  color: var(--gold-700, #8a6012);
   font-family: inherit;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
-  transition: background-color 150ms ease, color 150ms ease;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
 }
 
 .t-btn-print:hover:not(:disabled) {
-  background: var(--gold-100, #FEF3C7);
-  color: var(--gold-900, #78350F);
+  background: var(--gold-100, #f7ebd2);
+  color: var(--ink-900, #2a2118);
+  border-color: var(--gold-700, #8a6012);
 }
 
 .t-btn-print:focus-visible {
@@ -47,8 +48,34 @@
 }
 
 .t-btn-print:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
+}
+
+@media (prefers-color-scheme: dark) {
+  .t-btn-print {
+    border-color: var(--gold-500, #F59E0B);
+    background: var(--surface-card, #26211a);
+    color: var(--gold-700, #e0b463);
+  }
+  .t-btn-print:hover:not(:disabled) {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--gold-300, #FCD34D);
+    border-color: var(--gold-500, #F59E0B);
+  }
+}
+
+:root[data-theme='dark'] .t-btn-print,
+.dark .t-btn-print {
+  border-color: var(--gold-500, #F59E0B);
+  background: var(--surface-card, #26211a);
+  color: var(--gold-700, #e0b463);
+}
+:root[data-theme='dark'] .t-btn-print:hover:not(:disabled),
+.dark .t-btn-print:hover:not(:disabled) {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--gold-300, #FCD34D);
+  border-color: var(--gold-500, #F59E0B);
 }
 
 /* Thông báo nhỏ (Toast) khi mở hộp thoại in — không popup chặn */

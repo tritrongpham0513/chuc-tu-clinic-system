@@ -96,17 +96,17 @@ export function ReminderDialog({ appt, onClose, onDone }) {
         {!loading && preview && (
           <>
             <div className="t-reminder-info">
-              <div>
+              <div className="t-reminder-info-row">
                 <span className="t-label">Người nhận:</span>
-                <strong>{appt.patient?.fullName || 'Bệnh nhân'}</strong>
+                <strong className="t-reminder-val">{appt.patient?.fullName || 'Bệnh nhân'}</strong>
               </div>
-              <div>
+              <div className="t-reminder-info-row">
                 <span className="t-label">Số điện thoại:</span>
                 <span className="t-reminder-phone">{preview.phone || appt.patient?.phone || 'Chưa có SĐT'}</span>
               </div>
-              <div>
+              <div className="t-reminder-info-row">
                 <span className="t-label">Giờ khám:</span>
-                <span>{appt.slotStart} ({appt.slotDate})</span>
+                <span className="t-reminder-val">{appt.slotStart} ({appt.slotDate})</span>
               </div>
             </div>
 
@@ -134,23 +134,23 @@ export function ReminderDialog({ appt, onClose, onDone }) {
             <div className="t-reminder-actions">
               <button
                 type="button"
-                className="t-btn t-btn-primary t-btn-bold t-reminder-copy-btn"
+                className="t-btn t-reminder-copy-btn t-btn-bold"
                 onClick={copyContent}
                 aria-label="Sao chép nội dung tin nhắn"
               >
-                <Icon name="clipboard" size={24} />
-                {copied ? 'Đã sao chép' : 'Sao chép nội dung'}
+                <Icon name={copied ? 'check' : 'clipboard'} size={22} />
+                <span>{copied ? 'Đã sao chép' : 'Sao chép nội dung'}</span>
               </button>
 
               <div className="t-reminder-links">
                 {phone && (
                   <a
                     href={smsHref}
-                    className="t-btn t-btn-ghost t-reminder-link-btn"
+                    className="t-btn t-reminder-link-btn"
                     title="Mở ứng dụng tin nhắn SMS của điện thoại"
                   >
-                    <Icon name="chat" size={22} />
-                    Mở SMS
+                    <Icon name="chat" size={20} />
+                    <span>Mở SMS</span>
                   </a>
                 )}
                 {zaloHref && (
@@ -158,11 +158,11 @@ export function ReminderDialog({ appt, onClose, onDone }) {
                     href={zaloHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="t-btn t-btn-ghost t-reminder-link-btn"
+                    className="t-btn t-reminder-link-btn"
                     title="Mở ứng dụng Zalo để nhắn tin"
                   >
-                    <Icon name="external" size={22} />
-                    Mở Zalo
+                    <Icon name="external" size={20} />
+                    <span>Mở Zalo</span>
                   </a>
                 )}
               </div>
@@ -170,19 +170,24 @@ export function ReminderDialog({ appt, onClose, onDone }) {
           </>
         )}
 
-        <div className="t-dialog-actions" style={{ marginTop: 8 }}>
+        <div className="t-dialog-actions t-reminder-footer">
+          <button
+            type="button"
+            className="t-btn t-btn-ghost"
+            style={{ minHeight: 48, minWidth: 120 }}
+            onClick={onClose}
+          >
+            Đóng
+          </button>
           <button
             type="button"
             className="t-btn t-btn-primary t-btn-bold"
-            style={{ minHeight: 48, minWidth: 140 }}
+            style={{ minHeight: 48, minWidth: 170 }}
             onClick={markSent}
             disabled={loading || submitting}
           >
             <Icon name="check" size={22} />
-            {submitting ? 'Đang lưu...' : 'Đã gửi'}
-          </button>
-          <button type="button" className="t-btn t-btn-ghost" style={{ minHeight: 48 }} onClick={onClose}>
-            Đóng
+            <span>{submitting ? 'Đang lưu...' : '✓ Đã gửi tin nhắc'}</span>
           </button>
         </div>
       </div>
@@ -328,19 +333,19 @@ export function BulkReminderDialog({ ids, onClose, onDone }) {
           </>
         )}
 
-        <div className="t-dialog-actions" style={{ marginTop: 10 }}>
+        <div className="t-dialog-actions t-reminder-footer" style={{ marginTop: 10 }}>
+          <button type="button" className="t-btn t-btn-ghost" style={{ minHeight: 48, minWidth: 120 }} onClick={onClose}>
+            Đóng
+          </button>
           <button
             type="button"
             className="t-btn t-btn-primary t-btn-bold"
-            style={{ minHeight: 48, minWidth: 200 }}
+            style={{ minHeight: 48, minWidth: 220 }}
             onClick={markAllSent}
             disabled={loading || submitting || items.length === 0}
           >
             <Icon name="checkCircle" size={22} />
-            {submitting ? 'Đang lưu...' : 'Đánh dấu tất cả đã gửi'}
-          </button>
-          <button type="button" className="t-btn t-btn-ghost" style={{ minHeight: 48 }} onClick={onClose}>
-            Đóng
+            <span>{submitting ? 'Đang lưu...' : '✓ Đánh dấu tất cả đã gửi'}</span>
           </button>
         </div>
       </div>

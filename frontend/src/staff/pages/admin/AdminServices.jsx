@@ -109,10 +109,10 @@ export default function AdminServices() {
       {/* Tiêu đề & Nút Thêm mới */}
       <div className="db-panel-head" style={{ alignItems: 'center', marginBottom: 20 }}>
         <div>
-          <h1 className="t-h1" style={{ fontSize: '26px', color: '#1F1610', margin: 0 }}>
+          <h1 className="t-h1" style={{ fontSize: '26px', color: 'var(--ink-900)', margin: 0 }}>
             Quản trị dịch vụ khám chữa bệnh
           </h1>
-          <p className="t-muted" style={{ fontSize: '18px', marginTop: 6, color: '#5C4838' }}>
+          <p className="t-muted" style={{ fontSize: '18px', marginTop: 6, color: 'var(--ink-600)' }}>
             Quản lý danh mục dịch vụ đông y, phục hồi chức năng và bắt mạch bốc thuốc tại Phòng Khám Chúc Từ.
           </p>
         </div>
@@ -134,9 +134,9 @@ export default function AdminServices() {
         <div
           role="status"
           style={{
-            backgroundColor: '#DCFCE7',
-            color: '#166534',
-            border: '1px solid #86EFAC',
+            backgroundColor: 'var(--green-100)',
+            color: 'var(--green-700)',
+            border: '1px solid var(--green-600)',
             borderRadius: 8,
             padding: '14px 18px',
             fontSize: '18px',
@@ -159,9 +159,9 @@ export default function AdminServices() {
         <div
           role="alert"
           style={{
-            backgroundColor: '#FEF2F2',
-            color: '#991B1B',
-            border: '1px solid #FECACA',
+            backgroundColor: 'var(--alert-100)',
+            color: 'var(--alert-700)',
+            border: '1px solid var(--alert-700)',
             borderRadius: 8,
             padding: '20px',
             marginBottom: 20,
@@ -172,7 +172,7 @@ export default function AdminServices() {
             <Icon name="alert" size={24} />
             <span>Đã xảy ra lỗi khi tải danh mục dịch vụ</span>
           </div>
-          <p style={{ margin: '0 0 16px 0', color: '#7F1D1D' }}>{error.message || 'Không thể kết nối đến máy chủ.'}</p>
+          <p style={{ margin: '0 0 16px 0', color: 'var(--alert-700)' }}>{error.message || 'Không thể kết nối đến máy chủ.'}</p>
           <button
             type="button"
             className="t-btn t-btn-primary"
@@ -187,7 +187,7 @@ export default function AdminServices() {
       {/* 4 Trạng thái: 3. Rỗng */}
       {!loading && !error && services.length === 0 && (
         <Empty title="Chưa có dịch vụ nào trong danh mục">
-          <p style={{ fontSize: '18px', color: '#5C4838', marginBottom: 20 }}>
+          <p style={{ fontSize: '18px', color: 'var(--ink-600)', marginBottom: 20 }}>
             Quý vị có thể bắt đầu thêm các dịch vụ y học cổ truyền (Châm cứu, Xoa bóp, Bốc thuốc...) vào hệ thống.
           </p>
           <button
@@ -204,17 +204,17 @@ export default function AdminServices() {
 
       {/* 4 Trạng thái: 4. Thành công - Hiển thị Bảng danh sách */}
       {!loading && !error && services.length > 0 && (
-        <div className="t-table-wrap" style={{ overflowX: 'auto', backgroundColor: '#FFFFFF', borderRadius: 8, border: '1px solid #E5E0D8' }}>
+        <div className="t-table-wrap" style={{ overflowX: 'auto', backgroundColor: 'var(--surface-card)', borderRadius: 8, border: '1px solid var(--line-soft)' }}>
           <table className="t-table" style={{ width: '100%', fontSize: '18px', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ backgroundColor: '#F5EFE6', borderBottom: '2px solid #D8CFC4', textAlign: 'left' }}>
-                <th style={{ padding: '16px 14px', color: '#1F1610', fontWeight: 700 }}>Tên dịch vụ</th>
-                <th style={{ padding: '16px 14px', color: '#1F1610', fontWeight: 700 }}>Slug (URL)</th>
-                <th style={{ padding: '16px 14px', color: '#1F1610', fontWeight: 700 }}>Thời lượng</th>
-                <th style={{ padding: '16px 14px', color: '#1F1610', fontWeight: 700 }}>Giá tham khảo</th>
-                <th style={{ padding: '16px 14px', color: '#1F1610', fontWeight: 700, textAlign: 'center' }}>Thứ tự</th>
-                <th style={{ padding: '16px 14px', color: '#1F1610', fontWeight: 700, textAlign: 'center' }}>Đang dùng</th>
-                <th style={{ padding: '16px 14px', color: '#1F1610', fontWeight: 700, textAlign: 'right' }}>Thao tác</th>
+              <tr style={{ backgroundColor: 'var(--surface-200)', borderBottom: '2px solid var(--line-soft)', textAlign: 'left' }}>
+                <th style={{ padding: '16px 14px', color: 'var(--ink-800)', fontWeight: 700 }}>Tên dịch vụ</th>
+                <th style={{ padding: '16px 14px', color: 'var(--ink-800)', fontWeight: 700 }}>Slug (URL)</th>
+                <th style={{ padding: '16px 14px', color: 'var(--ink-800)', fontWeight: 700 }}>Thời lượng</th>
+                <th style={{ padding: '16px 14px', color: 'var(--ink-800)', fontWeight: 700 }}>Giá tham khảo</th>
+                <th style={{ padding: '16px 14px', color: 'var(--ink-800)', fontWeight: 700, textAlign: 'center' }}>Thứ tự</th>
+                <th style={{ padding: '16px 14px', color: 'var(--ink-800)', fontWeight: 700, textAlign: 'center' }}>Đang dùng</th>
+                <th style={{ padding: '16px 14px', color: 'var(--ink-800)', fontWeight: 700, textAlign: 'right' }}>Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -222,20 +222,20 @@ export default function AdminServices() {
                 <tr
                   key={s.id}
                   style={{
-                    borderBottom: '1px solid #EDE8E1',
-                    backgroundColor: s.isActive ? '#FFFFFF' : '#F9F8F6',
+                    borderBottom: '1px solid var(--line-soft)',
+                    backgroundColor: s.isActive ? 'var(--surface-card)' : 'var(--surface-100)',
                     opacity: s.isActive ? 1 : 0.8,
                   }}
                 >
-                  <td style={{ padding: '16px 14px', fontWeight: 600, color: '#1F1610' }}>
+                  <td style={{ padding: '16px 14px', fontWeight: 600, color: 'var(--ink-900)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <span
                         style={{
                           width: 36,
                           height: 36,
                           borderRadius: '50%',
-                          backgroundColor: '#F5EFE6',
-                          color: '#5C3A21',
+                          backgroundColor: 'var(--surface-200)',
+                          color: 'var(--wood-800)',
                           display: 'inline-flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -254,16 +254,16 @@ export default function AdminServices() {
                       </div>
                     </div>
                   </td>
-                  <td style={{ padding: '16px 14px', color: '#5C4838', fontFamily: 'monospace', fontSize: '16px' }}>
+                  <td style={{ padding: '16px 14px', color: 'var(--ink-600)', fontFamily: 'monospace', fontSize: '16px' }}>
                     <code>{s.slug}</code>
                   </td>
-                  <td style={{ padding: '16px 14px', color: '#1F1610' }}>
+                  <td style={{ padding: '16px 14px', color: 'var(--ink-900)' }}>
                     {s.durationMin} phút
                   </td>
-                  <td style={{ padding: '16px 14px', color: '#1F1610' }}>
+                  <td style={{ padding: '16px 14px', color: 'var(--ink-900)' }}>
                     <span>{fmtVND(s.price)}</span>
                   </td>
-                  <td style={{ padding: '16px 14px', textAlign: 'center', color: '#5C4838' }}>
+                  <td style={{ padding: '16px 14px', textAlign: 'center', color: 'var(--ink-600)' }}>
                     {s.sortOrder ?? 0}
                   </td>
                   <td style={{ padding: '16px 14px', textAlign: 'center' }}>
@@ -282,8 +282,8 @@ export default function AdminServices() {
                         border: 'none',
                         fontSize: '16px',
                         fontWeight: 600,
-                        backgroundColor: s.isActive ? '#DCFCE7' : '#F3F4F6',
-                        color: s.isActive ? '#166534' : '#6B7280',
+                        backgroundColor: s.isActive ? 'var(--green-100)' : 'var(--surface-200)',
+                        color: s.isActive ? 'var(--green-700)' : 'var(--ink-500)',
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: 6,
@@ -366,15 +366,15 @@ export default function AdminServices() {
           }}
           alert
         >
-          <div className="t-dialog-body" style={{ padding: '20px 24px', fontSize: '18px', color: '#1F1610' }}>
+          <div className="t-dialog-body" style={{ padding: '20px 24px', fontSize: '18px', color: 'var(--ink-900)' }}>
             {deleteError ? (
               <div
                 style={{
-                  backgroundColor: '#FEF2F2',
-                  border: '1px solid #FECACA',
+                  backgroundColor: 'var(--alert-100)',
+                  border: '1px solid var(--alert-700)',
                   borderRadius: 8,
                   padding: '16px',
-                  color: '#991B1B',
+                  color: 'var(--alert-700)',
                   marginBottom: 16,
                   lineHeight: 1.5,
                 }}
@@ -576,8 +576,8 @@ function ServiceFormDialog({ mode, initialService, onClose, onSuccess }) {
 
           {/* Tên dịch vụ */}
           <div style={{ marginBottom: 18 }}>
-            <label htmlFor={nameId} style={{ display: 'block', fontWeight: 700, marginBottom: 6, color: '#1F1610' }}>
-              Tên dịch vụ <span style={{ color: '#DC2626' }}>*</span>
+            <label htmlFor={nameId} style={{ display: 'block', fontWeight: 700, marginBottom: 6, color: 'var(--ink-900)' }}>
+              Tên dịch vụ <span style={{ color: 'var(--alert-700)' }}>*</span>
             </label>
             <input
               id={nameId}
@@ -594,8 +594,8 @@ function ServiceFormDialog({ mode, initialService, onClose, onSuccess }) {
 
           {/* Slug URL */}
           <div style={{ marginBottom: 18 }}>
-            <label htmlFor={slugId} style={{ display: 'block', fontWeight: 700, marginBottom: 6, color: '#1F1610' }}>
-              Mã định danh (Slug) <span style={{ color: '#DC2626' }}>*</span>
+            <label htmlFor={slugId} style={{ display: 'block', fontWeight: 700, marginBottom: 6, color: 'var(--ink-900)' }}>
+              Mã định danh (Slug) <span style={{ color: 'var(--alert-700)' }}>*</span>
             </label>
             <input
               id={slugId}
@@ -606,7 +606,7 @@ function ServiceFormDialog({ mode, initialService, onClose, onSuccess }) {
               onChange={handleSlugChange}
               placeholder="ví-dụ: cham-cuu"
             />
-            <p className="t-fine" style={{ color: '#5C4838', fontSize: '15px', marginTop: 4, marginBottom: 0 }}>
+            <p className="t-fine" style={{ color: 'var(--ink-600)', fontSize: '15px', marginTop: 4, marginBottom: 0 }}>
               Đường dẫn hiển thị: <code>chuctupk.vn/dich-vu#{toSlug(slug || name) || '...'}</code>
             </p>
           </div>
@@ -614,8 +614,8 @@ function ServiceFormDialog({ mode, initialService, onClose, onSuccess }) {
           {/* Thời lượng & Giá tham khảo */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 18 }}>
             <div>
-              <label htmlFor={durationId} style={{ display: 'block', fontWeight: 700, marginBottom: 6, color: '#1F1610' }}>
-                Thời lượng (phút) <span style={{ color: '#DC2626' }}>*</span>
+              <label htmlFor={durationId} style={{ display: 'block', fontWeight: 700, marginBottom: 6, color: 'var(--ink-900)' }}>
+                Thời lượng (phút) <span style={{ color: 'var(--alert-700)' }}>*</span>
               </label>
               <input
                 id={durationId}
@@ -628,13 +628,13 @@ function ServiceFormDialog({ mode, initialService, onClose, onSuccess }) {
                 onChange={(e) => setDurationMin(e.target.value)}
                 required
               />
-              <p className="t-fine" style={{ color: '#6B7280', fontSize: '15px', marginTop: 4, marginBottom: 0 }}>
+              <p className="t-fine" style={{ color: 'var(--ink-500)', fontSize: '15px', marginTop: 4, marginBottom: 0 }}>
                 Từ 5 đến 240 phút
               </p>
             </div>
 
             <div>
-              <label htmlFor={priceId} style={{ display: 'block', fontWeight: 700, marginBottom: 6, color: '#1F1610' }}>
+              <label htmlFor={priceId} style={{ display: 'block', fontWeight: 700, marginBottom: 6, color: 'var(--ink-900)' }}>
                 Giá tham khảo (VND)
               </label>
               <input
@@ -647,7 +647,7 @@ function ServiceFormDialog({ mode, initialService, onClose, onSuccess }) {
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
               />
-              <p className="t-fine" style={{ color: '#D97706', fontSize: '15px', marginTop: 4, marginBottom: 0, fontWeight: 600 }}>
+              <p className="t-fine" style={{ color: 'var(--gold-700)', fontSize: '15px', marginTop: 4, marginBottom: 0, fontWeight: 600 }}>
                 Phòng khám không thu tiền — giá chỉ để tham khảo
               </p>
             </div>
@@ -656,7 +656,7 @@ function ServiceFormDialog({ mode, initialService, onClose, onSuccess }) {
           {/* Thứ tự & Trạng thái bật/tắt */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 18, alignItems: 'center' }}>
             <div>
-              <label htmlFor={sortId} style={{ display: 'block', fontWeight: 700, marginBottom: 6, color: '#1F1610' }}>
+              <label htmlFor={sortId} style={{ display: 'block', fontWeight: 700, marginBottom: 6, color: 'var(--ink-900)' }}>
                 Thứ tự hiển thị
               </label>
               <input
@@ -667,7 +667,7 @@ function ServiceFormDialog({ mode, initialService, onClose, onSuccess }) {
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value)}
               />
-              <p className="t-fine" style={{ color: '#6B7280', fontSize: '15px', marginTop: 4, marginBottom: 0 }}>
+              <p className="t-fine" style={{ color: 'var(--ink-500)', fontSize: '15px', marginTop: 4, marginBottom: 0 }}>
                 Số nhỏ hơn xếp trước
               </p>
             </div>
@@ -680,7 +680,7 @@ function ServiceFormDialog({ mode, initialService, onClose, onSuccess }) {
                   gap: 12,
                   cursor: 'pointer',
                   fontWeight: 600,
-                  color: '#1F1610',
+                  color: 'var(--ink-900)',
                   minHeight: 48,
                 }}
               >
@@ -688,7 +688,7 @@ function ServiceFormDialog({ mode, initialService, onClose, onSuccess }) {
                   type="checkbox"
                   checked={isActive}
                   onChange={(e) => setIsActive(e.target.checked)}
-                  style={{ width: 24, height: 24, cursor: 'pointer', accentColor: '#15803D' }}
+                  style={{ width: 24, height: 24, cursor: 'pointer', accentColor: 'var(--green-600)' }}
                 />
                 <span>Đang dùng (hiển thị cho bệnh nhân)</span>
               </label>
@@ -697,7 +697,7 @@ function ServiceFormDialog({ mode, initialService, onClose, onSuccess }) {
 
           {/* Mô tả dịch vụ */}
           <div>
-            <label htmlFor={descId} style={{ display: 'block', fontWeight: 700, marginBottom: 6, color: '#1F1610' }}>
+            <label htmlFor={descId} style={{ display: 'block', fontWeight: 700, marginBottom: 6, color: 'var(--ink-900)' }}>
               Mô tả tóm tắt dịch vụ
             </label>
             <textarea

@@ -39,17 +39,17 @@ export function AppointmentHistoryDialog({ appt, onClose }) {
 
   return (
     <TDialog title={`Lịch sử phiếu khám: ${appt.ticketCode || appt.bookingCode || ''}`} width={700} onClose={onClose}>
-      <div className="t-dialog-body" style={{ padding: '24px 28px', fontSize: '18px', color: '#1F1610' }}>
-        <h3 className="t-h3" style={{ fontSize: '20px', marginBottom: '16px', color: '#5C3A21' }}>
+      <div className="t-dialog-body" style={{ padding: '24px 28px', fontSize: '18px', color: 'var(--ink-900)' }}>
+        <h3 className="t-h3" style={{ fontSize: '20px', marginBottom: '16px', color: 'var(--wood-800)' }}>
           Lịch sử phiếu
         </h3>
 
         {loading ? (
-          <p style={{ fontSize: '18px', color: '#4B5563' }}>Đang tải lịch sử...</p>
+          <p style={{ fontSize: '18px', color: 'var(--ink-600)' }}>Đang tải lịch sử...</p>
         ) : error ? (
-          <p style={{ fontSize: '18px', color: '#B91C1C' }}>{error}</p>
+          <p style={{ fontSize: '18px', color: 'var(--alert-700)' }}>{error}</p>
         ) : items.length === 0 ? (
-          <p style={{ fontSize: '18px', color: '#6B7280' }}>Chưa có thay đổi nào.</p>
+          <p style={{ fontSize: '18px', color: 'var(--ink-500)' }}>Chưa có thay đổi nào.</p>
         ) : (
           <div
             className="appointment-history-timeline"
@@ -57,7 +57,7 @@ export function AppointmentHistoryDialog({ appt, onClose }) {
               display: 'flex',
               flexDirection: 'column',
               gap: '16px',
-              borderLeft: '3px solid #78350F',
+              borderLeft: '3px solid var(--wood-800)',
               paddingLeft: '18px',
               marginLeft: '6px',
             }}
@@ -66,27 +66,27 @@ export function AppointmentHistoryDialog({ appt, onClose }) {
               <div
                 key={idx}
                 style={{
-                  backgroundColor: '#FDFBF7',
-                  border: '1px solid #E5E7EB',
+                  backgroundColor: 'var(--surface-card)',
+                  border: '1px solid var(--line-soft)',
                   borderRadius: '8px',
                   padding: '16px 20px',
                   fontSize: '18px',
                   lineHeight: 1.5,
                 }}
               >
-                <div style={{ fontWeight: 600, color: '#1F1610', marginBottom: '6px' }}>
+                <div style={{ fontWeight: 600, color: 'var(--ink-900)', marginBottom: '6px' }}>
                   <span>{formatTimestamp(item.at)}</span>
                   <span style={{ margin: '0 8px' }}>—</span>
-                  <span style={{ color: '#78350F' }}>
+                  <span style={{ color: 'var(--wood-800)' }}>
                     {item.oldStatusLabel ? `${item.oldStatusLabel} → ` : 'Khởi tạo → '}
                     {item.newStatusLabel}
                   </span>
                 </div>
-                <div style={{ fontSize: '18px', color: '#374151' }}>
+                <div style={{ fontSize: '18px', color: 'var(--ink-700)' }}>
                   Người thực hiện: <strong>{item.actorName || 'Hệ thống'}</strong>
                 </div>
                 {item.reason && (
-                  <div style={{ fontSize: '18px', color: '#4B5563', marginTop: '6px' }}>
+                  <div style={{ fontSize: '18px', color: 'var(--ink-600)', marginTop: '6px' }}>
                     Lý do: <em>{item.reason}</em>
                   </div>
                 )}

@@ -214,11 +214,11 @@ export default function AdminSettings() {
         <div
           style={{
             marginBottom: 24,
-            background: '#fef3c7',
-            border: '2px solid #f59e0b',
+            background: 'var(--gold-100)',
+            border: '2px solid var(--gold-500)',
             borderRadius: 16,
             padding: '16px 20px',
-            color: '#92400e',
+            color: 'var(--gold-700)',
             display: 'flex',
             alignItems: 'flex-start',
             gap: 14,
@@ -300,7 +300,7 @@ export default function AdminSettings() {
                             fontSize: 18,
                             padding: '0 16px',
                             borderRadius: 12,
-                            border: fieldErr ? '2px solid #dc2626' : '1.5px solid var(--line-soft)',
+                            border: fieldErr ? '2px solid var(--alert-700)' : '1.5px solid var(--line-soft)',
                             background: 'var(--surface-card)',
                             color: 'var(--ink-900)',
                             minWidth: 180,
@@ -323,7 +323,7 @@ export default function AdminSettings() {
                             fontSize: 18,
                             padding: '0 16px',
                             borderRadius: 12,
-                            border: fieldErr ? '2px solid #dc2626' : '1.5px solid var(--line-soft)',
+                            border: fieldErr ? '2px solid var(--alert-700)' : '1.5px solid var(--line-soft)',
                             background: 'var(--surface-card)',
                             color: 'var(--ink-900)',
                             width: type === 'time' ? 180 : 160,
@@ -340,7 +340,7 @@ export default function AdminSettings() {
                     </div>
 
                     {fieldErr && (
-                      <span style={{ color: '#b91c1c', fontSize: 15, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                      <span style={{ color: 'var(--alert-700)', fontSize: 15, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
                         <Icon name="alert" size={18} />
                         {fieldErr}
                       </span>
