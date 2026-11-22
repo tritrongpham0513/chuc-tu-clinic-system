@@ -10,6 +10,7 @@ import com.chuctupk.repository.RefreshTokenRepository;
 import com.chuctupk.service.ClinicSettingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +24,7 @@ import java.util.List;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class ClinicScheduledTasks {
 
     private final AppointmentRepository appointmentRepository;
@@ -32,9 +33,23 @@ public class ClinicScheduledTasks {
     private final OtpVerificationRepository otpVerificationRepository;
     private final ClinicSettingService clinicSettingService;
     private final com.chuctupk.service.NotificationService notificationService;
+    private final com.chuctupk.service.AppointmentStateService appointmentStateService;
     private final Clock clock;
 
-    public static final String AUTO_CANCEL_REASON = "Không đến khám";
+    public ClinicScheduledTasks(
+            AppointmentRepository appointmentRepository,
+            AppointmentSeatRepository appointmentSeatRepository,
+            RefreshTokenRepository refreshTokenRepository,
+            OtpVerificationRepository otpVerificationRepository,
+            ClinicSettingService clinicSettingService,
+            com.chuctupk.service.NotificationService notificationService,
+            Clock clock) {
+        this(appointmentRepository, appointmentSeatRepository, refreshTokenRepository,
+                otpVerificationRepository, clinicSettingService, notificationService,
+                new com.chuctupk.service.impl.AppointmentStateServiceImpl(appointmentRepository, null, clock), clock);
+    }
+
+    public static final String AUTO_CANCEL_REASON = "Không đến khám (tự động)";
 
     /**
      * Tự động chuyển NO_SHOW cho các lịch hẹn PENDING trong ngày khi slot đã kết thúc và quá mốc no_show_cancel_at.
@@ -68,9 +83,10 @@ public class ClinicScheduledTasks {
             // Chỉ huỷ khi slot đã kết thúc (slot.endTime < nowTime)
             boolean slotEnded = (slot == null || slot.getEndTime() == null || slot.getEndTime().isBefore(nowTime));
             if (slotEnded) {
-                appointment.setStatus(AppointmentStatus.NO_SHOW);
-                appointment.setCancelReason(AUTO_CANCEL_REASON);
-                appointment.setCancelledAt(now);
+                appointmentStateService.transition(appointment,
+                        AppointmentStatus.NO_SHOW,
+                        null,
+                        AUTO_CANCEL_REASON);
                 toNoShow.add(appointment);
 
                 // Nhả ghế đã giữ
@@ -86,7 +102,6 @@ public class ClinicScheduledTasks {
             return 0;
         }
 
-        appointmentRepository.saveAll(toNoShow);
         log.info("[Scheduled] Đã tự động chuyển trạng thái NO_SHOW cho {} lịch khám không đến trong ngày {}",
                 toNoShow.size(), today);
 

@@ -2,6 +2,7 @@ package com.chuctupk.service.impl;
 
 import com.chuctupk.entity.Appointment;
 import com.chuctupk.entity.Doctor;
+import com.chuctupk.entity.User;
 import com.chuctupk.entity.TimeSlot;
 import com.chuctupk.entity.enums.AppointmentStatus;
 import com.chuctupk.entity.enums.DayOfWeek;
@@ -14,6 +15,7 @@ import com.chuctupk.repository.DoctorScheduleRepository;
 import com.chuctupk.service.DoctorAssignmentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,13 +27,23 @@ import java.util.Set;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class DoctorAssignmentServiceImpl implements DoctorAssignmentService {
 
     private final DoctorScheduleRepository doctorScheduleRepository;
     private final DoctorDayOffRepository doctorDayOffRepository;
     private final DoctorRepository doctorRepository;
     private final AppointmentRepository appointmentRepository;
+    private final com.chuctupk.service.AppointmentStateService appointmentStateService;
+
+    public DoctorAssignmentServiceImpl(
+            DoctorScheduleRepository doctorScheduleRepository,
+            DoctorDayOffRepository doctorDayOffRepository,
+            DoctorRepository doctorRepository,
+            AppointmentRepository appointmentRepository) {
+        this(doctorScheduleRepository, doctorDayOffRepository, doctorRepository, appointmentRepository,
+                new AppointmentStateServiceImpl(appointmentRepository, null, java.time.Clock.systemDefaultZone()));
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -128,10 +140,24 @@ public class DoctorAssignmentServiceImpl implements DoctorAssignmentService {
             }
         }
 
+        Doctor oldDoctor = appointment.getDoctor();
         appointment.setDoctor(doctor);
         appointment.setDoctorChangeRequestedAt(null);
         appointment.setDoctorChangeNote(null);
-        appointmentRepository.save(appointment);
+
+        String oldDocName = oldDoctor != null ? oldDoctor.getFullName() : "Chưa có";
+        String newDocName = doctor.getFullName();
+
+        User actor = null;
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof User u) {
+            actor = u;
+        }
+
+        appointmentStateService.transition(appointment,
+                appointment.getStatus(),
+                actor,
+                "Đổi bác sĩ: " + oldDocName + " → " + newDocName);
         log.info("Phân công bác sĩ ID {} cho lịch hẹn ID {}", doctorId, appointmentId);
     }
 }

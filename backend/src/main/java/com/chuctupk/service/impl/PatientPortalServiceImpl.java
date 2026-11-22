@@ -49,6 +49,7 @@ public class PatientPortalServiceImpl implements PatientPortalService {
     private final com.chuctupk.service.DoctorAssignmentService doctorAssignmentService;
     private final com.chuctupk.service.NotificationService notificationService;
     private final com.chuctupk.service.CapacityResolver capacityResolver;
+    private final com.chuctupk.service.AppointmentStateService appointmentStateService;
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @org.springframework.beans.factory.annotation.Autowired
@@ -66,7 +67,8 @@ public class PatientPortalServiceImpl implements PatientPortalService {
             com.chuctupk.service.SlotPolicy slotPolicy,
             com.chuctupk.service.DoctorAssignmentService doctorAssignmentService,
             com.chuctupk.service.NotificationService notificationService,
-            com.chuctupk.service.CapacityResolver capacityResolver
+            com.chuctupk.service.CapacityResolver capacityResolver,
+            com.chuctupk.service.AppointmentStateService appointmentStateService
     ) {
         this.userRepository = userRepository;
         this.patientRepository = patientRepository;
@@ -82,6 +84,8 @@ public class PatientPortalServiceImpl implements PatientPortalService {
         this.doctorAssignmentService = doctorAssignmentService;
         this.notificationService = notificationService;
         this.capacityResolver = capacityResolver != null ? capacityResolver : new com.chuctupk.service.CapacityResolver(doctorAssignmentService, clinicSettingService);
+        this.appointmentStateService = appointmentStateService != null ? appointmentStateService
+                : new AppointmentStateServiceImpl(appointmentRepository, null, clock);
     }
 
     public PatientPortalServiceImpl(
@@ -104,7 +108,7 @@ public class PatientPortalServiceImpl implements PatientPortalService {
                 appointmentSeatRepository, idempotencyKeyRepository,
                 medicalRecordRepository, timeSlotRepository, sequenceGeneratorService,
                 clock, clinicSettingService, slotPolicy, doctorAssignmentService,
-                notificationService, null
+                notificationService, null, null
         );
     }
 
@@ -504,12 +508,14 @@ public class PatientPortalServiceImpl implements PatientPortalService {
                             .slotEndSnapshot(chosenSlot.getEndTime())
                             .expectedTime(chosenSlot.getStartTime())
                             .source(AppointmentSource.WEB)
-                            .status(AppointmentStatus.PENDING)
                             .bookerName(currentUser.getFullName())
                             .bookerPhone(currentUser.getPhone())
                             .rescheduledFrom(rebookedFrom)
                             .build();
-                    savedAppointment = appointmentRepository.saveAndFlush(appt);
+                    savedAppointment = appointmentStateService.transition(appt,
+                            AppointmentStatus.PENDING,
+                            null,
+                            "Bệnh nhân đặt lịch trực tuyến");
                 }
 
                 AppointmentSeat seat = AppointmentSeat.builder()
@@ -623,10 +629,10 @@ public class PatientPortalServiceImpl implements PatientPortalService {
                     "Phiếu khám đã tiếp nhận hoặc đang khám, không thể hủy");
         }
 
-        a.setStatus(AppointmentStatus.CANCELLED);
-        a.setCancelledAt(LocalDateTime.now(clock));
-        a.setCancelReason(reason != null && !reason.isBlank() ? reason.trim() : "Bệnh nhân chủ động hủy trên trang web");
-        Appointment saved = appointmentRepository.save(a);
+        Appointment saved = appointmentStateService.transition(a,
+                AppointmentStatus.CANCELLED,
+                currentUser,
+                reason != null && !reason.isBlank() ? reason.trim() : "Bệnh nhân chủ động hủy trên trang web");
 
         // Nhả ghế khám để người khác có thể đặt
         appointmentSeatRepository.deleteByAppointmentId(saved.getId());
@@ -753,7 +759,10 @@ public class PatientPortalServiceImpl implements PatientPortalService {
         if (request.getReason() != null && !request.getReason().isBlank()) {
             appt.setNote("Đổi lịch: " + request.getReason().trim());
         }
-        Appointment savedAppt = appointmentRepository.save(appt);
+        Appointment savedAppt = appointmentStateService.transition(appt,
+                AppointmentStatus.PENDING,
+                currentUser,
+                "Đổi giờ: " + (request.getReason() != null && !request.getReason().isBlank() ? request.getReason().trim() : "Bệnh nhân đổi lịch"));
 
         AppointmentSeat newSeat = AppointmentSeat.builder()
                 .appointmentDate(targetDate)

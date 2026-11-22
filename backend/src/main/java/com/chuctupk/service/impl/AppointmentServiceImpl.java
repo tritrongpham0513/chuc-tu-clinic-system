@@ -40,6 +40,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
     private final AppointmentStatusHistoryRepository statusHistoryRepository;
+    private final com.chuctupk.service.AppointmentStateService appointmentStateService;
     private final PatientRepository patientRepository;
     private final TimeSlotRepository timeSlotRepository;
     private final DoctorRepository doctorRepository;
@@ -183,19 +184,12 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .bookerName(request.getBookerName())
                 .bookerPhone(cleanPhone(request.getBookerPhone()))
                 .source(AppointmentSource.WEB)
-                .status(AppointmentStatus.PENDING)
                 .build();
 
-        appointment = appointmentRepository.save(appointment);
-
-        // 12. Ghi 1 bản ghi vào lịch sử trạng thái
-        statusHistoryRepository.save(AppointmentStatusHistory.builder()
-                .appointment(appointment)
-                .oldStatus(null)
-                .newStatus(AppointmentStatus.PENDING.name())
-                .reason("Bệnh nhân đăng ký khám trực tuyến qua website")
-                .changedBy(null)
-                .build());
+        appointment = appointmentStateService.transition(appointment,
+                AppointmentStatus.PENDING,
+                null,
+                "Bệnh nhân đặt lịch trực tuyến");
 
         log.info("Đặt lịch thành công mã: {}", bookingCode);
         return toResponse(appointment);
@@ -260,19 +254,10 @@ public class AppointmentServiceImpl implements AppointmentService {
             throw AppException.unprocessable("Đã sát giờ khám, vui lòng gọi hotline để hủy");
         }
 
-        String oldStatus = appointment.getStatus().name();
-        appointment.setStatus(AppointmentStatus.CANCELLED);
-        appointment.setCancelReason(request.getCancelReason());
-        appointment = appointmentRepository.save(appointment);
-
-        // Ghi lịch sử đổi trạng thái
-        statusHistoryRepository.save(AppointmentStatusHistory.builder()
-                .appointment(appointment)
-                .oldStatus(oldStatus)
-                .newStatus(AppointmentStatus.CANCELLED.name())
-                .reason(request.getCancelReason() != null ? request.getCancelReason() : "Bệnh nhân hủy qua website")
-                .changedBy(null)
-                .build());
+        appointment = appointmentStateService.transition(appointment,
+                AppointmentStatus.CANCELLED,
+                null,
+                request.getCancelReason() != null ? request.getCancelReason() : "Bệnh nhân hủy qua website");
 
         log.info("Đã hủy lịch hẹn mã: {}", bookingCode);
         return toResponse(appointment);

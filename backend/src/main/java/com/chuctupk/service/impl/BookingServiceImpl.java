@@ -47,6 +47,7 @@ public class BookingServiceImpl implements BookingService {
     private final MedicalRecordRepository medicalRecordRepository;
     private final ClinicHolidayRepository clinicHolidayRepository;
     private final ClinicSettingService clinicSettingService;
+    private final com.chuctupk.service.AppointmentStateService appointmentStateService;
     private final Clock clock;
 
     // ----------------------------------------------------------------
@@ -165,11 +166,13 @@ public class BookingServiceImpl implements BookingService {
                 .bookerName(user.getFullName())
                 .bookerPhone(user.getPhone())
                 .source(AppointmentSource.WEB)
-                .status(AppointmentStatus.PENDING)
                 .build();
 
         try {
-            appointment = appointmentRepository.save(appointment);
+            appointment = appointmentStateService.transition(appointment,
+                    AppointmentStatus.PENDING,
+                    null,
+                    "Bệnh nhân đặt lịch trực tuyến");
         } catch (DataIntegrityViolationException e) {
             log.warn("Duplicate booking attempt for user={}, date={}, slot={}",
                     user.getId(), request.getAppointmentDate(), slot.getId());
@@ -227,9 +230,10 @@ public class BookingServiceImpl implements BookingService {
         if (appointment.getStatus() != AppointmentStatus.PENDING) {
             throw AppException.unprocessable("Chỉ có thể hủy phiếu khám đang chờ xác nhận");
         }
-        appointment.setStatus(AppointmentStatus.CANCELLED);
-        appointment.setCancelReason(request.getCancelReason());
-        appointment = appointmentRepository.save(appointment);
+        appointment = appointmentStateService.transition(appointment,
+                AppointmentStatus.CANCELLED,
+                user,
+                request.getCancelReason());
 
         log.info("Appointment cancelled by patient: id={}, user={}", id, user.getId());
         return toDetailResponse(appointment);

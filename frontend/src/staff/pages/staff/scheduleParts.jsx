@@ -84,6 +84,7 @@ export function RowMenu({ a, isToday, isPast, open, onToggle, act, canChangeDoct
   if (a.status === 'COMPLETED') items.push(['record', 'file', 'Xem lượt khám']);
   items.push(['patient', 'user', 'Mở hồ sơ bệnh nhân']);
   if (a.status !== 'CANCELLED') items.push(['print', 'printer', 'In phiếu khám']);
+  items.push(['history', 'clock', 'Lịch sử phiếu']);
   if (a.status === 'CHECKED_IN' && isToday) items.push(['undo-checkin', 'undo', 'Hoàn tác check-in']);
   if (a.status === 'BOOKED' && !isPast) items.push(['cancel', 'x', 'Huỷ phiếu khám', 'danger']);
 

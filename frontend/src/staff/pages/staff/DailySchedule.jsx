@@ -13,6 +13,7 @@ import { CancelDialog, CheckinDialog, UndoCheckinDialog } from '../../components
 import { RescheduleDialog } from '../../components/appointments/RescheduleDialog.jsx';
 import { ChangeDoctorDialog } from '../../components/appointments/ChangeDoctorDialog.jsx';
 import { RequestDoctorChangeDialog } from '../../components/appointments/RequestDoctorChangeDialog.jsx';
+import { AppointmentHistoryDialog } from '../../components/appointments/AppointmentHistoryDialog.jsx';
 import { ReminderDialog, BulkReminderDialog } from '../../components/appointments/ReminderDialog.jsx';
 import { StatusChip, stateNote, RowMenu } from './scheduleParts.jsx';
 import { useSession, isDoctor } from '../../../shared/lib/session.jsx';
@@ -247,6 +248,7 @@ export default function DailySchedule() {
     if (key === 'change-doctor') return setDialog({ type: 'change-doctor', appt: a });
     if (key === 'request-doctor-change') return setDialog({ type: 'request-doctor-change', appt: a });
     if (key === 'cancel') return setDialog({ type: 'cancel', appt: a });
+    if (key === 'history') return setDialog({ type: 'history', appt: a });
   };
 
   const doctorChangeItems = useMemo(
@@ -724,6 +726,12 @@ export default function DailySchedule() {
       {dialog?.type === 'reschedule' && <RescheduleDialog appt={dialog.appt} onClose={() => setDialog(null)} onDone={done} />}
       {dialog?.type === 'change-doctor' && <ChangeDoctorDialog appt={dialog.appt} onClose={() => setDialog(null)} onDone={done} />}
       {dialog?.type === 'cancel' && <CancelDialog appt={dialog.appt} onClose={() => setDialog(null)} onDone={done} />}
+      {dialog?.type === 'history' && (
+        <AppointmentHistoryDialog
+          appt={dialog.appt}
+          onClose={() => setDialog(null)}
+        />
+      )}
       {dialog?.type === 'request-doctor-change' && (
         <RequestDoctorChangeDialog
           appt={dialog.appt}

@@ -150,7 +150,10 @@ class ClinicScheduledTasksTest {
         @Override public <S extends Appointment> long count(Example<S> example) { return 0; }
         @Override public <S extends Appointment> boolean exists(Example<S> example) { return false; }
         @Override public <S extends Appointment, R> R findBy(Example<S> example, Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction) { return null; }
-        @Override public <S extends Appointment> S save(S entity) { return null; }
+        @Override public <S extends Appointment> S save(S entity) {
+            savedAppointments.add(entity);
+            return entity;
+        }
         @Override public Optional<Appointment> findById(Long aLong) { return Optional.empty(); }
         @Override public boolean existsById(Long aLong) { return false; }
         @Override public List<Appointment> findAll() { return Collections.emptyList(); }
@@ -297,7 +300,7 @@ class ClinicScheduledTasksTest {
         assertThat(appointmentRepository.savedAppointments).hasSize(1);
         Appointment saved = appointmentRepository.savedAppointments.get(0);
         assertThat(saved.getStatus()).isEqualTo(AppointmentStatus.NO_SHOW);
-        assertThat(saved.getCancelReason()).isEqualTo("Không đến khám");
+        assertThat(saved.getCancelReason()).isEqualTo(ClinicScheduledTasks.AUTO_CANCEL_REASON);
         assertThat(saved.getCancelledAt()).isNotNull();
         assertThat(seatRepository.deletedAppointmentIds).contains(101L);
     }

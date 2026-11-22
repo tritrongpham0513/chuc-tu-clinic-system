@@ -17,6 +17,7 @@ import com.chuctupk.service.StaffService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +29,7 @@ import java.util.*;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class StaffRecordServiceImpl implements StaffRecordService {
 
     private final MedicalRecordRepository medicalRecordRepository;
@@ -38,11 +39,28 @@ public class StaffRecordServiceImpl implements StaffRecordService {
     private final DoctorRepository doctorRepository;
     private final CheckinRepository checkinRepository;
     private final ClinicSettingService clinicSettingService;
+    private final com.chuctupk.service.AppointmentStateService appointmentStateService;
     private final Clock clock;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Lazy
     private final StaffService staffService;
+
+    public StaffRecordServiceImpl(
+            MedicalRecordRepository medicalRecordRepository,
+            MedicalRecordEditRepository medicalRecordEditRepository,
+            AppointmentRepository appointmentRepository,
+            PatientRepository patientRepository,
+            DoctorRepository doctorRepository,
+            CheckinRepository checkinRepository,
+            ClinicSettingService clinicSettingService,
+            Clock clock,
+            StaffService staffService) {
+        this(medicalRecordRepository, medicalRecordEditRepository, appointmentRepository,
+                patientRepository, doctorRepository, checkinRepository, clinicSettingService,
+                new AppointmentStateServiceImpl(appointmentRepository, null, clock),
+                clock, staffService);
+    }
 
     @Override
     @Transactional
@@ -129,8 +147,10 @@ public class StaffRecordServiceImpl implements StaffRecordService {
             patientRepository.save(patient);
         }
 
-        appt.setStatus(AppointmentStatus.COMPLETED);
-        appointmentRepository.save(appt);
+        appointmentStateService.transition(appt,
+                AppointmentStatus.COMPLETED,
+                staff,
+                "Khám hoàn tất");
 
         Optional<Checkin> checkinOpt = checkinRepository.findByAppointmentId(appointmentId);
         checkinOpt.ifPresent(c -> {

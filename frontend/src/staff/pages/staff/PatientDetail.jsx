@@ -12,6 +12,7 @@ import { EditRecordDialog } from '../../components/records/EditRecordDialog.jsx'
 import { HistoryTable } from '../../components/records/HistoryTable.jsx';
 import { ResultDialog } from '../../components/records/ResultSheet.jsx';
 import { usePrint } from '../../components/print/PrintProvider.jsx';
+import { AppointmentHistoryDialog } from '../../components/appointments/AppointmentHistoryDialog.jsx';
 
 /** Hồ sơ chưa có ngày sinh đủ (tạo tại quầy chỉ có năm sinh): điền sẵn năm để tiếp tân chọn thêm ngày, tháng. */
 function editForm(patient) {
@@ -368,6 +369,15 @@ export default function PatientDetail() {
                           <Icon name="printer" size={18} strokeWidth={2} />
                           <span>In phiếu</span>
                         </button>
+                        <button
+                          type="button"
+                          className="t-btn t-btn-ghost"
+                          style={{ minHeight: '40px', padding: '0 14px', fontSize: '18px' }}
+                          onClick={() => setDialog({ type: 'history', appt: a })}
+                          title="Xem lịch sử phiếu khám"
+                        >
+                          <span>Lịch sử</span>
+                        </button>
                         {a.status === 'IN_PROGRESS' ? (
                           <Link to={`/noi-bo/phieu-kham/${a.id}/ket-qua`} state={{ back: `/noi-bo/benh-nhan/${p.id}` }} className="t-btn t-btn-primary" style={{ padding: '0 14px' }}>
                             Ghi nhận lượt khám
@@ -454,6 +464,12 @@ export default function PatientDetail() {
             setDialog(null);
             setNotice(`Đã cập nhật phiếu kết quả khám cho phiếu khám ${rec.appointment?.ticketCode}. Bệnh nhân sẽ thấy nội dung mới trong tài khoản website.`);
           }}
+        />
+      )}
+      {dialog?.type === 'history' && (
+        <AppointmentHistoryDialog
+          appt={dialog.appt}
+          onClose={() => setDialog(null)}
         />
       )}
     </>
