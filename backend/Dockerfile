@@ -6,9 +6,23 @@
 FROM maven:3.9.6-eclipse-temurin-17-alpine AS builder
 WORKDIR /app
 
+# Dùng Maven Central mirror trên Google Cloud Asia (tránh lỗi 429 Too Many Requests trên máy build dùng chung của Render)
+RUN mkdir -p /root/.m2 && cat <<'EOF' > /root/.m2/settings.xml
+<settings>
+  <mirrors>
+    <mirror>
+      <id>google-maven-central-asia</id>
+      <name>Google Maven Central Asia Mirror</name>
+      <url>https://maven-central-asia.storage-download.googleapis.com/maven2</url>
+      <mirrorOf>central</mirrorOf>
+    </mirror>
+  </mirrors>
+</settings>
+EOF
+
 # Cache dependency trước
 COPY pom.xml .
-RUN mvn dependency:resolve -B || true
+RUN mvn dependency:go-offline -B -Daether.connector.http.retryHandler.count=5 -Dmaven.artifact.threads=3 || true
 
 # Copy source code
 COPY src ./src
@@ -17,7 +31,7 @@ COPY src ./src
 RUN if [ ! -f src/main/resources/application.yml ]; then cp src/main/resources/application.example.yml src/main/resources/application.yml; fi
 
 # Đóng gói file JAR
-RUN mvn clean package -DskipTests -Dmaven.test.skip=true -B
+RUN mvn clean package -DskipTests -Dmaven.test.skip=true -B -Daether.connector.http.retryHandler.count=5 -Dmaven.artifact.threads=3
 
 # -------------------------------------------------------------
 # Stage 2: Môi trường chạy tối giản JRE 17
