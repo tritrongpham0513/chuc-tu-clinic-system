@@ -26,6 +26,10 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
       proxy: {
         '/api': env.DEV_API_TARGET || 'http://localhost:4000',
+        '/ws': {
+          target: env.DEV_API_TARGET || 'http://localhost:4000',
+          ws: true,
+        },
       },
     },
   };

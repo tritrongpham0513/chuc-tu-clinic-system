@@ -6,6 +6,7 @@ import { ROLE_LABELS } from '../../shared/lib/format.js';
 import { Icon } from '../../shared/ui/Icon.jsx';
 import { api } from '../../shared/lib/api.js';
 import { PrintProvider } from './print/PrintProvider.jsx';
+import { useStaffNotifications } from './useStaffNotifications.js';
 import './print/print.css';
 import './staff.css';
 
@@ -19,12 +20,14 @@ const STAFF_NAV = [
 ];
 const ADMIN_NAV = [
   { to: '/noi-bo/quan-tri', label: 'Tổng quan', icon: 'dashboard', end: true },
+  { to: '/noi-bo/quan-tri/bao-cao', label: 'Báo cáo', icon: 'file' },
   ...STAFF_NAV,
   { to: '/noi-bo/quan-tri/lich-truc', label: 'Lịch trực bác sĩ', icon: 'calendar' },
   { to: '/noi-bo/quan-tri/bac-si', label: 'Hồ sơ bác sĩ', icon: 'users' },
   { to: '/noi-bo/quan-tri/khung-gio', label: 'Khung giờ khám', icon: 'clock' },
   { to: '/noi-bo/quan-tri/dich-vu', label: 'Dịch vụ khám', icon: 'clipboard' },
   { to: '/noi-bo/quan-tri/ngay-nghi', label: 'Ngày nghỉ', icon: 'calendarPlus' },
+  { to: '/noi-bo/quan-tri/thong-bao', label: 'Nhật ký tin nhắn', icon: 'message' },
   { to: '/noi-bo/quan-tri/cau-hinh', label: 'Cấu hình phòng khám', icon: 'settings' },
   { to: '/noi-bo/quan-tri/bai-viet', label: 'Quản lý bài viết', icon: 'news' },
   { to: '/noi-bo/quan-tri/tai-khoan', label: 'Quản lý tài khoản', icon: 'userPlus' },
@@ -40,6 +43,7 @@ export function StaffLayout() {
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [badges, setBadges] = useState(null);
+  const notifications = useStaffNotifications(user);
   const admin = isAdmin(user);
   const nav = admin
     ? ADMIN_NAV
@@ -86,6 +90,7 @@ export function StaffLayout() {
               </button>
             )}
             <div className="t-user">
+              <NotificationBell notifications={notifications} onNavigate={navigate} />
               <UserMenu user={user} onLogout={handleLogout} />
             </div>
           </div>
@@ -164,6 +169,120 @@ function UserMenu({ user, onLogout }) {
             Đăng xuất
           </button>
         </div>
+      )}
+    </div>
+  );
+}
+
+function formatRelativeTime(at) {
+  if (!at) return '';
+  const normalized = /[Z+\-]\d{2}:?\d{2}$|Z$/.test(at) ? at : `${at}+07:00`;
+  const date = new Date(normalized);
+  if (Number.isNaN(date.getTime())) return at;
+
+  const diffSec = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+  if (diffSec < 60) return 'Vừa xong';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin} phút trước`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour} giờ trước`;
+
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const hh = String(date.getHours()).padStart(2, '0');
+  const mi = String(date.getMinutes()).padStart(2, '0');
+  return `${dd}/${mm} ${hh}:${mi}`;
+}
+
+/** Chuông thông báo lịch khám realtime + hộp thư trên thanh đầu trang. */
+function NotificationBell({ notifications, onNavigate }) {
+  const { items, unread, loading, error, reload, markRead, markAllRead } = notifications;
+  const [open, setOpen] = useState(false);
+  const close = useCallback(() => setOpen(false), []);
+  const ref = useDismiss(open, close);
+  const { pathname } = useLocation();
+  useEffect(close, [pathname, close]);
+
+  const handleItemClick = async (item) => {
+    setOpen(false);
+    await markRead(item.id);
+    if (item.link) {
+      onNavigate(item.link);
+    }
+  };
+
+  return (
+    <div className="t-notif-wrap" ref={ref}>
+      <button
+        type="button"
+        className="t-notif-btn"
+        aria-haspopup="true"
+        aria-expanded={open}
+        aria-label={`Thông báo${unread > 0 ? `, ${unread} chưa đọc` : ''}`}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <Icon name="bell" size={22} strokeWidth={1.9} />
+        {unread > 0 && (
+          <span className="t-notif-badge" aria-hidden="true">
+            {unread > 99 ? '99+' : unread}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <section className="t-notif-panel" aria-label="Danh sách thông báo">
+          <div className="t-notif-head">
+            <h2 className="t-notif-heading">Thông báo</h2>
+            <div className="t-notif-actions">
+              <button
+                type="button"
+                className="t-notif-action-btn"
+                onClick={reload}
+                disabled={loading}
+              >
+                Tải lại
+              </button>
+              <button
+                type="button"
+                className="t-notif-action-btn"
+                onClick={markAllRead}
+                disabled={unread === 0 || loading}
+              >
+                Đã đọc tất cả
+              </button>
+            </div>
+          </div>
+
+          {error && (
+            <div className="t-notif-error" role="alert">
+              {error}
+            </div>
+          )}
+
+          <div className="t-notif-list">
+            {loading && items.length === 0 ? (
+              <p className="t-notif-empty">Đang tải thông báo...</p>
+            ) : items.length === 0 ? (
+              <p className="t-notif-empty">Chưa có thông báo nào.</p>
+            ) : (
+              items.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`t-notif-item${item.read ? '' : ' unread'}`}
+                  onClick={() => handleItemClick(item)}
+                >
+                  <div className="t-notif-item-top">
+                    <span className="t-notif-item-title">{item.title}</span>
+                    {!item.read && <span className="t-notif-new">Mới</span>}
+                  </div>
+                  <p className="t-notif-item-body">{item.body}</p>
+                  <span className="t-notif-item-time">{formatRelativeTime(item.at)}</span>
+                </button>
+              ))
+            )}
+          </div>
+        </section>
       )}
     </div>
   );

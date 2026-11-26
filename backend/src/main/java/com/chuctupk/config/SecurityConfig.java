@@ -39,13 +39,16 @@ import java.util.Map;
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    public static final String DEFAULT_ALLOWED_ORIGINS =
+            "http://localhost:*,http://127.0.0.1:*,http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173";
+
     private static final DateTimeFormatter TIMESTAMP_FORMAT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JsonMapper jsonMapper;
 
-    @org.springframework.beans.factory.annotation.Value("${app.cors.allowed-origins:http://localhost:*,http://127.0.0.1:*,http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,https://*.vercel.app,https://*.onrender.com}")
+    @org.springframework.beans.factory.annotation.Value("${app.cors.allowed-origins:" + DEFAULT_ALLOWED_ORIGINS + "}")
     private String allowedOriginsStr;
 
     @org.springframework.beans.factory.annotation.Value("${spring.profiles.active:default}")
@@ -109,6 +112,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/staff/**").hasAnyRole("ADMIN", "STAFF", "DOCTOR")
                         .requestMatchers(HttpMethod.POST, "/api/v1/uploads").hasAnyRole("ADMIN", "STAFF", "DOCTOR")
 
+                        // WebSocket handshake: cho phép đi qua, xác thực thực hiện ở frame STOMP CONNECT
+                        .requestMatchers("/ws", "/ws/**").permitAll()
+
                         // 7. Mọi đường dẫn chính thức còn lại của v1 đều phải đăng nhập
                         .requestMatchers("/api/v1/**").authenticated()
 
@@ -163,7 +169,7 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(origins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
-        configuration.setExposedHeaders(List.of("Location", "Authorization"));
+        configuration.setExposedHeaders(List.of("Location", "Authorization", "Content-Disposition"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 

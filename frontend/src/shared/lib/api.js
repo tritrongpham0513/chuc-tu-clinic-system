@@ -62,6 +62,32 @@ export class ApiError extends Error {
   }
 }
 
+async function tryRefreshToken() {
+  try {
+    const refreshRes = await fetch(`${API_BASE}/api/v1/auth/refresh`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: appHeaders(),
+    });
+    if (refreshRes.ok) {
+      const refreshData = await refreshRes.json().catch(() => null);
+      const newToken = refreshData?.data?.token || refreshData?.data?.accessToken || refreshData?.token || refreshData?.accessToken;
+      if (newToken) {
+        setToken(newToken);
+      }
+      return true;
+    }
+  } catch {
+    /* Bỏ qua lỗi refresh */
+  }
+  setToken(null);
+  return false;
+}
+
+export async function refreshAccessToken() {
+  return tryRefreshToken();
+}
+
 async function request(method, path, body, isRetry = false) {
   let res;
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
@@ -83,24 +109,9 @@ async function request(method, path, body, isRetry = false) {
   if (!res.ok) {
     // Tự động thử refresh token một lần khi 401 (ngoại trừ các endpoint auth)
     if (res.status === 401 && !isRetry && !cleanPath.startsWith('/auth/')) {
-      try {
-        const refreshRes = await fetch(`${API_BASE}/api/v1/auth/refresh`, {
-          method: 'GET',
-          credentials: 'include',
-          headers: appHeaders(),
-        });
-        if (refreshRes.ok) {
-          const refreshData = await refreshRes.json().catch(() => null);
-          const newToken = refreshData?.data?.token || refreshData?.data?.accessToken || refreshData?.token || refreshData?.accessToken;
-          if (newToken) {
-            setToken(newToken);
-          }
-          return await request(method, path, body, true);
-        }
-      } catch {
-        /* Bỏ qua lỗi refresh để chuyển sang xử lý 401 ban đầu */
+      if (await tryRefreshToken()) {
+        return await request(method, path, body, true);
       }
-      setToken(null);
     }
 
     if (res.status === 401) {
@@ -142,6 +153,43 @@ async function request(method, path, body, isRetry = false) {
   return data;
 }
 
+async function download(path, isRetry = false) {
+  let res;
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  const url = `${API_BASE}/api/v1${cleanPath}`;
+
+  try {
+    res = await fetch(url, {
+      method: 'GET',
+      credentials: 'include',
+      headers: appHeaders(),
+    });
+  } catch {
+    throw new ApiError(0, { message: 'Không kết nối được tới phòng khám. Cô chú kiểm tra mạng rồi thử lại.' });
+  }
+
+  if (!res.ok) {
+    if (res.status === 401 && !isRetry) {
+      if (await tryRefreshToken()) {
+        return await download(path, true);
+      }
+    }
+    if (res.status === 401) {
+      setToken(null);
+    }
+    const errBody = await res.json().catch(() => null);
+    const err = new ApiError(res.status, errBody);
+    if (err.code === 'SESSION_CHANGED' || res.status === 403) {
+      onSessionChanged?.();
+    }
+    throw err;
+  }
+
+  const blob = await res.blob();
+  const disposition = res.headers.get('Content-Disposition') || '';
+  return { blob, disposition };
+}
+
 export function qs(params) {
   const entries = Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== '');
   return entries.length ? `?${new URLSearchParams(entries)}` : '';
@@ -153,4 +201,5 @@ export const api = {
   put: (path, body = {}) => request('PUT', path, body),
   patch: (path, body = {}) => request('PATCH', path, body),
   del: (path) => request('DELETE', path),
+  download: (path) => download(path),
 };

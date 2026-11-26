@@ -1,6 +1,7 @@
 // Icon nét mảnh, bo tròn, nét đồng nhất (Design System — Using tokens).
 const PATHS = {
   phone: 'M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z',
+  message: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
   map: 'M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12Z M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
   clock: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z M12 6v6l4 2',
   user: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z',
@@ -86,6 +87,7 @@ const PATHS = {
   alertCircle: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z M12 8v4 M12 16h.01',
   xCircle: 'M3 12a9 9 0 1 0 18 0 9 9 0 1 0-18 0Z M9 9l6 6 M15 9l-6 6',
   send: 'M22 2 11 13 M22 2 15 22 11 13 2 9 22 2Z',
+  bell: 'M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9 M10.3 21a1.94 1.94 0 0 0 3.4 0',
 };
 
 export function Icon({ name, size = 24, label, className, strokeWidth = 2, color }) {

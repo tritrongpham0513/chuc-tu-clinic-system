@@ -76,6 +76,8 @@ class ClinicScheduledTasksTest {
         List<Appointment> foundAppointments = new ArrayList<>();
         List<Appointment> savedAppointments = new ArrayList<>();
 
+        @Override public Optional<Appointment> findWithDetailById(Long id) { return Optional.empty(); }
+
         @Override public List<Appointment> findByAppointmentDateAndStatus(LocalDate appointmentDate, AppointmentStatus status) {
             return foundAppointments.stream()
                     .filter(a -> a.getStatus() == status && appointmentDate.equals(a.getAppointmentDate()))
@@ -134,6 +136,11 @@ class ClinicScheduledTasksTest {
         @Override public List<Long> findFutureSlotBookingCounts(LocalDate today, Pageable pageable) { return Collections.emptyList(); }
         @Override public long countUpcomingAppointmentsForSlot(Long timeSlotId, LocalDate today, java.util.Collection<AppointmentStatus> excludeStatuses) { return 0; }
         @Override public List<Object[]> countUpcomingAppointmentsGroupedBySlot(LocalDate today, java.util.Collection<AppointmentStatus> excludeStatuses) { return Collections.emptyList(); }
+        @Override public List<Object[]> countByDayAndStatus(LocalDate from, LocalDate to) { return Collections.emptyList(); }
+        @Override public List<Object[]> countByDoctorAndStatus(LocalDate from, LocalDate to) { return Collections.emptyList(); }
+        @Override public List<Object[]> countBySlotAndStatus(LocalDate from, LocalDate to) { return Collections.emptyList(); }
+        @Override public long countDistinctCompletedPatientsInPeriod(LocalDate from, LocalDate to) { return 0; }
+        @Override public List<Long> findNewPatientIdsInPeriod(LocalDate from, LocalDate to) { return Collections.emptyList(); }
         @Override public void flush() {}
         @Override public <S extends Appointment> S saveAndFlush(S entity) { return null; }
         @Override public <S extends Appointment> List<S> saveAllAndFlush(Iterable<S> entities) { return null; }

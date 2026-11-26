@@ -3,13 +3,19 @@ package com.chuctupk.controller;
 import com.chuctupk.dto.request.*;
 import com.chuctupk.dto.response.*;
 import com.chuctupk.entity.User;
+import com.chuctupk.entity.enums.Role;
+import com.chuctupk.exception.AppException;
 import com.chuctupk.service.AdminService;
+import com.chuctupk.service.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +25,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.Map;
 
 @Slf4j
@@ -30,9 +38,16 @@ public class AdminController {
 
     private final AdminService adminService;
     private final com.chuctupk.service.DoctorAssignmentService doctorAssignmentService;
+    private final ReportService reportService;
+
+    private void requireAdmin(User currentUser) {
+        if (currentUser == null || currentUser.getRole() != Role.ADMIN) {
+            throw AppException.forbidden("Bạn không có quyền thực hiện thao tác này");
+        }
+    }
 
     // =========================================================================
-    // 1. DASHBOARD
+    // 1. DASHBOARD & BÁO CÁO
     // =========================================================================
 
     @GetMapping("/dashboard")
@@ -40,6 +55,37 @@ public class AdminController {
     public ResponseEntity<ApiResponse<AdminDashboardResponse>> getDashboard() {
         AdminDashboardResponse response = adminService.getDashboard();
         return ResponseEntity.ok(ApiResponse.success(response, "Lấy tổng quan dashboard thành công"));
+    }
+
+    @GetMapping("/reports/summary")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Lấy báo cáo tổng hợp hoạt động khám bệnh theo kỳ")
+    public ResponseEntity<ApiResponse<ReportSummaryResponse>> getReportSummary(
+            @AuthenticationPrincipal User currentUser,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        requireAdmin(currentUser);
+        ReportSummaryResponse response = reportService.getSummary(from, to);
+        return ResponseEntity.ok(ApiResponse.success(response, "Lấy báo cáo tổng hợp thành công"));
+    }
+
+    @GetMapping("/reports/export")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Xuất báo cáo tổng hợp ra file CSV tương thích Excel tiếng Việt")
+    public ResponseEntity<byte[]> exportReportCsv(
+            @AuthenticationPrincipal User currentUser,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(defaultValue = "summary") String type) {
+        requireAdmin(currentUser);
+        ReportService.CsvExportResult csv = reportService.exportCsv(from, to, type);
+        ContentDisposition disposition = ContentDisposition.attachment()
+                .filename(csv.filename(), StandardCharsets.UTF_8)
+                .build();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, "text/csv;charset=UTF-8")
+                .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
+                .body(csv.content());
     }
 
     // =========================================================================

@@ -340,6 +340,7 @@ class AdminHolidayTest {
     }
 
     static class FakeAppointmentRepository implements AppointmentRepository {
+        @Override public Optional<Appointment> findWithDetailById(Long id) { return Optional.empty(); }
         @Override public long countByAppointmentDateAndStatusNot(LocalDate appointmentDate, AppointmentStatus excludeStatus) { return 0; }
         @Override public boolean isServiceUsed(Long serviceId, String slug, String slugUnderscore) { return false; }
         @Override public long countAppointmentsForService(Long serviceId, String slug, String slugUnderscore) { return 0; }
@@ -374,6 +375,11 @@ class AdminHolidayTest {
         @Override public List<Long> findFutureSlotBookingCounts(LocalDate today, Pageable pageable) { return List.of(); }
         @Override public long countUpcomingAppointmentsForSlot(Long timeSlotId, LocalDate today, Collection<AppointmentStatus> excludeStatuses) { return 0; }
         @Override public List<Object[]> countUpcomingAppointmentsGroupedBySlot(LocalDate today, Collection<AppointmentStatus> excludeStatuses) { return List.of(); }
+        @Override public List<Object[]> countByDayAndStatus(LocalDate from, LocalDate to) { return List.of(); }
+        @Override public List<Object[]> countByDoctorAndStatus(LocalDate from, LocalDate to) { return List.of(); }
+        @Override public List<Object[]> countBySlotAndStatus(LocalDate from, LocalDate to) { return List.of(); }
+        @Override public long countDistinctCompletedPatientsInPeriod(LocalDate from, LocalDate to) { return 0; }
+        @Override public List<Long> findNewPatientIdsInPeriod(LocalDate from, LocalDate to) { return List.of(); }
         @Override public void flush() {}
         @Override public <S extends Appointment> S saveAndFlush(S entity) { return null; }
         @Override public <S extends Appointment> List<S> saveAllAndFlush(Iterable<S> entities) { return null; }

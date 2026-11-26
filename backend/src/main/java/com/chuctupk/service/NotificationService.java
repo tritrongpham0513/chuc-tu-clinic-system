@@ -23,4 +23,27 @@ public interface NotificationService {
      * Soạn nội dung nhắc lịch thủ công (1 click) cho nhân viên lễ tân.
      */
     String composeManualReminder(Appointment appointment);
+
+    /**
+     * Lấy danh sách nhật ký thông báo phục vụ màn hình Admin.
+     *
+     * @param status trạng thái lọc (SENT, FAILED, SKIPPED) hoặc null nếu lấy tất cả
+     * @return danh sách AdminNotificationDto kèm errorCode đã dịch sang tiếng Việt
+     */
+    java.util.List<com.chuctupk.dto.response.AdminNotificationDto> getAdminNotifications(String status);
+
+    /**
+     * Lấy danh sách nhật ký thông báo có giới hạn trang phục vụ màn hình Admin.
+     */
+    default java.util.List<com.chuctupk.dto.response.AdminNotificationDto> getAdminNotifications(String status, int page, int limit) {
+        return getAdminNotifications(status);
+    }
+
+    /**
+     * Gửi lại 1 tin nhắn thông báo (tạo dòng log mới, không sửa dòng cũ).
+     *
+     * @param logId ID dòng log cũ cần gửi lại
+     * @return AdminNotificationDto của dòng log mới vừa tạo
+     */
+    com.chuctupk.dto.response.AdminNotificationDto resendNotification(Long logId);
 }

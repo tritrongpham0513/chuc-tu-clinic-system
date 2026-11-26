@@ -63,7 +63,7 @@ app:
   cookie:
     secure: ${COOKIE_SECURE:true}
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:*,http://127.0.0.1:*,http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,https://*.vercel.app,https://*.onrender.com}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:*,http://127.0.0.1:*,http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173}
   upload:
     dir: ${UPLOAD_DIR:uploads}
   otp:
@@ -80,9 +80,19 @@ app:
     provider: ${SMS_PROVIDER:esms}          # Mặc định sử dụng eSMS
     api-key: ${SMS_API_KEY:}                # ApiKey copy từ eSMS.vn
     secret-key: ${SMS_SECRET_KEY:}          # SecretKey copy từ eSMS.vn
-    sms-type: ${SMS_TYPE:2}                 # 2: Brandname CSKH/OTP (khuyên dùng khi có Brandname), 8: Đầu số cố định
-    brandname: ${SMS_BRAND_NAME:Baotrixemay} # Tên Brandname đã đăng ký trên eSMS (ví dụ Baotrixemay)
+    brandname: ${SMS_BRANDNAME:}            # Tên Brandname đã đăng ký trên eSMS
+    sms-type: ${SMS_TYPE:8}                 # 8: Đầu số cố định (test ngay được, không cần brandname), 2: Brandname CSKH/OTP
+
+  # Cấu hình Zalo ZNS (khung sẵn, mặc định tắt và fallback sang SMS nếu bật)
+  zns:
+    enabled: ${ZNS_ENABLED:false}
+    oa-id: ${ZNS_OA_ID:}
+    access-token: ${ZNS_ACCESS_TOKEN:}
+    template-booking-success: ${ZNS_TEMPLATE_BOOKING_SUCCESS:}
+    template-cancelled: ${ZNS_TEMPLATE_CANCELLED:}
+    template-reminder: ${ZNS_TEMPLATE_REMINDER:}
+    fallback-sms: ${ZNS_FALLBACK_SMS:true}
 
 notification:
-  provider: ${NOTIFICATION_PROVIDER:log}   # log | sms
+  provider: ${NOTIFICATION_PROVIDER:log}   # log | sms | zns
 

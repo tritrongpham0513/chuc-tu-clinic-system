@@ -11,6 +11,8 @@ import com.chuctupk.entity.*;
 import com.chuctupk.entity.enums.AppointmentSource;
 import com.chuctupk.entity.enums.AppointmentStatus;
 import com.chuctupk.entity.enums.Gender;
+import com.chuctupk.event.AppointmentCancelledEvent;
+import com.chuctupk.event.AppointmentCreatedEvent;
 import com.chuctupk.exception.AppException;
 import com.chuctupk.exception.ErrorCode;
 import com.chuctupk.repository.*;
@@ -19,6 +21,7 @@ import com.chuctupk.service.SequenceGeneratorService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,6 +54,9 @@ public class PatientPortalServiceImpl implements PatientPortalService {
     private final com.chuctupk.service.CapacityResolver capacityResolver;
     private final com.chuctupk.service.AppointmentStateService appointmentStateService;
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ApplicationEventPublisher eventPublisher;
 
     @org.springframework.beans.factory.annotation.Autowired
     public PatientPortalServiceImpl(
@@ -541,6 +547,9 @@ public class PatientPortalServiceImpl implements PatientPortalService {
         result.put("appointment", AppointmentDto.from(savedAppointment));
 
         notificationService.notifyBookingSuccess(savedAppointment);
+        if (eventPublisher != null && savedAppointment.getId() != null) {
+            eventPublisher.publishEvent(new AppointmentCreatedEvent(savedAppointment.getId()));
+        }
 
         // 7. Ghi nhận Idempotency-Key
         if (idempotencyKey != null && !idempotencyKey.isBlank()) {
@@ -638,6 +647,9 @@ public class PatientPortalServiceImpl implements PatientPortalService {
         appointmentSeatRepository.deleteByAppointmentId(saved.getId());
 
         notificationService.notifyCancellation(saved, a.getCancelReason());
+        if (eventPublisher != null && saved.getId() != null) {
+            eventPublisher.publishEvent(new AppointmentCancelledEvent(saved.getId()));
+        }
 
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("appointment", AppointmentDto.from(saved));

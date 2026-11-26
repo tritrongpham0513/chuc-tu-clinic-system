@@ -11,6 +11,8 @@ import com.chuctupk.entity.enums.CheckinStatus;
 import com.chuctupk.entity.enums.Period;
 import com.chuctupk.entity.enums.PriorityGroup;
 import com.chuctupk.entity.enums.Role;
+import com.chuctupk.event.AppointmentCancelledEvent;
+import com.chuctupk.event.AppointmentCreatedEvent;
 import com.chuctupk.exception.AppException;
 import com.chuctupk.exception.ErrorCode;
 import com.chuctupk.notification.DeliveryResult;
@@ -22,6 +24,7 @@ import com.chuctupk.service.SequenceGeneratorService;
 import com.chuctupk.service.StaffService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -64,6 +67,9 @@ public class StaffServiceImpl implements StaffService {
     private final com.chuctupk.service.CapacityResolver capacityResolver;
     private final com.chuctupk.service.AppointmentStateService appointmentStateService;
     private final com.chuctupk.repository.AppointmentStatusHistoryRepository statusHistoryRepository;
+
+    @Autowired(required = false)
+    private ApplicationEventPublisher eventPublisher;
 
     @Autowired
     public StaffServiceImpl(
@@ -592,6 +598,9 @@ public class StaffServiceImpl implements StaffService {
 
         AppointmentDto dto = AppointmentDto.from(savedAppointment, checkin);
         notificationService.notifyBookingSuccess(savedAppointment);
+        if (eventPublisher != null && savedAppointment.getId() != null) {
+            eventPublisher.publishEvent(new AppointmentCreatedEvent(savedAppointment.getId()));
+        }
         return Map.of("appointment", dto, "ticket", dto);
     }
 
@@ -724,6 +733,9 @@ public class StaffServiceImpl implements StaffService {
                 request.reason().trim());
 
         notificationService.notifyCancellation(saved, request.reason());
+        if (eventPublisher != null && saved.getId() != null) {
+            eventPublisher.publishEvent(new AppointmentCancelledEvent(saved.getId()));
+        }
 
         return new StaffAppointmentLookupResponse(AppointmentDto.from(saved, (Checkin) null));
     }

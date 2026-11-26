@@ -1,0 +1,71 @@
+services:
+  # --------------------------------------------------------------------------
+  # 1. Backend API (Spring Boot 4 / Java 17 + WebSocket STOMP)
+  # --------------------------------------------------------------------------
+  - type: web
+    name: chuctu-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    region: singapore
+    plan: free
+    branch: feat/clinic-management-system
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: PORT
+        value: 4000
+      - key: TZ
+        value: Asia/Ho_Chi_Minh
+      - key: DDL_AUTO
+        value: validate
+      - key: UPLOAD_DIR
+        value: /app/uploads
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: OTP_EXPOSE_DEV_CODE
+        value: "false"
+      # Điền địa chỉ MySQL 8.0 (Aiven / Railway / TiDB / RDS), ví dụ:
+      # jdbc:mysql://host:3306/phongkham_chuctu?useSSL=true&requireSSL=true&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      # BẮT BUỘC là chuỗi Base64 >= 32 bytes (tạo bằng: openssl rand -base64 32)
+      - key: JWT_SECRET
+        sync: false
+      # BẮT BUỘC điền domain Frontend Vercel/Web thật cho cả HTTP và WebSocket /ws
+      # Ví dụ: https://chuc-tu-clinic.vercel.app
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_PHONE
+        value: "0912345678"
+      - key: ADMIN_FULL_NAME
+        value: "Quản trị viên Phòng khám"
+      - key: NOTIFICATION_PROVIDER
+        value: log
+      - key: SMS_ENABLED
+        value: "false"
+
+  # --------------------------------------------------------------------------
+  # 2. Frontend Web App (Tuỳ chọn nếu chạy trên Render thay vì Vercel)
+  # --------------------------------------------------------------------------
+  - type: web
+    name: chuctu-frontend
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    region: singapore
+    plan: free
+    branch: feat/clinic-management-system
+    healthCheckPath: /
+    envVars:
+      - key: API_UPSTREAM
+        sync: false

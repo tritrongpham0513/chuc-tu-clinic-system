@@ -7,12 +7,15 @@ import com.chuctupk.entity.*;
 import com.chuctupk.entity.enums.AppointmentSource;
 import com.chuctupk.entity.enums.AppointmentStatus;
 import com.chuctupk.entity.enums.DayOfWeek;
+import com.chuctupk.event.AppointmentCancelledEvent;
+import com.chuctupk.event.AppointmentCreatedEvent;
 import com.chuctupk.exception.AppException;
 import com.chuctupk.repository.*;
 import com.chuctupk.service.AppointmentService;
 import com.chuctupk.service.ClinicSettingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -52,6 +55,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final ClinicSettingService clinicSettingService;
     private final com.chuctupk.service.SlotPolicy slotPolicy;
     private final com.chuctupk.service.CapacityResolver capacityResolver;
+    private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
 
     @Override
@@ -192,6 +196,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                 "Bệnh nhân đặt lịch trực tuyến");
 
         log.info("Đặt lịch thành công mã: {}", bookingCode);
+        eventPublisher.publishEvent(new AppointmentCreatedEvent(appointment.getId()));
         return toResponse(appointment);
     }
 
@@ -260,6 +265,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                 request.getCancelReason() != null ? request.getCancelReason() : "Bệnh nhân hủy qua website");
 
         log.info("Đã hủy lịch hẹn mã: {}", bookingCode);
+        eventPublisher.publishEvent(new AppointmentCancelledEvent(appointment.getId()));
         return toResponse(appointment);
     }
 

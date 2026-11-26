@@ -192,7 +192,8 @@ class V1AdminControllerSliceTest {
 
         AdminService adminService = new StubAdminService();
         com.chuctupk.service.DoctorAssignmentService doctorAssignmentService = org.mockito.Mockito.mock(com.chuctupk.service.DoctorAssignmentService.class);
-        AdminController adminController = new AdminController(adminService, doctorAssignmentService);
+        com.chuctupk.service.ReportService reportService = org.mockito.Mockito.mock(com.chuctupk.service.ReportService.class);
+        AdminController adminController = new AdminController(adminService, doctorAssignmentService, reportService);
         PublicPostController publicPostController = new PublicPostController(adminService);
         MediaController mediaController = new MediaController(adminService);
 

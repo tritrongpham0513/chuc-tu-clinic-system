@@ -2,6 +2,7 @@ package com.chuctupk.repository;
 
 import com.chuctupk.entity.Appointment;
 import com.chuctupk.entity.enums.AppointmentStatus;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,6 +14,10 @@ import java.util.Optional;
 
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
+
+    @EntityGraph(attributePaths = {"patient", "doctor", "doctor.user", "timeSlot"})
+    @Query("SELECT a FROM Appointment a WHERE a.id = :id")
+    Optional<Appointment> findWithDetailById(@Param("id") Long id);
 
     Optional<Appointment> findByBookingCode(String bookingCode);
 
@@ -158,4 +163,55 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             @Param("slug") String slug,
             @Param("slugUnderscore") String slugUnderscore
     );
+
+    // --- Sprint 13: Báo cáo tổng hợp theo kỳ (GROUP BY ở DB) ---
+    @Query("""
+            SELECT a.appointmentDate, a.status, COUNT(a)
+            FROM Appointment a
+            WHERE a.appointmentDate BETWEEN :from AND :to
+            GROUP BY a.appointmentDate, a.status
+            """)
+    List<Object[]> countByDayAndStatus(@Param("from") LocalDate from, @Param("to") LocalDate to);
+
+    @Query("""
+            SELECT d.id, d.fullName, a.status, COUNT(a)
+            FROM Appointment a
+            LEFT JOIN a.doctor d
+            WHERE a.appointmentDate BETWEEN :from AND :to
+            GROUP BY d.id, d.fullName, a.status
+            """)
+    List<Object[]> countByDoctorAndStatus(@Param("from") LocalDate from, @Param("to") LocalDate to);
+
+    @Query("""
+            SELECT ts.id, ts.slotLabel, ts.startTime, ts.endTime, ts.maxPatients, ts.sortOrder, a.status, COUNT(a)
+            FROM Appointment a
+            JOIN a.timeSlot ts
+            WHERE a.appointmentDate BETWEEN :from AND :to
+            GROUP BY ts.id, ts.slotLabel, ts.startTime, ts.endTime, ts.maxPatients, ts.sortOrder, a.status
+            ORDER BY ts.sortOrder ASC, ts.startTime ASC
+            """)
+    List<Object[]> countBySlotAndStatus(@Param("from") LocalDate from, @Param("to") LocalDate to);
+
+    @Query("""
+            SELECT COUNT(DISTINCT a.patient.id)
+            FROM Appointment a
+            WHERE a.appointmentDate BETWEEN :from AND :to
+              AND a.status = com.chuctupk.entity.enums.AppointmentStatus.COMPLETED
+            """)
+    long countDistinctCompletedPatientsInPeriod(@Param("from") LocalDate from, @Param("to") LocalDate to);
+
+    @Query("""
+            SELECT a.patient.id
+            FROM Appointment a
+            WHERE a.status = com.chuctupk.entity.enums.AppointmentStatus.COMPLETED
+              AND a.patient.id IN (
+                  SELECT DISTINCT a2.patient.id
+                  FROM Appointment a2
+                  WHERE a2.appointmentDate BETWEEN :from AND :to
+                    AND a2.status = com.chuctupk.entity.enums.AppointmentStatus.COMPLETED
+              )
+            GROUP BY a.patient.id
+            HAVING MIN(a.appointmentDate) BETWEEN :from AND :to
+            """)
+    List<Long> findNewPatientIdsInPeriod(@Param("from") LocalDate from, @Param("to") LocalDate to);
 }

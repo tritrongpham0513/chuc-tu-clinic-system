@@ -134,11 +134,13 @@
     margin-left: auto;
   }
   .t-burger[aria-expanded='true'] { background: rgba(255, 255, 255, 0.18); }
-  .t-user { order: 3; flex: 1 1 100%; margin-left: 0; justify-content: space-between; }
-  .t-user-menu { width: 100%; }
+  .t-user { order: 3; flex: 1 1 100%; margin-left: 0; justify-content: space-between; position: relative; gap: 10px; }
+  .t-user-menu { flex: 1 1 auto; min-width: 0; width: auto; }
   .t-user-btn { width: 100%; }
   .t-user-btn .t-user-name { flex: 1 1 auto; text-align: left; }
   .t-user-menu .t-menu { left: 0; right: 0; width: auto; }
+  .t-notif-wrap { position: static; }
+  .t-notif-panel { left: 0; right: 0; width: auto; max-width: 100%; }
   .t-aside { display: contents; }
   .t-side { display: none; order: -1; flex: 1 1 100%; }
   .t-side.open { display: flex; }
@@ -1138,4 +1140,206 @@ button.t-check { cursor: pointer; }
   font-size: 15px;
   color: var(--ink-900);
 }
+
+/* ---------- Chuông thông báo nội bộ ---------- */
+.t-notif-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.t-notif-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 0;
+  border-radius: 12px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.t-notif-btn:hover,
+.t-notif-btn[aria-expanded='true'] {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.t-notif-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: center;
+}
+
+.t-notif-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  width: 400px;
+  max-width: calc(100vw - 24px);
+  max-height: 75vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-card);
+  border: 1.5px solid var(--line-strong);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: t-notif-fade 150ms ease;
+}
+
+@keyframes t-notif-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.t-notif-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--surface-100);
+}
+
+.t-notif-heading {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink-900);
+}
+
+.t-notif-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.t-notif-action-btn {
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--surface-card);
+  color: var(--ink-900);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.t-notif-action-btn:hover:not(:disabled) {
+  background: var(--surface-200);
+}
+
+.t-notif-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.t-notif-error {
+  padding: 10px 14px;
+  background: var(--alert-100);
+  color: var(--alert-700);
+  font-size: 15px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.t-notif-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.t-notif-empty {
+  padding: 28px 16px;
+  text-align: center;
+  font-size: 16px;
+  color: var(--ink-500);
+}
+
+.t-notif-item {
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--surface-card);
+  color: var(--ink-900);
+  text-align: left;
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.t-notif-item:last-child {
+  border-bottom: 0;
+}
+
+.t-notif-item:hover {
+  background: var(--surface-200);
+}
+
+.t-notif-item.unread {
+  background: var(--gold-100);
+}
+
+.t-notif-item.unread:hover {
+  background: var(--gold-100);
+}
+
+.t-notif-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.t-notif-item-title {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 24px;
+  color: var(--ink-900);
+}
+
+.t-notif-new {
+  flex-shrink: 0;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #d97706;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+.t-notif-item-body {
+  font-size: 16px;
+  line-height: 23px;
+  color: var(--ink-800);
+}
+
+.t-notif-item-time {
+  font-size: 14px;
+  color: var(--ink-500);
+}
+
 

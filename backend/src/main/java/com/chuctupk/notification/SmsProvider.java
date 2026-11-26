@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Component("sms")
 @ConditionalOnProperty(name = "notification.provider", havingValue = "sms")
 @RequiredArgsConstructor
-public class SmsNotificationProvider implements NotificationProvider {
+public class SmsProvider implements NotificationProvider {
 
     private final SmsService smsService;
 
@@ -22,17 +22,18 @@ public class SmsNotificationProvider implements NotificationProvider {
     @Override
     public DeliveryResult send(NotificationMessage message) {
         String content = "";
-        if (message.data() != null && message.data().containsKey("message")) {
+        if (message != null && message.data() != null && message.data().containsKey("message")) {
             Object msgObj = message.data().get("message");
             if (msgObj != null) {
                 content = msgObj.toString();
             }
         }
-        SmsService.OtpSendResult result = smsService.sendMessage(message.phone(), content);
-        return switch (result) {
-            case SENT -> new DeliveryResult(DeliveryResult.Status.SENT, null, "sms");
-            case SKIPPED -> new DeliveryResult(DeliveryResult.Status.SKIPPED, null, "sms");
-            case FAILED -> new DeliveryResult(DeliveryResult.Status.FAILED, "SMS_SEND_FAILED", "sms");
-        };
+
+        String phone = message != null ? message.phone() : null;
+        if (smsService == null) {
+            return new DeliveryResult(DeliveryResult.Status.FAILED, "NO_PROVIDER", "sms");
+        }
+
+        return smsService.sendNotification(phone, content);
     }
 }

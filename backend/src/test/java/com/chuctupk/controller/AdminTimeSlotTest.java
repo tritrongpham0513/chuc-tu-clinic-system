@@ -440,6 +440,7 @@ class AdminTimeSlotTest {
             return result;
         }
 
+        @Override public Optional<Appointment> findWithDetailById(Long id) { return Optional.empty(); }
         @Override public Optional<Appointment> findByBookingCode(String bookingCode) { return Optional.empty(); }
         @Override public long countByAppointmentDate(LocalDate appointmentDate) { return 0; }
         @Override public boolean existsByBookingCode(String bookingCode) { return false; }
@@ -469,6 +470,11 @@ class AdminTimeSlotTest {
         @Override public boolean existsByPatientIdAndDoctorId(Long patientId, Long doctorId) { return false; }
         @Override public long countFutureAppointmentsForDoctor(Long doctorId, LocalDate today, Collection<AppointmentStatus> excludeStatuses) { return 0; }
         @Override public List<Long> findFutureSlotBookingCounts(LocalDate today, Pageable pageable) { return List.of(); }
+        @Override public List<Object[]> countByDayAndStatus(LocalDate from, LocalDate to) { return List.of(); }
+        @Override public List<Object[]> countByDoctorAndStatus(LocalDate from, LocalDate to) { return List.of(); }
+        @Override public List<Object[]> countBySlotAndStatus(LocalDate from, LocalDate to) { return List.of(); }
+        @Override public long countDistinctCompletedPatientsInPeriod(LocalDate from, LocalDate to) { return 0; }
+        @Override public List<Long> findNewPatientIdsInPeriod(LocalDate from, LocalDate to) { return List.of(); }
         @Override public void flush() {}
         @Override public <S extends Appointment> S saveAndFlush(S entity) { return null; }
         @Override public <S extends Appointment> List<S> saveAllAndFlush(Iterable<S> entities) { return null; }
