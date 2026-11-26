@@ -53,19 +53,3 @@ services:
         value: log
       - key: SMS_ENABLED
         value: "false"
-
-  # --------------------------------------------------------------------------
-  # 2. Frontend Web App (Tuỳ chọn nếu chạy trên Render thay vì Vercel)
-  # --------------------------------------------------------------------------
-  - type: web
-    name: chuctu-frontend
-    runtime: docker
-    dockerfilePath: ./frontend/Dockerfile
-    dockerContext: ./frontend
-    region: singapore
-    plan: free
-    branch: feat/clinic-management-system
-    healthCheckPath: /
-    envVars:
-      - key: API_UPSTREAM
-        sync: false
